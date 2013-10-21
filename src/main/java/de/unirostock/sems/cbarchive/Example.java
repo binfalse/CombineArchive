@@ -93,13 +93,14 @@ public class Example
 		// in that case all files will be deleted if the vm exits.
 		// if destination is given we won't delete anything, so you can work with
 		// the unpacked archive
-		CombineArchive ca2 = CombineArchive.readArchive (archiveFile, destination);
+		CombineArchive ca = CombineArchive.readArchive (archiveFile, destination);
 		
 		// iterate over all entries in the archive
-		for (ArchiveEntry entry : ca2.getEntries ())
+		for (ArchiveEntry entry : ca.getEntries ())
 		{
 			// display some information about the archive
 			System.out.println ("file name in archive: " + entry.getRelativeName ());
+			// read entry.getFile () in your application to get the contents
 			System.out.println ("file is available in: " + entry.getFile ().getAbsolutePath ());
 			
 			// read the description
