@@ -1,143 +1,126 @@
 /**
+ * CombineArchive - a JAVA library to read/write/create/... CombineArchives
+ * Copyright (C) 2013 Martin Scharm - http://binfalse.de/contact/
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  * 
  */
 package de.unirostock.sems.cbarchive;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.Properties;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 
 
 /**
- * @author martin
+ * The Class ArchiveEntry represents a single entry in a CombineArchive.
  * 
+ * @author martin scharm
  */
 public class ArchiveEntry
 {
 	
-	private static final String	knownFormats	= "/formatDict.prop";
-	private static Properties		formats			= new Properties ();
-	static
-	{
-		try
-		{
-			InputStream is = ArchiveEntry.class.getResourceAsStream (knownFormats);
-			if (is != null)
-				formats.load (is);
-		}
-		catch (IOException e)
-		{
-			e.printStackTrace ();
-		}
-	}
+	/** The archive containing this entry. */
+	private CombineArchive	archive;
 	
-	private CombineArchive archive;
-	private String relName;
-	private String format;
+	/** The relative path name to that file. */
+	private String					relativeName;
+	
+	/** The format. */
+	private String					format;
+	
+	/** The description. */
+	private OmexDescription	description;
 	
 	
-	
-	
-	
-	
-	public ArchiveEntry (CombineArchive archive, String relName, String format)
+	/**
+	 * Instantiates a new archive entry.
+	 * 
+	 * @param archive
+	 *          the CombineArchive
+	 * @param relativeName
+	 *          the relative path name
+	 * @param format
+	 *          the format
+	 * @param description
+	 *          the description
+	 */
+	public ArchiveEntry (CombineArchive archive, String relativeName,
+		String format, OmexDescription description)
 	{
 		super ();
 		this.archive = archive;
-		this.relName = relName;
+		this.relativeName = relativeName;
 		this.format = format;
+		this.description = description;
+		if (description != null)
+			description.setAbout (relativeName);
 	}
-
-
 	
-	public String getRelName ()
+	
+	/**
+	 * Gets the corresponding file.
+	 * 
+	 * @return the file
+	 */
+	public File getFile ()
 	{
-		return relName;
+		return new File (archive.getBaseDir ().getAbsolutePath () + File.separator
+			+ relativeName);
 	}
-
-
 	
+	
+	/**
+	 * Gets the relative path name.
+	 * 
+	 * @return the relative path name
+	 */
+	public String getRelativeName ()
+	{
+		return relativeName;
+	}
+	
+	
+	/**
+	 * Gets the format.
+	 * 
+	 * @return the format
+	 */
 	public String getFormat ()
 	{
 		return format;
 	}
-
-
-	public static String getFormat (String s)
-	{
-		return formats.getProperty (s, s);
-	}
-
-
+	
+	
 	/**
-	 * The main method to update our format dictionary.
-	 *
-	 * @param args the arguments
-	 * @throws FileNotFoundException the file not found exception
-	 * @throws IOException Signals that an I/O exception has occurred.
+	 * Gets the description.
+	 * 
+	 * @return the description
 	 */
-	public static void main (String[] args)
-		throws FileNotFoundException,
-			IOException
+	public OmexDescription getDescription ()
 	{
-		// merge format dictionaries. thanks to frank :)
-		// see: https://github.com/fbergmann/CombineArchive
-		
-		final URL franksList = new URL (
-			"https://raw.github.com/fbergmann/CombineArchive/master/LibCombine/Entry.cs");
-		final Pattern franksPattern = Pattern
-			.compile ("^\\s*\\{\\s*\"([^\"]+)\"\\s*,\\s*\"([^\"]+)\"\\s*\\},\\s*$");
-		
-		System.out.println ("known so far");
-		for (Object f : formats.keySet ())
-			System.out.println (f);
-		System.out.println ("/known so far");
-		
-		formats.store (
-			new FileOutputStream (ArchiveEntry.class.getResource (knownFormats)
-				.getFile ()), null);
-		
-		// load franks version and update our version
-		BufferedReader in = null;
-		try
-		{
-			in = new BufferedReader (new InputStreamReader (franksList.openStream ()));
-			String line;
-			while ( (line = in.readLine ()) != null)
-			{
-				Matcher m = franksPattern.matcher (line);
-				if (m.matches ())
-					formats.put (m.group (1), m.group (2));
-			}
-			// update our version
-			formats.store (
-				new FileOutputStream (ArchiveEntry.class.getResource (knownFormats)
-					.getFile ()), null);
-		}
-		catch (IOException e)
-		{
-			e.printStackTrace ();
-		}
-		finally
-		{
-			try
-			{
-				in.close ();
-			}
-			catch (IOException e)
-			{
-			}
-		}
+		return description;
+	}
+	
+	
+	/**
+	 * Sets the description.
+	 * 
+	 * @param description
+	 *          the new description
+	 */
+	public void setDescription (OmexDescription description)
+	{
+		this.description = description;
 	}
 }

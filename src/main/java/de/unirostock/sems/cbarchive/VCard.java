@@ -1,109 +1,167 @@
 /**
+ * CombineArchive - a JAVA library to read/write/create/.. CombineArchives
+ * Copyright (C) 2013 Martin Scharm - http://binfalse.de/contact/
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  * 
  */
 package de.unirostock.sems.cbarchive;
 
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
+import java.util.List;
+
+import org.jdom2.Element;
+
 
 
 /**
+ * The Class VCard representing a VCard entity of the Omex description.
+ * 
  * @author martin
- *
  */
 public class VCard
 {
-	private String familyName;
-	private String givenName;
-	private String email;
-  private String organization;
-
-	public void debug ()
-	{
-		System.out.println ("familyName: " + familyName);
-		System.out.println ("givenName: " + givenName);
-		System.out.println ("email: " + email);
-		System.out.println ("organization: " + organization);
-	}
-  
-  public boolean isEmpty ()
-  {
-  	return familyName == null || givenName == null || familyName.length () < 1 || givenName.length () < 1;
-  }
 	
-
-  public VCard()
-  {
-  }
-  
-  public VCard (Element element)
+	/** The family name. */
+	private String	familyName;
+	
+	/** The given name. */
+	private String	givenName;
+	
+	/** The email. */
+	private String	email;
+	
+	/** The organization. */
+	private String	organization;
+	
+	
+	/**
+	 * Checks if the VCard is empty.
+	 * 
+	 * @return true, if it is empty
+	 */
+	public boolean isEmpty ()
 	{
-	  NodeList list = element.getElementsByTagNameNS (OmexDescription.vcNS, "family-name");
-	  if (list.getLength () > 0)
-	  	familyName = list.item (0).getTextContent ();
-	  list = element.getElementsByTagNameNS(OmexDescription.vcNS, "given-name");
-	  if (list.getLength () > 0)
-	  	givenName = list.item (0).getTextContent ();
-	  list = element.getElementsByTagNameNS(OmexDescription.vcNS, "email");
-	  if (list.getLength () > 0)
-	  	email = list.item (0).getTextContent ();
-	  list = element.getElementsByTagNameNS(OmexDescription.vcNS, "organization-name");
-	  if (list.getLength () > 0)
-	  	organization = list.item (0).getTextContent ();
+		return familyName == null || givenName == null || familyName.length () < 1
+			|| givenName.length () < 1;
 	}
-  
-  public void toXml (Document doc, Element parent)
-  {
-  	if (isEmpty ())
-  		return;
-  	
-  	Element creator = doc.createElementNS (OmexDescription.dcNS, "dcterms:creator");
-  	Element bag = doc.createElementNS (OmexDescription.rdfNS, "rdf:Bag");
-  	Element li = doc.createElementNS (OmexDescription.rdfNS, "rdf:li");
-		li.setAttributeNode (OmexDescription.getResAttr (doc));
+	
+	
+	/**
+	 * Instantiates a new VCard.
+	 * 
+	 * @param familyName
+	 *          the family name
+	 * @param givenName
+	 *          the given name
+	 * @param email
+	 *          the email
+	 * @param organization
+	 *          the organization
+	 */
+	public VCard (String familyName, String givenName, String email,
+		String organization)
+	{
+		this.familyName = familyName;
+		this.givenName = givenName;
+		this.email = email;
+		this.organization = organization;
+	}
+	
+	
+	/**
+	 * Instantiates a new VCard from an entity of the Omex description.
+	 * 
+	 * @param element
+	 *          the XML element which roots the VCard entity
+	 */
+	public VCard (Element element)
+	{
+		List<Element> list = Utils.getElementsByTagName (element, "family-name",
+			OmexDescription.vcNS);
+		if (list.size () > 0)
+			familyName = list.get (0).getText ();
+		list = Utils.getElementsByTagName (element, "given-name",
+			OmexDescription.vcNS);
+		if (list.size () > 0)
+			givenName = list.get (0).getText ();
+		list = Utils.getElementsByTagName (element, "email", OmexDescription.vcNS);
+		if (list.size () > 0)
+			email = list.get (0).getText ();
+		list = Utils.getElementsByTagName (element, "organization-name",
+			OmexDescription.vcNS);
+		if (list.size () > 0)
+			organization = list.get (0).getText ();
+	}
+	
+	
+	/**
+	 * Appends the VCard tree to an XML element.
+	 * 
+	 * @param parent
+	 *          the parent element in the XML tree
+	 */
+	public void toXml (Element parent)
+	{
+		if (isEmpty ())
+			return;
 		
-		if ((familyName != null && familyName.length () > 0) || (givenName != null && givenName.length () > 0))
+		Element creator = new Element ("creator", OmexDescription.dcNS);
+		Element bag = new Element ("Bag", OmexDescription.rdfNS);
+		Element li = new Element ("li", OmexDescription.rdfNS);
+		li.setAttribute ("parseType", "Resource", OmexDescription.rdfNS);
+		
+		if ( (familyName != null && familyName.length () > 0)
+			|| (givenName != null && givenName.length () > 0))
 		{
-	  	Element n = doc.createElementNS (OmexDescription.vcNS, "vCard:n");
-			n.setAttributeNode (OmexDescription.getResAttr (doc));
+			Element n = new Element ("n", OmexDescription.vcNS);
+			n.setAttribute ("parseType", "Resource", OmexDescription.rdfNS);
 			if (familyName != null && familyName.length () > 0)
 			{
-		  	Element famName = doc.createElementNS (OmexDescription.vcNS, "vCard:family-name");
-				famName.appendChild (doc.createTextNode (familyName));
-		  	n.appendChild (famName);
+				Element famName = new Element ("family-name", OmexDescription.vcNS);
+				famName.setText (familyName);
+				n.addContent (famName);
 			}
 			if (givenName != null && givenName.length () > 0)
 			{
-		  	Element givName = doc.createElementNS (OmexDescription.vcNS, "vCard:given-name");
-				givName.appendChild (doc.createTextNode (givenName));
-		  	n.appendChild (givName);
+				Element givName = new Element ("given-name", OmexDescription.vcNS);
+				givName.setText (givenName);
+				n.addContent (givName);
 			}
-	  	li.appendChild (n);
-		}
-
-		if (email != null && email.length () > 0)
-		{
-	  	Element mail = doc.createElementNS (OmexDescription.vcNS, "vCard:email");
-			mail.appendChild (doc.createTextNode (email));
-	  	li.appendChild (mail);
-		}
-
-		if (organization != null && organization.length () > 0)
-		{
-	  	Element org = doc.createElementNS (OmexDescription.vcNS, "vCard:org");
-	  	Element orgName = doc.createElementNS (OmexDescription.vcNS, "vCard:organization-name");
-			orgName.appendChild (doc.createTextNode (organization));
-			org.setAttributeNode (OmexDescription.getResAttr (doc));
-	  	org.appendChild (orgName);
-	  	li.appendChild (org);
+			li.addContent (n);
 		}
 		
-  	
-  	creator.appendChild (bag);
-  	bag.appendChild (li);
-  	
-  	parent.appendChild (creator);
-  }
-
+		if (email != null && email.length () > 0)
+		{
+			Element mail = new Element ("email", OmexDescription.vcNS);
+			mail.setText (email);
+			li.addContent (mail);
+		}
+		
+		if (organization != null && organization.length () > 0)
+		{
+			Element org = new Element ("org", OmexDescription.vcNS);
+			Element orgName = new Element ("organization-name", OmexDescription.vcNS);
+			orgName.setText (organization);
+			org.setAttribute ("parseType", "Resource", OmexDescription.rdfNS);
+			org.addContent (orgName);
+			li.addContent (org);
+		}
+		
+		creator.addContent (bag);
+		bag.addContent (li);
+		
+		parent.addContent (creator);
+	}
+	
 }

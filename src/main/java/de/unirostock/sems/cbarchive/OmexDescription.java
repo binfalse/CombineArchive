@@ -1,4 +1,19 @@
 /**
+ * CombineArchive - a JAVA library to read/write/create/.. CombineArchives
+ * Copyright (C) 2013 Martin Scharm - http://binfalse.de/contact/
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  * 
  */
 package de.unirostock.sems.cbarchive;
@@ -6,52 +21,129 @@ package de.unirostock.sems.cbarchive;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
 import java.util.Vector;
 
-import org.w3c.dom.Attr;
-import org.w3c.dom.DOMException;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
+import org.jdom2.Element;
+import org.jdom2.Namespace;
 
 
 
 /**
- * @author martin
+ * The Class OmexDescription to parse and create meta data for entries in
+ * CombineArchives.
  * 
+ * @author martin
  */
 public class OmexDescription
 {
 	
-	public static final String						rdfNS					= "http://www.w3.org/1999/02/22-rdf-syntax-ns#";
-	public static final String						dcNS					= "http://purl.org/dc/terms/";
-	public static final String						vcNS					= "http://www.w3.org/2006/vcard/ns#";
+	/** The RDF namespace. */
+	public static final Namespace					rdfNS					= Namespace
+																												.getNamespace ("rdf",
+																													"http://www.w3.org/1999/02/22-rdf-syntax-ns#");
 	
+	/** The DC namespace. */
+	public static final Namespace					dcNS					= Namespace
+																												.getNamespace (
+																													"dcterms",
+																													"http://purl.org/dc/terms/");
+	
+	/** The vcard namespace. */
+	public static final Namespace					vcNS					= Namespace
+																												.getNamespace ("vCard",
+																													"http://www.w3.org/2006/vcard/ns#");
+	
+	/** The date formater. */
 	public static final SimpleDateFormat	dateFormater	= new SimpleDateFormat (
 																												"yyyy'-'MM'-'dd'T'HH':'mm':'ss'Z'");
 	
+	/** The description. */
 	private String												description;
+	
+	/** About which entry? */
 	private String												about;
+	
+	/** The creators. */
 	private Vector<VCard>									creators;
+	
+	/** The date created. */
 	private Date													created;
+	
+	/** The dates modified. */
 	public Vector<Date>										modified;
-
-
-
-	public void debug ()
+	
+	
+	/**
+	 * Gets the path to the entry that is described by this object.
+	 * 
+	 * @return the path
+	 */
+	public String getAbout ()
 	{
-		System.out.println ("omex descr" + this);
-		System.out.println ("descr" + description);
-		System.out.println ("about" + about);
-		System.out.println ("created" + created);
-		System.out.println ("#creators" + creators.size ());
-		for (int i = 0; i < creators.size (); i++)
-			creators.elementAt (i).debug ();
-		System.out.println ("#mods" + modified.size ());
-		for (int i = 0; i < modified.size (); i++)
-			System.out.println ("mod: " + modified.elementAt (i));
+		return about;
 	}
 	
+	
+	/**
+	 * Sets the path to the entry that is described by this object.
+	 * 
+	 * @param about
+	 *          the new path
+	 */
+	public void setAbout (String about)
+	{
+		this.about = about;
+	}
+	
+	
+	/**
+	 * Gets the description.
+	 * 
+	 * @return the description
+	 */
+	public String getDescription ()
+	{
+		return description;
+	}
+	
+	
+	/**
+	 * Gets the creators.
+	 * 
+	 * @return the creators
+	 */
+	public Vector<VCard> getCreators ()
+	{
+		return creators;
+	}
+	
+	
+	/**
+	 * Gets the date created.
+	 * 
+	 * @return the date created
+	 */
+	public Date getCreated ()
+	{
+		return created;
+	}
+	
+	
+	/**
+	 * Gets the dates modified.
+	 * 
+	 * @return the dates modified
+	 */
+	public Vector<Date> getModified ()
+	{
+		return modified;
+	}
+	
+	
+	/**
+	 * Instantiates a new omex description.
+	 */
 	public OmexDescription ()
 	{
 		creators = new Vector<VCard> ();
@@ -60,120 +152,192 @@ public class OmexDescription
 	}
 	
 	
+	/**
+	 * Instantiates a new omex description.
+	 * 
+	 * @param creators
+	 *          the creators
+	 * @param modified
+	 *          the date of modifications
+	 */
+	public OmexDescription (Vector<VCard> creators, Vector<Date> modified)
+	{
+		this.creators = creators;
+		this.modified = modified;
+		this.created = new Date ();
+	}
+	
+	
+	/**
+	 * Instantiates a new omex description.
+	 * 
+	 * @param creator
+	 *          the creator
+	 * @param created
+	 *          the date of creation
+	 */
+	public OmexDescription (VCard creator, Date created)
+	{
+		this.creators = new Vector<VCard> ();
+		this.creators.add (creator);
+		this.modified = new Vector<Date> ();
+		this.created = created;
+	}
+	
+	
+	/**
+	 * Instantiates a new omex description.
+	 * 
+	 * @param creators
+	 *          the creators
+	 * @param created
+	 *          the date of creation
+	 */
+	public OmexDescription (Vector<VCard> creators, Date created)
+	{
+		this.creators = creators;
+		this.modified = new Vector<Date> ();
+		this.created = created;
+	}
+	
+	
+	/**
+	 * Instantiates a new omex description.
+	 * 
+	 * @param creators
+	 *          the creators
+	 * @param modified
+	 *          the date of modifications
+	 * @param created
+	 *          the date of creation
+	 */
+	public OmexDescription (Vector<VCard> creators, Vector<Date> modified,
+		Date created)
+	{
+		this.creators = creators;
+		this.modified = modified;
+		this.created = created;
+	}
+	
+	
+	/**
+	 * Checks if description is empty.
+	 * 
+	 * @return true, if is empty
+	 */
 	public boolean isEmpty ()
 	{
 		boolean haveCreator = false;
-		for (VCard vc : creators)
-			if (!vc.isEmpty ())
-			{
-				haveCreator = true;
-				break;
-			}
-		return description != null && description.length () > 0
-			&& creators.size () > 0 && haveCreator;
+		if (creators != null)
+			for (VCard vc : creators)
+				if (!vc.isEmpty ())
+				{
+					haveCreator = true;
+					break;
+				}
+		return description != null && description.length () > 0 && haveCreator;
 	}
 	
 	
-	public static final Attr getResAttr (Document doc)
+	/**
+	 * Attach the description to an XML tree.
+	 * 
+	 * @param parent
+	 *          the parent element
+	 */
+	public void toXML (Element parent)
 	{
-		return getAttr (doc, OmexDescription.rdfNS, "rdf:parseType", "Resource");
-	}
-	
-	
-	public static final Attr getAttr (Document doc, String ns, String name,
-		String value)
-	{
-		Attr attr = doc.createAttributeNS (ns, name);
-		attr.setValue (value);
-		return attr;
-	}
-	
-	
-	public void toXML (Document doc, Element parent)
-	{
-		if (modified.size () < 1)
-			modified.add (new Date ());
+		if (modified == null)
+			modified = new Vector<Date> ();
 		
-		Element Description = doc.createElementNS (OmexDescription.rdfNS,
-			"rdf:Description");
-		Description.setAttributeNode (OmexDescription.getAttr (doc, OmexDescription.rdfNS, "rdf:about", about));
-		parent.appendChild (Description);
+		if (modified.size () < 1)
+		{
+			if (created == null)
+				created = new Date ();
+			modified.add (created);
+		}
+		
+		Element Description = new Element ("Description", OmexDescription.rdfNS);
+		Description.setAttribute ("about", about, OmexDescription.rdfNS);
+		parent.addContent (Description);
 		
 		if (description != null && description.length () > 0)
 		{
-			Element description = doc.createElementNS (OmexDescription.dcNS,
-				"dcterms:description");
-			description.appendChild (doc.createTextNode (this.description));
-			Description.appendChild (description);
+			Element description = new Element ("description", OmexDescription.dcNS);
+			description.setText (this.description);
+			Description.addContent (description);
 		}
 		
 		// vcards
-		for (VCard vc : creators)
-		{
-			vc.toXml (doc, Description);
-		}
-		
+		if (creators != null)
+			for (VCard vc : creators)
+				vc.toXml (Description);
 		
 		if (created != null)
 		{
-			Element created = doc.createElementNS (OmexDescription.dcNS,
-				"dcterms:created");
-			created.setAttributeNode (OmexDescription.getResAttr (doc));
-			Element W3CDTF = doc.createElementNS (OmexDescription.dcNS,
-				"dcterms:W3CDTF");
-			W3CDTF.appendChild (doc.createTextNode (dateFormater.format (this.created)));
-			created.appendChild (W3CDTF);
-			Description.appendChild (created);
+			Element created = new Element ("created", OmexDescription.dcNS);
+			created.setAttribute ("parseType", "Resource", OmexDescription.rdfNS);
+			Element W3CDTF = new Element ("W3CDTF", OmexDescription.dcNS);
+			W3CDTF.setText (dateFormater.format (this.created));
+			created.addContent (W3CDTF);
+			Description.addContent (created);
 		}
 		
 		for (Date date : modified)
 		{
-			Element modified = doc.createElementNS (OmexDescription.dcNS,
-				"dcterms:modified");
-			modified.setAttributeNode (OmexDescription.getResAttr (doc));
-			Element modW3CDTF = doc.createElementNS (OmexDescription.dcNS,
-				"dcterms:W3CDTF");
-			modW3CDTF.appendChild (doc.createTextNode (dateFormater.format (date)));
-			modified.appendChild (modW3CDTF);
-			Description.appendChild (modified);
+			Element modified = new Element ("modified", OmexDescription.dcNS);
+			modified.setAttribute ("parseType", "Resource", OmexDescription.rdfNS);
+			Element modW3CDTF = new Element ("W3CDTF", OmexDescription.dcNS);
+			modW3CDTF.setText (dateFormater.format (date));
+			modified.addContent (modW3CDTF);
+			Description.addContent (modified);
 		}
 		
 	}
 	
 	
-	public OmexDescription (Element element) throws DOMException, ParseException
+	/**
+	 * Instantiates a new omex description parsed from an XML subtree.
+	 * 
+	 * @param element
+	 *          the element
+	 * @throws ParseException
+	 *           the parse exception
+	 */
+	public OmexDescription (Element element) throws ParseException
 	{
 		creators = new Vector<VCard> ();
 		modified = new Vector<Date> ();
 		
-		about = element.getAttributeNS (rdfNS, "about");
+		about = element.getAttributeValue ("about", rdfNS);
 		
-		NodeList list = element.getElementsByTagNameNS (dcNS, "description");
-		if (list.getLength () > 0)
-			description = list.item (0).getTextContent ();
+		List<Element> list = Utils.getElementsByTagName (element, "description",
+			dcNS);
+		if (list.size () > 0)
+			description = list.get (0).getText ();
 		
-		list = element.getElementsByTagNameNS (dcNS, "creator");
-		if (list.getLength () > 0)
-			for (int i = 0; i < list.getLength (); i++)
-				creators.add (new VCard ((Element) list.item (i)));
+		list = Utils.getElementsByTagName (element, "creator", dcNS);
+		if (list.size () > 0)
+			for (int i = 0; i < list.size (); i++)
+				creators.add (new VCard (list.get (i)));
 		
-		list = element.getElementsByTagNameNS (dcNS, "created");
-		if (list.getLength () > 0)
+		list = Utils.getElementsByTagName (element, "created", dcNS);
+		if (list.size () > 0)
 		{
-			list = ((Element) list.item (0)).getElementsByTagNameNS (dcNS, "W3CDTF");
-			if (list.getLength () > 0)
-				created = dateFormater.parse (list.item (0).getTextContent ());
+			list = Utils.getElementsByTagName (list.get (0), "W3CDTF", dcNS);
+			if (list.size () > 0)
+				created = dateFormater.parse (list.get (0).getText ());
 		}
 		
-		list = element.getElementsByTagNameNS (dcNS, "modified");
-		if (list.getLength () > 0)
+		list = Utils.getElementsByTagName (element, "modified", dcNS);
+		if (list.size () > 0)
 		{
-			for (int i = 0; i < list.getLength (); i++)
+			for (int i = 0; i < list.size (); i++)
 			{
-				NodeList date = ((Element) list.item (i)).getElementsByTagNameNS (dcNS,
-					"W3CDTF");
-				if (date.getLength () > 0)
-					modified.add (dateFormater.parse (date.item (0).getTextContent ()));
+				List<Element> date = Utils.getElementsByTagName (list.get (i),
+					"W3CDTF", dcNS);
+				if (date.size () > 0)
+					modified.add (dateFormater.parse (date.get (0).getText ()));
 			}
 		}
 		
