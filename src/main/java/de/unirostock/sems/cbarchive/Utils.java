@@ -115,10 +115,10 @@ public class Utils
 		}
 		finally
 		{
-			if (fos != null)
-				fos.close ();
 			if (zos != null)
 				zos.close ();
+			if (fos != null)
+				fos.close ();
 		}
 	}
 	

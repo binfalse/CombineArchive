@@ -24,6 +24,7 @@ import org.jdom2.Element;
 
 
 
+// TODO: Auto-generated Javadoc
 /**
  * The Class VCard representing a VCard entity of the Omex description.
  * 
@@ -40,7 +41,8 @@ public class VCard
 	
 	/** The email. */
 	private String	email;
-	
+
+
 	/** The organization. */
 	private String	organization;
 	
@@ -163,5 +165,52 @@ public class VCard
 		
 		parent.addContent (creator);
 	}
+
 	
+	
+	/**
+	 * Gets the family name.
+	 *
+	 * @return the family name
+	 */
+	public String getFamilyName ()
+	{
+		return familyName;
+	}
+
+
+	
+	/**
+	 * Gets the given name.
+	 *
+	 * @return the given name
+	 */
+	public String getGivenName ()
+	{
+		return givenName;
+	}
+
+
+	
+	/**
+	 * Gets the email address.
+	 *
+	 * @return the email
+	 */
+	public String getEmail ()
+	{
+		return email;
+	}
+
+
+	
+	/**
+	 * Gets the organization.
+	 *
+	 * @return the organization
+	 */
+	public String getOrganization ()
+	{
+		return organization;
+	}
 }
