@@ -169,6 +169,68 @@ public class CombineArchive
 	 *          the format
 	 * @param description
 	 *          the description
+	 * @param mainEntry
+	 *          is this the main entry of the archive?
+	 * @return the archive entry
+	 * @throws IOException
+	 *           Signals that an I/O exception has occurred.
+	 */
+	public ArchiveEntry addEntry (File baseDir, File file, String format,
+		OmexDescription description, boolean mainEntry) throws IOException
+	{
+		if (!file.exists ())
+			throw new IOException ("file does not exist.");
+		
+		if (!file.getAbsolutePath ().contains (baseDir.getAbsolutePath ()))
+			throw new IOException ("file must be in basedir.");
+		
+		String localName = file.getAbsolutePath ().replace (
+			baseDir.getAbsolutePath (), "");
+		if (localName.equals ("/manifest.xml"))
+			throw new IllegalArgumentException (
+				"it's not allowed to name a file manifest.xml");
+		
+		File destination = new File (this.baseDir.getAbsolutePath () + localName);
+		destination.getParentFile ().mkdirs ();
+		destination.getParentFile ().deleteOnExit ();
+		
+		Files.copy (file.toPath (), destination.toPath (),
+			java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+		destination.deleteOnExit ();
+		
+		ArchiveEntry entry = new ArchiveEntry (this, "." + localName, format,
+			description);
+		
+		entries.put (entry.getRelativeName (), entry);
+		
+		if (mainEntry)
+		{
+			LOGGER.error ("setting main entry:");
+			this.mainEntry = entry;
+		}
+		
+		return entry;
+	}
+	
+	
+	/**
+	 * Adds an entry to the archive.
+	 * The current version of the concerning file will be copied,
+	 * so upcoming modifications of the source file won't have affect the version
+	 * in our archive.
+	 * The path of this file in the archive will be the path <code>file</code>
+	 * relative to <code>baseDir</code>.
+	 * If there is already a file in the archive having the same relative path
+	 * we'll delete it.
+	 * 
+	 * @param baseDir
+	 *          the base dir
+	 * @param file
+	 *          the file
+	 * @param format
+	 *          the format
+	 * @param description
+	 *          the description
 	 * @return the archive entry
 	 * @throws IOException
 	 *           Signals that an I/O exception has occurred.
@@ -283,11 +345,13 @@ public class CombineArchive
 	 *          the format of the entry
 	 * @return the XML node
 	 */
-	private Element createManifestEntry (String location, String format)
+	private Element createManifestEntry (String location, String format, boolean mainEntry)
 	{
 		Element element = new Element ("content", omexNs);
 		element.setAttribute ("location", location);
 		element.setAttribute ("format", format);
+		if (mainEntry)
+			element.setAttribute ("master", "" + mainEntry);
 		return element;
 	}
 	
@@ -312,13 +376,13 @@ public class CombineArchive
 		Element root = new Element ("omexManifest", omexNs);
 		doc.addContent (root);
 		
-		root.addContent (createManifestEntry ("./manifest.xml", omexNs.getURI ()));
+		root.addContent (createManifestEntry ("./manifest.xml", omexNs.getURI (), false));
 		
 		Vector<OmexDescription> descriptions = new Vector<OmexDescription> ();
 		for (ArchiveEntry e : entries.values ())
 		{
 			root.addContent (createManifestEntry (e.getRelativeName (),
-				e.getFormat ()));
+				e.getFormat (), e == mainEntry));
 			fileList.add (new File (baseDir.getAbsolutePath () + File.separator
 				+ e.getRelativeName ()));
 			if (e.getDescription () != null)
@@ -328,7 +392,7 @@ public class CombineArchive
 		File descr = OmexDescriptionFile.writeFile (descriptions, baseDir);
 		root.addContent (createManifestEntry ("."
 			+ descr.getAbsolutePath ().replace (baseDir.getAbsolutePath (), ""),
-			"http://identifiers.org/combine.specifications/omex-metadata"));
+			"http://identifiers.org/combine.specifications/omex-metadata", false));
 		fileList.add (descr);
 		
 		BufferedWriter bw = null;
