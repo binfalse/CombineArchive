@@ -21,6 +21,7 @@ package de.unirostock.sems.cbarchive;
 import java.util.List;
 
 import org.jdom2.Element;
+import org.json.simple.JSONObject;
 
 
 
@@ -212,5 +213,16 @@ public class VCard
 	public String getOrganization ()
 	{
 		return organization;
+	}
+
+
+	public Object toJsonObject ()
+	{
+		JSONObject descr = new JSONObject ();
+		descr.put ("familyName", familyName);
+		descr.put ("givenName", givenName);
+		descr.put ("email", email);
+		descr.put ("organization", organization);
+		return descr;
 	}
 }

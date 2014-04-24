@@ -26,6 +26,8 @@ import java.util.Vector;
 
 import org.jdom2.Element;
 import org.jdom2.Namespace;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 
 
 
@@ -341,5 +343,23 @@ public class OmexDescription
 			}
 		}
 		
+	}
+
+
+	public JSONObject toJsonDescription ()
+	{
+		JSONObject descr = new JSONObject ();
+		descr.put ("description", description);
+		descr.put ("about", about);
+		JSONArray array = new JSONArray ();
+		for (VCard c : creators)
+			array.add (c.toJsonObject ());
+		descr.put ("creators", array);
+		descr.put ("created", dateFormater.format (created));
+		array = new JSONArray ();
+		for (Date d : modified)
+			array.add (dateFormater.format (d));
+		descr.put ("modified", array);
+		return descr;
 	}
 }

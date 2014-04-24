@@ -38,6 +38,7 @@ import org.jdom2.Document;
 import org.jdom2.Element;
 import org.jdom2.JDOMException;
 import org.jdom2.Namespace;
+import org.json.simple.JSONObject;
 
 import de.binfalse.bflog.LOGGER;
 
@@ -52,6 +53,8 @@ import de.binfalse.bflog.LOGGER;
  */
 public class CombineArchive
 {
+	
+	public static final String MANIFEST_LOCATION = "manifest.xml";
 	
 	/** The OMEX namespace. */
 	public static final Namespace					omexNs	= Namespace
@@ -78,6 +81,24 @@ public class CombineArchive
 		entries = new HashMap<String, ArchiveEntry> ();
 		baseDir = Files.createTempDirectory ("CombineArchive").toFile ();
 		baseDir.deleteOnExit ();
+	}
+	
+	
+	/**
+	 * Instantiates a new empty combine archive.
+	 *
+	 * @param temporaryDirectory the directory containing the extracted archive
+	 * @throws ParseException 
+	 * @throws JDOMException 
+	 * @throws IOException 
+	 */
+	private CombineArchive (File temporaryDirectory) throws IOException, JDOMException, ParseException
+	{
+		entries = new HashMap<String, ArchiveEntry> ();
+		baseDir = temporaryDirectory;
+		File mani = new File (baseDir.getAbsolutePath () + File.separatorChar + MANIFEST_LOCATION);
+		if (mani.exists ())
+			parseManifest (mani);
 	}
 	
 	
@@ -369,14 +390,14 @@ public class CombineArchive
 	{
 		List<File> fileList = new ArrayList<File> ();
 		File manifestFile = new File (baseDir.getAbsolutePath () + File.separator
-			+ "manifest.xml");
+			+ MANIFEST_LOCATION);
 		fileList.add (manifestFile);
 		
 		Document doc = new Document ();
 		Element root = new Element ("omexManifest", omexNs);
 		doc.addContent (root);
 		
-		root.addContent (createManifestEntry ("./manifest.xml", omexNs.getURI (), false));
+		root.addContent (createManifestEntry ("./" + MANIFEST_LOCATION, omexNs.getURI (), false));
 		
 		Vector<OmexDescription> descriptions = new Vector<OmexDescription> ();
 		for (ArchiveEntry e : entries.values ())
@@ -558,11 +579,7 @@ public class CombineArchive
 		if (!Utils.unpackZip (zipFile, destination, deleteOnExit))
 			throw new IOException ("unable to unpack zip file");
 		
-		CombineArchive arch = new CombineArchive ();
-		arch.baseDir = destination;
-		arch.parseManifest (new File (destination.getAbsolutePath ()
-			+ File.separator + "manifest.xml"));
-		return arch;
+		return readExtractedArchive (destination);
 	}
 	
 	
@@ -613,5 +630,42 @@ public class CombineArchive
 		return readArchive (zipFile,
 			Files.createTempDirectory (CombineArchive.class.getName ()).toFile (),
 			true);
+	}
+	
+	
+	/**
+	 * Read an extracted archive.
+	 * 
+	 * @param zipFile
+	 *          the zipped Combine archive
+	 * @return the combine archive
+	 * @throws IOException 
+	 * @throws ParseException 
+	 * @throws JDOMException 
+	 */
+	public static CombineArchive readExtractedArchive (File baseDir) throws IOException, JDOMException, ParseException
+	{
+		CombineArchive arch = new CombineArchive ();
+		arch.baseDir = baseDir;
+		File mani = new File (baseDir.getAbsolutePath ()
+			+ File.separator + MANIFEST_LOCATION);
+		if (mani.exists ())
+			arch.parseManifest (mani);
+		return arch;
+	}
+	
+	public JSONObject toJsonDescription ()
+	{
+		JSONObject descr = new JSONObject ();
+		
+		for (String s : entries.keySet ())
+		{
+			JSONObject entryDescr = entries.get (s).toJsonObject ();
+			if (entries.get (s) == mainEntry)
+				entryDescr.put ("master", "true");
+			descr.put (s, entryDescr);
+		}
+		
+		return descr;
 	}
 }

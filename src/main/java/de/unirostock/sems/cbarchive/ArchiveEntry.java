@@ -20,6 +20,8 @@ package de.unirostock.sems.cbarchive;
 
 import java.io.File;
 
+import org.json.simple.JSONObject;
+
 
 
 /**
@@ -122,5 +124,15 @@ public class ArchiveEntry
 	public void setDescription (OmexDescription description)
 	{
 		this.description = description;
+	}
+
+
+	public JSONObject toJsonObject ()
+	{
+		JSONObject descr = new JSONObject ();
+		descr.put ("relativeName", relativeName);
+		descr.put ("format", format);
+		descr.put ("meta", description.toJsonDescription ());
+		return descr;
 	}
 }
