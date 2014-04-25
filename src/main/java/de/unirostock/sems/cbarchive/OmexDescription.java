@@ -346,6 +346,12 @@ public class OmexDescription
 	}
 
 
+	/**
+	 * Export a JSON description of this OMEX description.
+	 *
+	 * @return the JSON object
+	 */
+	@SuppressWarnings("unchecked")
 	public JSONObject toJsonDescription ()
 	{
 		JSONObject descr = new JSONObject ();

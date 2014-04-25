@@ -109,8 +109,8 @@ public class Utils
 		}
 		catch (IOException e)
 		{
-			LOGGER.error ("cannot write zip file: " + destination + " - zipping: "
-				+ directoryToZip, e);
+			LOGGER.error (e, "cannot write zip file: ", destination, " - zipping: ",
+				directoryToZip);
 			throw e;
 		}
 		finally
@@ -157,8 +157,7 @@ public class Utils
 		}
 		catch (IOException e)
 		{
-			LOGGER.error ("add zip entry: " + file + " - zipping: " + directoryToZip,
-				e);
+			LOGGER.error (e, "add zip entry: ", file, " - zipping: ", directoryToZip);
 			throw e;
 		}
 		finally
@@ -227,8 +226,8 @@ public class Utils
 		}
 		catch (IOException e)
 		{
-			LOGGER.error ("add unzip file: " + zipFilePath + " - to: "
-				+ destDirectory, e);
+			LOGGER.error (e, "add unzip file: ", zipFilePath, " - to: ",
+				destDirectory);
 			throw e;
 		}
 		finally
@@ -264,7 +263,7 @@ public class Utils
 		}
 		catch (IOException e)
 		{
-			LOGGER.error ("cannot unzip file: " + filePath, e);
+			LOGGER.error (e, "cannot unzip file: ", filePath);
 			throw e;
 			
 		}

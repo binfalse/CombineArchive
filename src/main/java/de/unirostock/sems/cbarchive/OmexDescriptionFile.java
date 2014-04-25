@@ -88,7 +88,7 @@ public class OmexDescriptionFile
 			}
 			catch (IOException | TransformerException e)
 			{
-				LOGGER.error ("cannot write omex descriptions to " + output);
+				LOGGER.error (e, "cannot write omex descriptions to ", output);
 				throw e;
 			}
 			finally
@@ -140,7 +140,7 @@ public class OmexDescriptionFile
 		}
 		catch (IOException | TransformerException e)
 		{
-			LOGGER.error ("cannot write omex descriptions to " + output);
+			LOGGER.error (e, "cannot write omex descriptions to ", output);
 			throw e;
 		}
 		finally
@@ -214,7 +214,7 @@ public class OmexDescriptionFile
 			}
 			catch (ParseException e)
 			{
-				LOGGER.error ("cannot parse OmexDescription in " + file, e);
+				LOGGER.error (e, "cannot parse OmexDescription in ", file);
 				if (!ignoreErrs)
 					throw e;
 			}

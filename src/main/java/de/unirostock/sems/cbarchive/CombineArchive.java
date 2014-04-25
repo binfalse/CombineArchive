@@ -87,19 +87,16 @@ public class CombineArchive
 	/**
 	 * Instantiates a new empty combine archive.
 	 *
-	 * @param temporaryDirectory the directory containing the extracted archive
-	 * @throws ParseException 
-	 * @throws JDOMException 
-	 * @throws IOException 
+	 * @return the main entry
 	 */
-	private CombineArchive (File temporaryDirectory) throws IOException, JDOMException, ParseException
+	/*private CombineArchive (File temporaryDirectory) throws IOException, JDOMException, ParseException
 	{
 		entries = new HashMap<String, ArchiveEntry> ();
 		baseDir = temporaryDirectory;
 		File mani = new File (baseDir.getAbsolutePath () + File.separatorChar + MANIFEST_LOCATION);
 		if (mani.exists ())
 			parseManifest (mani);
-	}
+	}*/
 	
 	
 	/**
@@ -425,7 +422,7 @@ public class CombineArchive
 		catch (IOException | TransformerException e)
 		{
 			e.printStackTrace ();
-			LOGGER.error ("cannot write manifest file to " + manifestFile);
+			LOGGER.error (e, "cannot write manifest file to ", manifestFile);
 			throw e;
 		}
 		finally
@@ -654,6 +651,12 @@ public class CombineArchive
 		return arch;
 	}
 	
+	/**
+	 * Export a JSON description of this archive.
+	 *
+	 * @return the JSON object
+	 */
+	@SuppressWarnings("unchecked")
 	public JSONObject toJsonDescription ()
 	{
 		JSONObject descr = new JSONObject ();

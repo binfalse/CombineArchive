@@ -127,6 +127,12 @@ public class ArchiveEntry
 	}
 
 
+	/**
+	 * Export a JSON description of this entry.
+	 *
+	 * @return the jSON object
+	 */
+	@SuppressWarnings("unchecked")
 	public JSONObject toJsonObject ()
 	{
 		JSONObject descr = new JSONObject ();

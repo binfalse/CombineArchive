@@ -216,6 +216,12 @@ public class VCard
 	}
 
 
+	/**
+	 * Export this VCard as a JSON object.
+	 *
+	 * @return the object
+	 */
+	@SuppressWarnings("unchecked")
 	public Object toJsonObject ()
 	{
 		JSONObject descr = new JSONObject ();

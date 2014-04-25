@@ -66,9 +66,9 @@ public class CombineFormats
 		catch (IOException e)
 		{
 			e.printStackTrace ();
-			LOGGER.error (
-				"error reading known formats: "
-					+ ArchiveEntry.class.getResourceAsStream (knownFormats), e);
+			LOGGER.error (e,
+				"error reading known formats: ",
+					ArchiveEntry.class.getResourceAsStream (knownFormats));
 		}
 	}
 	
@@ -173,7 +173,7 @@ public class CombineFormats
 		LOGGER.addLevel (LOGGER.INFO);
 		
 		int soFar = formats.size ();
-		LOGGER.info ("so far we know " + soFar + " types");
+		LOGGER.info ("so far we know ", soFar, " types");
 		
 		// merge format dictionaries. thanks to frank :)
 		// see: https://github.com/fbergmann/CombineArchive
@@ -187,7 +187,7 @@ public class CombineFormats
 		BufferedReader in = null;
 		try
 		{
-			LOGGER.info ("downloading franks formats list: " + franksList);
+			LOGGER.info ("downloading franks formats list: ", franksList);
 			in = new BufferedReader (new InputStreamReader (franksList.openStream ()));
 			String line;
 			int n = 0;
@@ -201,7 +201,7 @@ public class CombineFormats
 					insertFormat (m.group (1), m.group (2));
 				}
 			}
-			LOGGER.info ("found " + n + " entries in table");
+			LOGGER.info ("found ", n, " entries in table");
 		}
 		catch (IOException e)
 		{
@@ -227,7 +227,7 @@ public class CombineFormats
 			"http://co.mbine.org/standards/specifications/");
 		try
 		{
-			LOGGER.info ("downloading mbine table: " + mbineTable);
+			LOGGER.info ("downloading mbine table: ", mbineTable);
 			in = new BufferedReader (new InputStreamReader (mbineTable.openStream ()));
 			
 			String doc = "";
@@ -253,7 +253,7 @@ public class CombineFormats
 					doc += line;
 			}
 			
-			LOGGER.info ("parsing table (" + doc.length () + " chars)");
+			LOGGER.info ("parsing table (" , doc.length (), " chars)");
 			
 			SAXBuilder builder = new SAXBuilder ();
 			Document d = (Document) builder.build (new StringReader (doc));
@@ -273,7 +273,7 @@ public class CombineFormats
 					n++;
 				}
 			}
-			LOGGER.info ("found " + n + " entries in table");
+			LOGGER.info ("found ", n, " entries in table");
 			
 		}
 		catch (IOException | JDOMException e)
@@ -292,16 +292,16 @@ public class CombineFormats
 			}
 		}
 		
-		LOGGER.info ("now we know " + formats.size () + " types");
-		LOGGER.info ("that's a plus of " + (formats.size () - soFar)
-			+ " new formats");
+		LOGGER.info ("now we know ", formats.size (), " types");
+		LOGGER.info ("that's a plus of ", (formats.size () - soFar),
+			" new formats");
 		
 		// update our version
 		formats.store (
 			new FileOutputStream (ArchiveEntry.class.getResource (knownFormats)
 				.getFile ()), null);
-		LOGGER.info ("new file written to: "
-			+ ArchiveEntry.class.getResource (knownFormats).getFile ());
+		LOGGER.info ("new file written to: ",
+			ArchiveEntry.class.getResource (knownFormats).getFile ());
 	}
 	
 }
