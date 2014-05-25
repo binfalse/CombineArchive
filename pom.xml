@@ -3,7 +3,7 @@
     <groupId>de.unirostock.sems</groupId>
     <artifactId>CombineArchive</artifactId>
     <packaging>jar</packaging>
-    <version>0.5</version>
+    <version>0.5.1</version>
     <name>CombineArchive</name>
     <description>Library to read/create/write/manipulate/... COMBINE archives</description>
     <url>http://sems.uni-rostock.de/projects/combinearchive/</url>
@@ -97,8 +97,50 @@
                 <includes>
                     <include>formatDict.prop</include>
                 </includes>
-                <!--targetPath>.</targetPath-->
-        </resource>
-    </resources>
-</build>
+            </resource>
+        </resources>
+    </build>
+    <profiles>
+        <!-- deployment profile -->
+        <profile>
+            <id>release</id>
+            <!-- build plugin configuration for the deploy -->
+            <!-- not necessary to always nclude the sources and javadocs -->
+            <build>
+                <plugins>
+                    <!-- attach sources -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-source-plugin</artifactId>
+
+                        <configuration>
+                            <attach>true</attach>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>attach-sources</id>
+                                <goals>
+                                    <goal>jar</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+
+                    <!-- attach javadoc -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-javadoc-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>attach-javadocs</id>
+                                <goals>
+                                    <goal>jar</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>

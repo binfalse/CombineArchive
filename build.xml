@@ -1,0 +1,74 @@
+<project name="CombineArchive" default="dist" basedir=".">
+	<description>
+		Library to read/create/write/manipulate/... COMBINE archives
+	</description>
+	
+	<property name="app.name" value="CombineArchive" />
+	<property name="app.version" value="0.5.1" />
+	<property name="src" location="src/main/java" />
+	<property name="build" location="build" />
+	<property name="dist" location="dist" />
+	<property name="lib" location="lib" />
+	
+	<path id="compile.classpath">
+		<fileset dir="${lib}">
+			<include name="*.jar" />
+		</fileset>
+	</path>
+	
+	
+	<target name="init" description="initialize workspace">
+		<assertDirAvailable dir="${lib}" />
+		<tstamp />
+		<mkdir dir="${build}" />
+		<!--copy todir="${build}">
+			<fileset dir="${src}" includes="**/*.xml,**/*.properties,**/*.txt,**/*.ico" />
+		</copy-->
+		<mkdir dir="${dist}" />
+	</target>
+	
+	<target name="compile" depends="init" description="compile the source">
+		<javac srcdir="${src}" destdir="${build}" includeantruntime="false">
+			<classpath refid="compile.classpath" />
+		</javac>
+	</target>
+	
+	<target name="dist" depends="compile" description="generate the distribution">
+		<manifest file="build/MANIFEST.MF">
+			<attribute name="Main-Class" value="de.unirostock.sems.cbarchive.Main" />
+		</manifest>
+		<jar jarfile="${dist}/${app.name}-${app.version}.jar" basedir="${build}" manifest="build/MANIFEST.MF" />
+		<jar jarfile="${dist}/${app.name}-${app.version}-fat.jar" basedir="${build}" manifest="build/MANIFEST.MF">
+			<zipgroupfileset dir="lib" includes="*.jar" excludes="" />
+		</jar>
+	</target>
+	
+	<target name="sign" depends="dist" description="sign a dist">
+		<checksum file="${dist}/${app.name}-${app.version}.jar" forceOverwrite="yes" />
+		<move file="${dist}/${app.name}-${app.version}.jar.MD5" tofile="${dist}/${app.name}-${app.version}.jar.md5" />
+		<exec executable="gpg">
+			<arg value="--output" />
+			<arg value="${dist}/${app.name}-${app.version}.jar.md5.sig" />
+			<arg value="-abs" />
+			<arg value="${dist}/${app.name}-${app.version}.jar.md5" />
+		</exec>
+	</target>
+	
+	<target name="clean" description="clean up">
+		<delete dir="${build}" />
+		<delete dir="${dist}" />
+	</target>
+	
+	<macrodef name="assertDirAvailable">
+			<attribute name="dir" />
+			<sequential>
+				<fail message="Please create dir @{dir} containing the depenencies:${line.separator}${line.separator} &gt;&gt; BFlog (see http://bin.sems.uni-rostock.de/BFLog/)${line.separator} &gt;&gt; json-simple (see https://code.google.com/p/json-simple/)${line.separator} &gt;&gt; JDOM (http://jdom.org/)">
+							<condition>
+									<not>
+											<available file="@{dir}" type="dir" />
+									</not>
+							</condition>
+					</fail>
+			</sequential>
+	</macrodef>
+</project>
