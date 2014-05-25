@@ -1,19 +1,33 @@
 /**
  * CombineArchive - a JAVA library to read/write/create/.. CombineArchives
- * Copyright (C) 2013 Martin Scharm - http://binfalse.de/contact/
+ * Copyright (c) 2014, Martin Scharm <combinearchive-code@binfalse.de>
+ * All rights reserved.
  * 
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
  * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
+ * 1. Redistributions of source code must retain the above copyright notice,
+ * this list of conditions and the following disclaimer.
  * 
- * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ * 2. Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * 
+ * 3. Neither the name of the copyright holder nor the names of its contributors
+ * may be used to endorse or promote products derived from this software without
+ * specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  * 
  */
 package de.unirostock.sems.cbarchive;
@@ -29,7 +43,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Vector;
 
 import javax.xml.transform.TransformerException;
 
@@ -37,12 +50,10 @@ import org.jdom2.Attribute;
 import org.jdom2.Document;
 import org.jdom2.Element;
 import org.jdom2.JDOMException;
-import org.jdom2.Namespace;
 import org.json.simple.JSONObject;
 
 import de.binfalse.bflog.LOGGER;
 import de.unirostock.sems.cbarchive.meta.MetaDataFile;
-import de.unirostock.sems.cbarchive.meta.MetaDataObject;
 import de.unirostock.sems.cbarchive.meta.OmexMetaDataObject;
 import de.unirostock.sems.cbarchive.meta.omex.OmexDescription;
 
@@ -58,11 +69,8 @@ import de.unirostock.sems.cbarchive.meta.omex.OmexDescription;
 public class CombineArchive
 {
 	
-	public static final String MANIFEST_LOCATION = "manifest.xml";
-	
-	/** The OMEX namespace. */
-	public static final Namespace					omexNs	= Namespace
-																									.getNamespace ("http://identifiers.org/combine.specifications/omex-manifest");
+	/** The Constant MANIFEST_LOCATION. */
+	public static final String						MANIFEST_LOCATION	= "manifest.xml";
 	
 	/** The archive entries. */
 	private HashMap<String, ArchiveEntry>	entries;
@@ -90,18 +98,21 @@ public class CombineArchive
 	
 	/**
 	 * Instantiates a new empty combine archive.
-	 *
+	 * 
 	 * @return the main entry
 	 */
-	/*private CombineArchive (File temporaryDirectory) throws IOException, JDOMException, ParseException
-	{
-		entries = new HashMap<String, ArchiveEntry> ();
-		baseDir = temporaryDirectory;
-		File mani = new File (baseDir.getAbsolutePath () + File.separatorChar + MANIFEST_LOCATION);
-		if (mani.exists ())
-			parseManifest (mani);
-	}*/
-	
+	/*
+	 * private CombineArchive (File temporaryDirectory) throws IOException,
+	 * JDOMException, ParseException
+	 * {
+	 * entries = new HashMap<String, ArchiveEntry> ();
+	 * baseDir = temporaryDirectory;
+	 * File mani = new File (baseDir.getAbsolutePath () + File.separatorChar +
+	 * MANIFEST_LOCATION);
+	 * if (mani.exists ())
+	 * parseManifest (mani);
+	 * }
+	 */
 	
 	/**
 	 * Gets the main entry of this archive.
@@ -173,8 +184,6 @@ public class CombineArchive
 	}
 	
 	
-	
-	
 	/**
 	 * Adds an entry to the archive.
 	 * The current version of the concerning file will be copied immediately.
@@ -197,7 +206,8 @@ public class CombineArchive
 	 * @throws IOException
 	 *           Signals that an I/O exception has occurred.
 	 */
-	public ArchiveEntry addEntry (File baseDir, File file, String format, boolean mainEntry) throws IOException
+	public ArchiveEntry addEntry (File baseDir, File file, String format,
+		boolean mainEntry) throws IOException
 	{
 		if (!file.exists ())
 			throw new IOException ("file does not exist.");
@@ -207,7 +217,7 @@ public class CombineArchive
 		
 		String localName = file.getAbsolutePath ().replace (
 			baseDir.getAbsolutePath (), "");
-		if (localName.equals ("/manifest.xml"))
+		if (localName.equals ("/" + MANIFEST_LOCATION))
 			throw new IllegalArgumentException (
 				"it's not allowed to name a file manifest.xml");
 		
@@ -253,7 +263,8 @@ public class CombineArchive
 	 * @throws IOException
 	 *           Signals that an I/O exception has occurred.
 	 */
-	public ArchiveEntry addEntry (File baseDir, File file, String format) throws IOException
+	public ArchiveEntry addEntry (File baseDir, File file, String format)
+		throws IOException
 	{
 		if (!file.exists ())
 			throw new IOException ("file does not exist.");
@@ -263,7 +274,7 @@ public class CombineArchive
 		
 		String localName = file.getAbsolutePath ().replace (
 			baseDir.getAbsolutePath (), "");
-		if (localName.equals ("/manifest.xml"))
+		if (localName.equals ("/" + MANIFEST_LOCATION))
 			throw new IllegalArgumentException (
 				"it's not allowed to name a file manifest.xml");
 		
@@ -281,8 +292,6 @@ public class CombineArchive
 		
 		return entry;
 	}
-	
-	
 	
 	
 	/**
@@ -308,7 +317,8 @@ public class CombineArchive
 	 * @return the archive entry
 	 * @throws IOException
 	 *           Signals that an I/O exception has occurred.
-	 * @deprecated as of version 0.5, replaced by {@link #addEntry(java.io.File,java.io.File,java.lang.String,boolean)}
+	 * @deprecated as of version 0.5, replaced by
+	 *             {@link #addEntry(java.io.File,java.io.File,java.lang.String,boolean)}
 	 */
 	@Deprecated
 	public ArchiveEntry addEntry (File baseDir, File file, String format,
@@ -322,7 +332,7 @@ public class CombineArchive
 		
 		String localName = file.getAbsolutePath ().replace (
 			baseDir.getAbsolutePath (), "");
-		if (localName.equals ("/manifest.xml"))
+		if (localName.equals ("/" + MANIFEST_LOCATION))
 			throw new IllegalArgumentException (
 				"it's not allowed to name a file manifest.xml");
 		
@@ -334,8 +344,10 @@ public class CombineArchive
 			java.nio.file.StandardCopyOption.REPLACE_EXISTING);
 		destination.deleteOnExit ();
 		
-		/*ArchiveEntry entry = new ArchiveEntry (this, "." + localName, format,
-			description);*/
+		/*
+		 * ArchiveEntry entry = new ArchiveEntry (this, "." + localName, format,
+		 * description);
+		 */
 		ArchiveEntry entry = new ArchiveEntry (this, "." + localName, format);
 		entry.addDescription (new OmexMetaDataObject (entry, description));
 		
@@ -372,7 +384,8 @@ public class CombineArchive
 	 * @return the archive entry
 	 * @throws IOException
 	 *           Signals that an I/O exception has occurred.
-	 * @deprecated as of version 0.5, replaced by {@link #addEntry(java.io.File,java.io.File,java.lang.String)}
+	 * @deprecated as of version 0.5, replaced by
+	 *             {@link #addEntry(java.io.File,java.io.File,java.lang.String)}
 	 */
 	@Deprecated
 	public ArchiveEntry addEntry (File baseDir, File file, String format,
@@ -386,7 +399,7 @@ public class CombineArchive
 		
 		String localName = file.getAbsolutePath ().replace (
 			baseDir.getAbsolutePath (), "");
-		if (localName.equals ("/manifest.xml"))
+		if (localName.equals ("/" + MANIFEST_LOCATION))
 			throw new IllegalArgumentException (
 				"it's not allowed to name a file manifest.xml");
 		
@@ -485,9 +498,10 @@ public class CombineArchive
 	 *          the format of the entry
 	 * @return the XML node
 	 */
-	private Element createManifestEntry (String location, String format, boolean mainEntry)
+	private Element createManifestEntry (String location, String format,
+		boolean mainEntry)
 	{
-		Element element = new Element ("content", omexNs);
+		Element element = new Element ("content", Utils.omexNs);
 		element.setAttribute ("location", location);
 		element.setAttribute ("format", format);
 		if (mainEntry)
@@ -505,7 +519,9 @@ public class CombineArchive
 	 * @throws TransformerException
 	 *           the transformer exception
 	 */
-	private List<File> writeManifest (boolean singleFile) throws IOException, TransformerException
+	private List<File> writeManifest (boolean singleFile)
+		throws IOException,
+			TransformerException
 	{
 		List<File> fileList = new ArrayList<File> ();
 		File manifestFile = new File (baseDir.getAbsolutePath () + File.separator
@@ -513,29 +529,27 @@ public class CombineArchive
 		fileList.add (manifestFile);
 		
 		Document doc = new Document ();
-		Element root = new Element ("omexManifest", omexNs);
+		Element root = new Element ("omexManifest", Utils.omexNs);
 		doc.addContent (root);
 		
-		root.addContent (createManifestEntry ("./" + MANIFEST_LOCATION, omexNs.getURI (), false));
+		root.addContent (createManifestEntry ("./" + MANIFEST_LOCATION,
+			Utils.omexNs.getURI (), false));
 		
-		//List<MetaDataObject> descriptions = new ArrayList<MetaDataObject> ();
 		for (ArchiveEntry e : entries.values ())
 		{
 			root.addContent (createManifestEntry (e.getRelativeName (),
 				e.getFormat (), e == mainEntry));
 			fileList.add (new File (baseDir.getAbsolutePath () + File.separator
 				+ e.getRelativeName ()));
-			/*for (MetaDataObject meta : e.getDescriptions ())
-				descriptions.add (meta);*/
-			/*if (e.getDescription () != null)
-				descriptions.add (e.getOmexDescription ());*/
 		}
 		
-		List<File> descr = singleFile ? MetaDataFile.writeFile (baseDir, entries) : MetaDataFile.writeFiles (baseDir, entries);//OmexDescriptionFile.writeFile (descriptions, baseDir);
+		List<File> descr = singleFile ? MetaDataFile.writeFile (baseDir, entries)
+			: MetaDataFile.writeFiles (baseDir, entries);// OmexDescriptionFile.writeFile
+																										// (descriptions, baseDir);
 		for (File f : descr)
 		{
-			root.addContent (createManifestEntry ("."
-				+ f.getAbsolutePath ().replace (baseDir.getAbsolutePath (), ""),
+			root.addContent (createManifestEntry (
+				"." + f.getAbsolutePath ().replace (baseDir.getAbsolutePath (), ""),
 				"http://identifiers.org/combine.specifications/omex-metadata", false));
 			fileList.add (f);
 		}
@@ -574,7 +588,8 @@ public class CombineArchive
 	 * @param destination
 	 *          the destination of the archive
 	 * @param multipleMetaFiles
-	 *          should we export the meta data to multiple files? (defaults to <code>false</code>)
+	 *          should we export the meta data to multiple files? (defaults to
+	 *          <code>false</code>)
 	 * @throws IOException
 	 *           Signals that an I/O exception has occurred.
 	 * @throws TransformerException
@@ -633,9 +648,9 @@ public class CombineArchive
 			ParseException
 	{
 		Document doc = Utils.readXmlDocument (manifest);
-		Vector<File> descr = new Vector<File> ();
+		List<File> descr = new ArrayList<File> ();
 		List<Element> nl = Utils.getElementsByTagName (doc.getRootElement (),
-			"content", omexNs);
+			"content", Utils.omexNs);
 		for (int i = 0; i < nl.size (); i++)
 		{
 			Element content = nl.get (i);
@@ -664,11 +679,8 @@ public class CombineArchive
 				throw new IOException ("archive seems to be corrupt. file " + location
 					+ " not found.");
 			
-			// System.out.println (">>" + location + "   " + format + "   " + master);
 			if (format.equals (CombineFormats.getFormatIdentifier ("omex")))
 			{
-				// descriptions.addAll (OmexDescriptionFile.readFile (new File
-				// (baseDir.getAbsolutePath () + File.separator + location), false));
 				descr.add (new File (baseDir.getAbsolutePath () + File.separator
 					+ location));
 				// since that's not a real entry
@@ -681,8 +693,6 @@ public class CombineArchive
 				continue;
 			}
 			
-			// System.out.println ("<<" + location + "   " + format + "   " + master);
-			
 			ArchiveEntry entry = new ArchiveEntry (this, location, format);
 			if (master != null && Boolean.parseBoolean (master))
 				mainEntry = entry;
@@ -692,14 +702,7 @@ public class CombineArchive
 		// parse all descriptions
 		for (File f : descr)
 		{
-			//Vector<OmexDescription> des = 
-				MetaDataFile.readFile (f, entries);//OmexDescriptionFile.readFile (f, false);
-			/*for (OmexDescription d : des)
-			{
-				ArchiveEntry entry = entries.get (d.getAbout ());
-				if (entry != null)
-					entry.setDescription (d);
-			}*/
+			MetaDataFile.readFile (f, entries);
 		}
 	}
 	
@@ -786,27 +789,31 @@ public class CombineArchive
 	/**
 	 * Read an extracted archive.
 	 * 
-	 * @param zipFile
-	 *          the zipped Combine archive
+	 * @param baseDir
+	 *          the dir containing the extracted archive
 	 * @return the combine archive
-	 * @throws IOException 
-	 * @throws ParseException 
-	 * @throws JDOMException 
+	 * @throws IOException
+	 * @throws ParseException
+	 * @throws JDOMException
 	 */
-	public static CombineArchive readExtractedArchive (File baseDir) throws IOException, JDOMException, ParseException
+	public static CombineArchive readExtractedArchive (File baseDir)
+		throws IOException,
+			JDOMException,
+			ParseException
 	{
 		CombineArchive arch = new CombineArchive ();
 		arch.baseDir = baseDir;
-		File mani = new File (baseDir.getAbsolutePath ()
-			+ File.separator + MANIFEST_LOCATION);
+		File mani = new File (baseDir.getAbsolutePath () + File.separator
+			+ MANIFEST_LOCATION);
 		if (mani.exists ())
 			arch.parseManifest (mani);
 		return arch;
 	}
 	
+	
 	/**
 	 * Export a JSON description of this archive.
-	 *
+	 * 
 	 * @return the JSON object
 	 */
 	@SuppressWarnings("unchecked")

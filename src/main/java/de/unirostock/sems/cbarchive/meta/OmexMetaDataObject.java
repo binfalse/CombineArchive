@@ -1,3 +1,35 @@
+/**
+ * CombineArchive - a JAVA library to read/write/create/... CombineArchives
+ * Copyright (c) 2014, Martin Scharm <combinearchive-code@binfalse.de>
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ * 
+ * 1. Redistributions of source code must retain the above copyright notice,
+ * this list of conditions and the following disclaimer.
+ * 
+ * 2. Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * 
+ * 3. Neither the name of the copyright holder nor the names of its contributors
+ * may be used to endorse or promote products derived from this software without
+ * specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ * 
+ */
 package de.unirostock.sems.cbarchive.meta;
 
 import org.jdom2.Element;
@@ -7,11 +39,28 @@ import de.unirostock.sems.cbarchive.ArchiveEntry;
 import de.unirostock.sems.cbarchive.meta.omex.OmexDescription;
 
 
+
+/**
+ * The Class OmexMetaDataObject representing meta data in OMEX format.
+ * 
+ * @author Martin Scharm
+ */
 public class OmexMetaDataObject
 	extends MetaDataObject
 {
-	private OmexDescription description;
 	
+	/** The description. */
+	protected OmexDescription	description;
+	
+	
+	/**
+	 * Instantiates a new OMEX meta data object.
+	 * 
+	 * @param about
+	 *          the entry described by this object
+	 * @param description
+	 *          the description
+	 */
 	public OmexMetaDataObject (ArchiveEntry about, OmexDescription description)
 	{
 		super (about);
@@ -19,56 +68,71 @@ public class OmexMetaDataObject
 	}
 	
 	
-	public OmexMetaDataObject (ArchiveEntry about, String fragmentIdentifier, OmexDescription description)
+	/**
+	 * Instantiates a new OMEX meta data object.
+	 * 
+	 * @param about
+	 *          the entry described by this object
+	 * @param fragmentIdentifier
+	 *          the fragment identifier pointing into <code>about</code>
+	 * @param description
+	 *          the description
+	 */
+	public OmexMetaDataObject (ArchiveEntry about, String fragmentIdentifier,
+		OmexDescription description)
 	{
 		super (about, fragmentIdentifier);
 		this.description = description;
 	}
 	
 	
-	/*public OmexMetaDataObject (String alternativeAbout, OmexDescription description)
-	{
-		super (alternativeAbout);
-		this.description = description;
-	}*/
-	
-	
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * de.unirostock.sems.cbarchive.meta.MetaDataObject#injectDescription(org.
+	 * jdom2.Element)
+	 */
 	@Override
 	public void injectDescription (Element parent)
 	{
 		description.toXML (parent);
 	}
 	
+	
+	/**
+	 * Gets the omex description.
+	 * 
+	 * @return the omex description
+	 */
 	public OmexDescription getOmexDescription ()
 	{
 		return description;
 	}
-
-
-	/*public static OmexMetaDataObject tryToRead (Element element, ArchiveEntry about)
-	{
-		try
-		{
-			OmexDescription desc = new OmexDescription (element);
-			return new OmexMetaDataObject (about, desc);
-		}
-		catch (Exception e)
-		{
-			LOGGER.debug (e, "could not parse OMEX description");
-		}
-		return null;
-	}*/
-
-
-	public static OmexMetaDataObject tryToRead (Element element, ArchiveEntry about,
-		String fragmentIdentifier)
+	
+	
+	/**
+	 * Try to read a meta data object. Might return null if <code>element</code>
+	 * cannot be understood as an OMEX description.
+	 * 
+	 * @param element
+	 *          the element rooting the meta data subtree
+	 * @param about
+	 *          the entry the is described by <code>element</code>
+	 * @param fragmentIdentifier
+	 *          the optional fragment identifier pointing into <code>about</code>
+	 *          (leave <code>null</code> if in doubt)
+	 * @return the OMEX meta data object if in proper format, or null if we cannot
+	 *         parse the element
+	 */
+	public static OmexMetaDataObject tryToRead (Element element,
+		ArchiveEntry about, String fragmentIdentifier)
 	{
 		try
 		{
 			OmexDescription desc = new OmexDescription (element);
 			if (desc.isEmpty ())
 				return null;
-			System.out.println (about.getRelativeName () + " -- " + fragmentIdentifier + " -> " + desc);
 			if (fragmentIdentifier == null)
 				return new OmexMetaDataObject (about, desc);
 			return new OmexMetaDataObject (about, fragmentIdentifier, desc);
@@ -79,20 +143,5 @@ public class OmexMetaDataObject
 		}
 		return null;
 	}
-
-
-	/*public static OmexMetaDataObject tryToRead (Element element, String alternativeAbout)
-	{
-		try
-		{
-			OmexDescription desc = new OmexDescription (element);
-			return new OmexMetaDataObject (alternativeAbout, desc);
-		}
-		catch (Exception e)
-		{
-			LOGGER.debug (e, "could not parse OMEX description");
-		}
-		return null;
-	}*/
 	
 }

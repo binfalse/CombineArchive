@@ -1,31 +1,43 @@
 /**
  * CombineArchive - a JAVA library to read/write/create/.. CombineArchives
- * Copyright (C) 2013 Martin Scharm - http://binfalse.de/contact/
+ * Copyright (c) 2014, Martin Scharm <combinearchive-code@binfalse.de>
+ * All rights reserved.
  * 
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
  * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
+ * 1. Redistributions of source code must retain the above copyright notice,
+ * this list of conditions and the following disclaimer.
  * 
- * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ * 2. Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * 
+ * 3. Neither the name of the copyright holder nor the names of its contributors
+ * may be used to endorse or promote products derived from this software without
+ * specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  * 
  */
 package de.unirostock.sems.cbarchive.meta.omex;
 
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Vector;
 
 import org.jdom2.Element;
-import org.jdom2.Namespace;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
@@ -37,23 +49,22 @@ import de.unirostock.sems.cbarchive.Utils;
  * The Class OmexDescription to parse and create meta data for entries in
  * CombineArchives.
  * 
- * @author martin
+ * @author martin scharm
  */
 public class OmexDescription
 {
 	
 	/** The description. */
-	private String												description;
+	private String			description;
 	
 	/** The creators. */
-	private Vector<VCard>									creators;
+	private List<VCard>	creators;
 	
 	/** The date created. */
-	private Date													created;
+	private Date				created;
 	
 	/** The dates modified. */
-	public Vector<Date>										modified;
-	
+	public List<Date>		modified;
 	
 	
 	/**
@@ -72,7 +83,7 @@ public class OmexDescription
 	 * 
 	 * @return the creators
 	 */
-	public Vector<VCard> getCreators ()
+	public List<VCard> getCreators ()
 	{
 		return creators;
 	}
@@ -94,7 +105,7 @@ public class OmexDescription
 	 * 
 	 * @return the dates modified
 	 */
-	public Vector<Date> getModified ()
+	public List<Date> getModified ()
 	{
 		return modified;
 	}
@@ -105,8 +116,8 @@ public class OmexDescription
 	 */
 	public OmexDescription ()
 	{
-		creators = new Vector<VCard> ();
-		modified = new Vector<Date> ();
+		creators = new ArrayList<VCard> ();
+		modified = new ArrayList<Date> ();
 		created = new Date ();
 	}
 	
@@ -119,7 +130,7 @@ public class OmexDescription
 	 * @param modified
 	 *          the date of modifications
 	 */
-	public OmexDescription (Vector<VCard> creators, Vector<Date> modified)
+	public OmexDescription (List<VCard> creators, List<Date> modified)
 	{
 		this.creators = creators;
 		this.modified = modified;
@@ -137,9 +148,9 @@ public class OmexDescription
 	 */
 	public OmexDescription (VCard creator, Date created)
 	{
-		this.creators = new Vector<VCard> ();
+		this.creators = new ArrayList<VCard> ();
 		this.creators.add (creator);
-		this.modified = new Vector<Date> ();
+		this.modified = new ArrayList<Date> ();
 		this.created = created;
 	}
 	
@@ -152,10 +163,10 @@ public class OmexDescription
 	 * @param created
 	 *          the date of creation
 	 */
-	public OmexDescription (Vector<VCard> creators, Date created)
+	public OmexDescription (List<VCard> creators, Date created)
 	{
 		this.creators = creators;
-		this.modified = new Vector<Date> ();
+		this.modified = new ArrayList<Date> ();
 		this.created = created;
 	}
 	
@@ -170,7 +181,7 @@ public class OmexDescription
 	 * @param created
 	 *          the date of creation
 	 */
-	public OmexDescription (Vector<VCard> creators, Vector<Date> modified,
+	public OmexDescription (List<VCard> creators, List<Date> modified,
 		Date created)
 	{
 		this.creators = creators;
@@ -194,7 +205,8 @@ public class OmexDescription
 					haveCreator = true;
 					break;
 				}
-		return !((description != null && description.length () > 0) || haveCreator || created != null);
+		return ! ( (description != null && description.length () > 0)
+			|| haveCreator || created != null);
 	}
 	
 	
@@ -207,7 +219,7 @@ public class OmexDescription
 	public void toXML (Element parent)
 	{
 		if (modified == null)
-			modified = new Vector<Date> ();
+			modified = new ArrayList<Date> ();
 		
 		if (modified.size () < 1)
 		{
@@ -261,9 +273,8 @@ public class OmexDescription
 	 */
 	public OmexDescription (Element parent) throws ParseException
 	{
-		creators = new Vector<VCard> ();
-		modified = new Vector<Date> ();
-		
+		creators = new ArrayList<VCard> ();
+		modified = new ArrayList<Date> ();
 		
 		List<Element> list = Utils.getElementsByTagName (parent, "description",
 			Utils.dcNS);
@@ -296,11 +307,11 @@ public class OmexDescription
 		}
 		
 	}
-
-
+	
+	
 	/**
 	 * Export a JSON description of this OMEX description.
-	 *
+	 * 
 	 * @return the JSON object
 	 */
 	@SuppressWarnings("unchecked")
