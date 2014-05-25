@@ -25,6 +25,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.zip.ZipEntry;
@@ -52,6 +53,25 @@ import de.binfalse.bflog.LOGGER;
  */
 public class Utils
 {
+	/** The RDF namespace. */
+	public static final Namespace					rdfNS					= Namespace
+																												.getNamespace ("rdf",
+																													"http://www.w3.org/1999/02/22-rdf-syntax-ns#");
+	
+	/** The DC namespace. */
+	public static final Namespace					dcNS					= Namespace
+																												.getNamespace (
+																													"dcterms",
+																													"http://purl.org/dc/terms/");
+	
+	/** The vcard namespace. */
+	public static final Namespace					vcNS					= Namespace
+																												.getNamespace ("vCard",
+																													"http://www.w3.org/2006/vcard/ns#");
+	
+	/** The date formater. */
+	public static final SimpleDateFormat	dateFormater	= new SimpleDateFormat (
+																												"yyyy'-'MM'-'dd'T'HH':'mm':'ss'Z'");
 	
 	public final static int			BUFFER_SIZE	= 8 * 1024;
 	public final static String	NEWLINE			= System

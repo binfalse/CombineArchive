@@ -16,7 +16,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  * 
  */
-package de.unirostock.sems.cbarchive;
+package de.unirostock.sems.cbarchive.meta.omex;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -29,6 +29,8 @@ import org.jdom2.Namespace;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
+import de.unirostock.sems.cbarchive.Utils;
+
 
 
 /**
@@ -40,31 +42,8 @@ import org.json.simple.JSONObject;
 public class OmexDescription
 {
 	
-	/** The RDF namespace. */
-	public static final Namespace					rdfNS					= Namespace
-																												.getNamespace ("rdf",
-																													"http://www.w3.org/1999/02/22-rdf-syntax-ns#");
-	
-	/** The DC namespace. */
-	public static final Namespace					dcNS					= Namespace
-																												.getNamespace (
-																													"dcterms",
-																													"http://purl.org/dc/terms/");
-	
-	/** The vcard namespace. */
-	public static final Namespace					vcNS					= Namespace
-																												.getNamespace ("vCard",
-																													"http://www.w3.org/2006/vcard/ns#");
-	
-	/** The date formater. */
-	public static final SimpleDateFormat	dateFormater	= new SimpleDateFormat (
-																												"yyyy'-'MM'-'dd'T'HH':'mm':'ss'Z'");
-	
 	/** The description. */
 	private String												description;
-	
-	/** About which entry? */
-	private String												about;
 	
 	/** The creators. */
 	private Vector<VCard>									creators;
@@ -75,28 +54,6 @@ public class OmexDescription
 	/** The dates modified. */
 	public Vector<Date>										modified;
 	
-	
-	/**
-	 * Gets the path to the entry that is described by this object.
-	 * 
-	 * @return the path
-	 */
-	public String getAbout ()
-	{
-		return about;
-	}
-	
-	
-	/**
-	 * Sets the path to the entry that is described by this object.
-	 * 
-	 * @param about
-	 *          the new path
-	 */
-	public void setAbout (String about)
-	{
-		this.about = about;
-	}
 	
 	
 	/**
@@ -237,7 +194,7 @@ public class OmexDescription
 					haveCreator = true;
 					break;
 				}
-		return description != null && description.length () > 0 && haveCreator;
+		return !((description != null && description.length () > 0) || haveCreator || created != null);
 	}
 	
 	
@@ -259,40 +216,36 @@ public class OmexDescription
 			modified.add (created);
 		}
 		
-		Element Description = new Element ("Description", OmexDescription.rdfNS);
-		Description.setAttribute ("about", about, OmexDescription.rdfNS);
-		parent.addContent (Description);
-		
 		if (description != null && description.length () > 0)
 		{
-			Element description = new Element ("description", OmexDescription.dcNS);
+			Element description = new Element ("description", Utils.dcNS);
 			description.setText (this.description);
-			Description.addContent (description);
+			parent.addContent (description);
 		}
 		
 		// vcards
 		if (creators != null)
 			for (VCard vc : creators)
-				vc.toXml (Description);
+				vc.toXml (parent);
 		
 		if (created != null)
 		{
-			Element created = new Element ("created", OmexDescription.dcNS);
-			created.setAttribute ("parseType", "Resource", OmexDescription.rdfNS);
-			Element W3CDTF = new Element ("W3CDTF", OmexDescription.dcNS);
-			W3CDTF.setText (dateFormater.format (this.created));
+			Element created = new Element ("created", Utils.dcNS);
+			created.setAttribute ("parseType", "Resource", Utils.rdfNS);
+			Element W3CDTF = new Element ("W3CDTF", Utils.dcNS);
+			W3CDTF.setText (Utils.dateFormater.format (this.created));
 			created.addContent (W3CDTF);
-			Description.addContent (created);
+			parent.addContent (created);
 		}
 		
 		for (Date date : modified)
 		{
-			Element modified = new Element ("modified", OmexDescription.dcNS);
-			modified.setAttribute ("parseType", "Resource", OmexDescription.rdfNS);
-			Element modW3CDTF = new Element ("W3CDTF", OmexDescription.dcNS);
-			modW3CDTF.setText (dateFormater.format (date));
+			Element modified = new Element ("modified", Utils.dcNS);
+			modified.setAttribute ("parseType", "Resource", Utils.rdfNS);
+			Element modW3CDTF = new Element ("W3CDTF", Utils.dcNS);
+			modW3CDTF.setText (Utils.dateFormater.format (date));
 			modified.addContent (modW3CDTF);
-			Description.addContent (modified);
+			parent.addContent (modified);
 		}
 		
 	}
@@ -301,45 +254,44 @@ public class OmexDescription
 	/**
 	 * Instantiates a new omex description parsed from an XML subtree.
 	 * 
-	 * @param element
-	 *          the element
+	 * @param parent
+	 *          the parent element
 	 * @throws ParseException
 	 *           the parse exception
 	 */
-	public OmexDescription (Element element) throws ParseException
+	public OmexDescription (Element parent) throws ParseException
 	{
 		creators = new Vector<VCard> ();
 		modified = new Vector<Date> ();
 		
-		about = element.getAttributeValue ("about", rdfNS);
 		
-		List<Element> list = Utils.getElementsByTagName (element, "description",
-			dcNS);
+		List<Element> list = Utils.getElementsByTagName (parent, "description",
+			Utils.dcNS);
 		if (list.size () > 0)
 			description = list.get (0).getText ();
 		
-		list = Utils.getElementsByTagName (element, "creator", dcNS);
+		list = Utils.getElementsByTagName (parent, "creator", Utils.dcNS);
 		if (list.size () > 0)
 			for (int i = 0; i < list.size (); i++)
 				creators.add (new VCard (list.get (i)));
 		
-		list = Utils.getElementsByTagName (element, "created", dcNS);
+		list = Utils.getElementsByTagName (parent, "created", Utils.dcNS);
 		if (list.size () > 0)
 		{
-			list = Utils.getElementsByTagName (list.get (0), "W3CDTF", dcNS);
+			list = Utils.getElementsByTagName (list.get (0), "W3CDTF", Utils.dcNS);
 			if (list.size () > 0)
-				created = dateFormater.parse (list.get (0).getText ());
+				created = Utils.dateFormater.parse (list.get (0).getText ());
 		}
 		
-		list = Utils.getElementsByTagName (element, "modified", dcNS);
+		list = Utils.getElementsByTagName (parent, "modified", Utils.dcNS);
 		if (list.size () > 0)
 		{
 			for (int i = 0; i < list.size (); i++)
 			{
 				List<Element> date = Utils.getElementsByTagName (list.get (i),
-					"W3CDTF", dcNS);
+					"W3CDTF", Utils.dcNS);
 				if (date.size () > 0)
-					modified.add (dateFormater.parse (date.get (0).getText ()));
+					modified.add (Utils.dateFormater.parse (date.get (0).getText ()));
 			}
 		}
 		
@@ -356,15 +308,14 @@ public class OmexDescription
 	{
 		JSONObject descr = new JSONObject ();
 		descr.put ("description", description);
-		descr.put ("about", about);
 		JSONArray array = new JSONArray ();
 		for (VCard c : creators)
 			array.add (c.toJsonObject ());
 		descr.put ("creators", array);
-		descr.put ("created", dateFormater.format (created));
+		descr.put ("created", Utils.dateFormater.format (created));
 		array = new JSONArray ();
 		for (Date d : modified)
-			array.add (dateFormater.format (d));
+			array.add (Utils.dateFormater.format (d));
 		descr.put ("modified", array);
 		return descr;
 	}

@@ -19,8 +19,13 @@
 package de.unirostock.sems.cbarchive;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
+
+import de.unirostock.sems.cbarchive.meta.MetaDataObject;
 
 
 
@@ -41,8 +46,8 @@ public class ArchiveEntry
 	/** The format. */
 	private String					format;
 	
-	/** The description. */
-	private OmexDescription	description;
+	/** The descriptions. */
+	private List<MetaDataObject>	descriptions;
 	
 	
 	/**
@@ -58,15 +63,13 @@ public class ArchiveEntry
 	 *          the description
 	 */
 	public ArchiveEntry (CombineArchive archive, String relativeName,
-		String format, OmexDescription description)
+		String format)
 	{
 		super ();
+		descriptions = new ArrayList<MetaDataObject> ();
 		this.archive = archive;
 		this.relativeName = relativeName;
 		this.format = format;
-		this.description = description;
-		if (description != null)
-			description.setAbout (relativeName);
 	}
 	
 	
@@ -105,25 +108,25 @@ public class ArchiveEntry
 	
 	
 	/**
-	 * Gets the description.
+	 * Gets the descriptions.
 	 * 
-	 * @return the description
+	 * @return the descriptions
 	 */
-	public OmexDescription getDescription ()
+	public List<MetaDataObject> getDescriptions ()
 	{
-		return description;
+		return this.descriptions;
 	}
 	
 	
 	/**
-	 * Sets the description.
+	 * Adds another meta object describing this entry.
 	 * 
 	 * @param description
 	 *          the new description
 	 */
-	public void setDescription (OmexDescription description)
+	public void addDescription (MetaDataObject description)
 	{
-		this.description = description;
+		this.descriptions.add (description);
 	}
 
 
@@ -138,7 +141,10 @@ public class ArchiveEntry
 		JSONObject descr = new JSONObject ();
 		descr.put ("relativeName", relativeName);
 		descr.put ("format", format);
-		descr.put ("meta", description.toJsonDescription ());
+//		TODO: JSONArray meta = new JSONArray ();
+//		for (MetaDataObject m : descriptions)
+//			meta.add (m.toJson ());
+//		descr.put ("meta", meta);
 		return descr;
 	}
 }

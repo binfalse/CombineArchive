@@ -26,7 +26,14 @@ import java.util.Vector;
 
 import javax.xml.transform.TransformerException;
 
+import org.jdom2.Element;
 import org.jdom2.JDOMException;
+
+import de.unirostock.sems.cbarchive.meta.DefaultMetaDataObject;
+import de.unirostock.sems.cbarchive.meta.MetaDataObject;
+import de.unirostock.sems.cbarchive.meta.OmexMetaDataObject;
+import de.unirostock.sems.cbarchive.meta.omex.OmexDescription;
+import de.unirostock.sems.cbarchive.meta.omex.VCard;
 
 
 
@@ -36,10 +43,26 @@ import org.jdom2.JDOMException;
  */
 public class Example
 {
+	/*
+	 * execute these commands before running the example:
+	 * 
+	 * mkdir -p /tmp/base/path/subdir
+	 * touch /tmp/base/path/{file.sbml,subdir/file.cellml}
+	 * 
+	 * 
+	 * the directory tree in /tmp/base should then look like:
+	 * 
+	 * /tmp/base
+	 * /tmp/base/path
+	 * /tmp/base/path/subdir
+	 * /tmp/base/path/subdir/file.cellml
+	 * /tmp/base/path/file.sbml
+	 * 
+	 */
 	
 	public static void createExample () throws IOException, TransformerException
 	{
-		// let's create some 'creators'.
+		// let's create some 'creators' -> meta data.
 		Vector<VCard> creators = new Vector<VCard> ();
 		creators.add (new VCard ("Scharm", "Martin",
 			"martin.scharm@uni-rostock.de", "University of Rostock"));
@@ -50,7 +73,7 @@ public class Example
 		CombineArchive ca = new CombineArchive ();
 		
 		// add an entry to the archive
-		ca.addEntry (
+		ArchiveEntry SBMLFile = ca.addEntry (
 			// this command will add /tmp/base/path/file.sbml to the root of our archive
 			// (because base path in that case is /tmp/base/path/). thus we'll see
 			// /file.sbml in our archive.
@@ -58,12 +81,13 @@ public class Example
 			new File ("/tmp/base/path/file.sbml"),
 			// format is http://identifiers.org/combine.specifications/sbml - here i use
 			// the class CombineFormats to get the SBML identifier
-			CombineFormats.getFormatIdentifier ("sbml"),
-			// we add it together with a description. creators as defined above
-			new OmexDescription (creators, new Date ()));
+			CombineFormats.getFormatIdentifier ("sbml"));
+
+		// we'll add some description. creators as defined above
+		SBMLFile.addDescription (new OmexMetaDataObject (SBMLFile, new OmexDescription (creators, new Date ())));
 		
 		// add another entry to the archive
-		ca.addEntry (
+		ArchiveEntry CellMLFile = ca.addEntry (
 			// this time we add /tmp/base/path/subdir/file.cellml to the /subdir of our
 			// archive (because base path again is /tmp/base/path/). thus we'll see
 			// /subdir/file.cellml in our archive.
@@ -71,9 +95,19 @@ public class Example
 			new File ("/tmp/base/path/subdir/file.cellml"),
 			// format is http://identifiers.org/combine.specifications/cellml.1.0 -
 			// again using CombineFormats to get the correct identifier
-			CombineFormats.getFormatIdentifier ("cellml.1.0"),
-			// same description, but feel free to define different authors.
-			new OmexDescription (creators, new Date ()));
+			CombineFormats.getFormatIdentifier ("cellml.1.0"));
+		
+		// same description, but feel free to define different authors.
+		// but this time we describe the fragment 'someFragment' inside the file
+		CellMLFile.addDescription (new OmexMetaDataObject (CellMLFile, new OmexDescription (creators, new Date ())));
+		
+		// just for fun: add some other meta data:
+		Element metaParent = new Element ("stuff");
+		Element metaElement = new Element ("myMetaElement");
+		metaElement.setAttribute ("someAttribute", "someValue");
+		metaElement.addContent ("some content");
+		metaParent.addContent (metaElement);
+		CellMLFile.addDescription (new DefaultMetaDataObject (CellMLFile, "someFragment", metaParent));
 		
 		// write the archive to /tmp/testArchive.zip
 		ca.exportArchive (new File ("/tmp/testArchive.zip"));
@@ -99,18 +133,29 @@ public class Example
 		for (ArchiveEntry entry : ca.getEntries ())
 		{
 			// display some information about the archive
-			System.out.println ("file name in archive: " + entry.getRelativeName ());
+			System.out.println (">>> file name in archive: " + entry.getRelativeName () + "  -- apparently of format: " + entry.getFormat ());
 			// read entry.getFile () in your application to get the contents
 			System.out.println ("file is available in: " + entry.getFile ().getAbsolutePath ());
 			
-			// read the description
-			OmexDescription description = entry.getDescription ();
-			System.out.println ("file was created: " + description.getCreated ());
-			
-			// who's created the archive?
-			VCard firstCreator = description.getCreators ().elementAt (0);
-			System.out.println ("file's first creator: "
-				+ firstCreator.getGivenName () + " " + firstCreator.getFamilyName ());
+			// read the descriptions
+			for (MetaDataObject description : entry.getDescriptions ())
+			{
+				System.out.println ("+ found some meta data about " + description.getAbout ());
+				if (description instanceof OmexMetaDataObject)
+				{
+					OmexDescription desc = ((OmexMetaDataObject) description).getOmexDescription ();
+					System.out.println ("file was created: " + desc.getCreated ());
+					
+					// who's created the archive?
+					VCard firstCreator = desc.getCreators ().elementAt (0);
+					System.out.println ("file's first author: "
+						+ firstCreator.getGivenName () + " " + firstCreator.getFamilyName ());
+				}
+				else
+				{
+					System.out.println ("found some meta data fo type '" + description.getClass ().getName () + "' that we do not respect in this small example.");
+				}
+			}
 		}
 	}
 	
@@ -121,8 +166,10 @@ public class Example
 	 */
 	public static void main (String[] args) throws Exception
 	{
+		// create an archive
 		createExample ();
 		
+		// read the archive
 		readExample ();
 	}
 	

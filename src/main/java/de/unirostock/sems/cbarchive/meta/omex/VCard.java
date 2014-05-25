@@ -16,16 +16,17 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  * 
  */
-package de.unirostock.sems.cbarchive;
+package de.unirostock.sems.cbarchive.meta.omex;
 
 import java.util.List;
 
 import org.jdom2.Element;
 import org.json.simple.JSONObject;
 
+import de.unirostock.sems.cbarchive.Utils;
 
 
-// TODO: Auto-generated Javadoc
+
 /**
  * The Class VCard representing a VCard entity of the Omex description.
  * 
@@ -91,18 +92,18 @@ public class VCard
 	public VCard (Element element)
 	{
 		List<Element> list = Utils.getElementsByTagName (element, "family-name",
-			OmexDescription.vcNS);
+			Utils.vcNS);
 		if (list.size () > 0)
 			familyName = list.get (0).getText ();
 		list = Utils.getElementsByTagName (element, "given-name",
-			OmexDescription.vcNS);
+			Utils.vcNS);
 		if (list.size () > 0)
 			givenName = list.get (0).getText ();
-		list = Utils.getElementsByTagName (element, "email", OmexDescription.vcNS);
+		list = Utils.getElementsByTagName (element, "email", Utils.vcNS);
 		if (list.size () > 0)
 			email = list.get (0).getText ();
 		list = Utils.getElementsByTagName (element, "organization-name",
-			OmexDescription.vcNS);
+			Utils.vcNS);
 		if (list.size () > 0)
 			organization = list.get (0).getText ();
 	}
@@ -119,25 +120,25 @@ public class VCard
 		if (isEmpty ())
 			return;
 		
-		Element creator = new Element ("creator", OmexDescription.dcNS);
-		Element bag = new Element ("Bag", OmexDescription.rdfNS);
-		Element li = new Element ("li", OmexDescription.rdfNS);
-		li.setAttribute ("parseType", "Resource", OmexDescription.rdfNS);
+		Element creator = new Element ("creator", Utils.dcNS);
+		Element bag = new Element ("Bag", Utils.rdfNS);
+		Element li = new Element ("li", Utils.rdfNS);
+		li.setAttribute ("parseType", "Resource", Utils.rdfNS);
 		
 		if ( (familyName != null && familyName.length () > 0)
 			|| (givenName != null && givenName.length () > 0))
 		{
-			Element n = new Element ("n", OmexDescription.vcNS);
-			n.setAttribute ("parseType", "Resource", OmexDescription.rdfNS);
+			Element n = new Element ("n", Utils.vcNS);
+			n.setAttribute ("parseType", "Resource", Utils.rdfNS);
 			if (familyName != null && familyName.length () > 0)
 			{
-				Element famName = new Element ("family-name", OmexDescription.vcNS);
+				Element famName = new Element ("family-name", Utils.vcNS);
 				famName.setText (familyName);
 				n.addContent (famName);
 			}
 			if (givenName != null && givenName.length () > 0)
 			{
-				Element givName = new Element ("given-name", OmexDescription.vcNS);
+				Element givName = new Element ("given-name", Utils.vcNS);
 				givName.setText (givenName);
 				n.addContent (givName);
 			}
@@ -146,17 +147,17 @@ public class VCard
 		
 		if (email != null && email.length () > 0)
 		{
-			Element mail = new Element ("email", OmexDescription.vcNS);
+			Element mail = new Element ("email", Utils.vcNS);
 			mail.setText (email);
 			li.addContent (mail);
 		}
 		
 		if (organization != null && organization.length () > 0)
 		{
-			Element org = new Element ("org", OmexDescription.vcNS);
-			Element orgName = new Element ("organization-name", OmexDescription.vcNS);
+			Element org = new Element ("org", Utils.vcNS);
+			Element orgName = new Element ("organization-name", Utils.vcNS);
 			orgName.setText (organization);
-			org.setAttribute ("parseType", "Resource", OmexDescription.rdfNS);
+			org.setAttribute ("parseType", "Resource", Utils.rdfNS);
 			org.addContent (orgName);
 			li.addContent (org);
 		}
