@@ -34,6 +34,9 @@ package de.unirostock.sems.cbarchive;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.StandardOpenOption;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Date;
@@ -71,6 +74,16 @@ import de.unirostock.sems.cbarchive.meta.omex.VCard;
  * /tmp/base/path/file.sbml
  * </pre>
  * 
+ * This example will create the following files/directories:
+ * (you may want to delete them afterwards)
+ * 
+ * <pre>
+ * /tmp/testArchive.zip
+ * /tmp/myDestination
+ * /tmp/myExtractedEntry
+ * </pre>
+ * 
+ * 
  * @author Martin Scharm
  * 
  */
@@ -84,8 +97,16 @@ public class Example
 	 *           Signals that an I/O exception has occurred.
 	 * @throws TransformerException
 	 *           the transformer exception
+	 * @throws CombineArchiveException
+	 * @throws ParseException
+	 * @throws JDOMException
 	 */
-	public static void createExample () throws IOException, TransformerException
+	public static void createExample ()
+		throws IOException,
+			TransformerException,
+			JDOMException,
+			ParseException,
+			CombineArchiveException
 	{
 		// let's create some 'creators' -> meta data.
 		List<VCard> creators = new ArrayList<VCard> ();
@@ -94,34 +115,35 @@ public class Example
 		creators.add (new VCard ("Waltemath", "Dagmar",
 			"dagmar.waltemath@uni-rostock.de", "University of Rostock"));
 		
-		// create a new empty archive
-		CombineArchive ca = new CombineArchive ();
+		// create a new empty archive. since /tmp/testArchive.zip does not exist
+		// it will be created. (if it exists we'd try to read it)
+		CombineArchive ca = new CombineArchive (new File ("/tmp/testArchive.zip"));
 		
 		// add an entry to the archive
 		ArchiveEntry SBMLFile = ca.addEntry (
-		// this command will add /tmp/base/path/file.sbml to the root of our archive
-		// (because base path in that case is /tmp/base/path/). thus we'll see
-		// /file.sbml in our archive.
-			new File ("/tmp/base/path"),
-			new File ("/tmp/base/path/file.sbml"),
+			// this command will add /tmp/base/path/file.sbml to the root of our archive
+			// (because base path in that case is /tmp/base/path/). thus we'll see
+			// /file.sbml in our archive.
+			new File ("/tmp/base/path"), new File ("/tmp/base/path/file.sbml"),
 			// format is http://identifiers.org/combine.specifications/sbml - here i
 			// use the class CombineFormats to get the SBML identifier
 			CombineFormats.getFormatIdentifier ("sbml"));
 		
-		// we'll add some description. creators as defined above
+		// we'll also add some OMEX description. creators as defined above
 		SBMLFile.addDescription (new OmexMetaDataObject (SBMLFile,
 			new OmexDescription (creators, new Date ())));
 		
 		// add another entry to the archive
 		ArchiveEntry CellMLFile = ca.addEntry (
-		// this time we add /tmp/base/path/subdir/file.cellml to the /subdir of our
-		// archive (because base path again is /tmp/base/path/). thus we'll see
-		// /subdir/file.cellml in our archive.
-			new File ("/tmp/base/path"),
+			// this time we add /tmp/base/path/subdir/file.cellml
 			new File ("/tmp/base/path/subdir/file.cellml"),
+			// and we'd like to see it in /subdir/file.cellml
+			"/subdir/file.cellml", 
 			// format is http://identifiers.org/combine.specifications/cellml.1.0 -
 			// again using CombineFormats to get the correct identifier
-			CombineFormats.getFormatIdentifier ("cellml.1.0"));
+			CombineFormats.getFormatIdentifier ("cellml.1.0"),
+			// in addition: set this entry as main entry in this archive
+			true);
 		
 		// same description, but feel free to define different authors.
 		CellMLFile.addDescription (new OmexMetaDataObject (CellMLFile,
@@ -137,8 +159,9 @@ public class Example
 		CellMLFile.addDescription (new DefaultMetaDataObject (CellMLFile,
 			"someFragment", metaParent));
 		
-		// write the archive to /tmp/testArchive.zip
-		ca.exportArchive (new File ("/tmp/testArchive.zip"));
+		// finalise the archive (write manifest and meta data) and close it
+		ca.pack ();
+		ca.close ();
 	}
 	
 	
@@ -151,32 +174,37 @@ public class Example
 	 *           the jDOM exception
 	 * @throws ParseException
 	 *           the parse exception
+	 * @throws CombineArchiveException
 	 */
 	public static void readExample ()
 		throws IOException,
 			JDOMException,
-			ParseException
+			ParseException,
+			CombineArchiveException
 	{
 		File archiveFile = new File ("/tmp/testArchive.zip");
 		File destination = new File ("/tmp/myDestination");
+		File tmpEntryExtract = new File ("/tmp/myExtractedEntry");
 		
-		// if you don't provide a destination we'll unpack the archive to a
-		// temporary directory.
-		// in that case all files will be deleted if the vm exits.
-		// if destination is given we won't delete anything, so you can work with
-		// the unpacked archive
-		CombineArchive ca = CombineArchive.readArchive (archiveFile, destination);
+		// read the archive stored in `archiveFile`
+		CombineArchive ca = new CombineArchive (archiveFile);
 		
 		// iterate over all entries in the archive
 		for (ArchiveEntry entry : ca.getEntries ())
 		{
 			// display some information about the archive
-			System.out.println (">>> file name in archive: "
-				+ entry.getRelativeName () + "  -- apparently of format: "
-				+ entry.getFormat ());
-			// read entry.getFile () in your application to get the contents
-			System.out.println ("file is available in: "
-				+ entry.getFile ().getAbsolutePath ());
+			System.out.println (">>> file name in archive: " + entry.getFileName ()
+				+ "  -- apparently of format: " + entry.getFormat ());
+			
+			// extract the file to `tmpEntryExtract`
+			System.out.println ("file can be read from: "
+				+ entry.extractFile (tmpEntryExtract).getAbsolutePath ());
+			
+			// if you just want to read it, you do not need to extract it
+			// instead call for an InputStream:
+			InputStream myReader = Files.newInputStream (entry.getPath (), StandardOpenOption.READ);
+			// but here we do not use it...
+			myReader.close ();
 			
 			// read the descriptions
 			for (MetaDataObject description : entry.getDescriptions ())
@@ -199,12 +227,22 @@ public class Example
 				}
 				else
 				{
-					System.out.println ("found some meta data fo type '"
+					System.out.println ("found some meta data of type '"
 						+ description.getClass ().getName ()
 						+ "' that we do not respect in this small example.");
 				}
+				// No matter what type of description that is, you can always
+				// retrieve the XML subtree rooting the meta data using
+				Element meta = description.getXmlDescription ();
+				// the descriptions are encoded in
+				meta.getChildren ();
 			}
 		}
+		
+		// ok, last but not least we can extract the whole archive to our disk:
+		ca.extractTo (destination);
+		// and now that we're finished: close the archive
+		ca.close ();
 	}
 	
 	

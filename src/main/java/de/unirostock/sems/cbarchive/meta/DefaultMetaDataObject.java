@@ -48,22 +48,17 @@ public class DefaultMetaDataObject
 	extends MetaDataObject
 {
 	
-	/** The description. */
-	protected Element	description;
-	
-	
 	/**
 	 * Instantiates a new default meta data object.
 	 * 
 	 * @param about
 	 *          the entry described by this object
-	 * @param descriptionElement
-	 *          the description element
+	 * @param describingElement
+	 *          the element rooting the subtree that describes about
 	 */
-	public DefaultMetaDataObject (ArchiveEntry about, Element descriptionElement)
+	public DefaultMetaDataObject (ArchiveEntry about, Element describingElement)
 	{
-		super (about);
-		this.description = descriptionElement;
+		super (about, describingElement);
 	}
 	
 	
@@ -74,14 +69,13 @@ public class DefaultMetaDataObject
 	 *          the entry described by this object
 	 * @param fragmentIdentifier
 	 *          the fragment identifier pointing into <code>about</code>
-	 * @param descriptionElement
-	 *          the description element
+	 * @param describingElement
+	 *          the element rooting the subtree that describes about
 	 */
 	public DefaultMetaDataObject (ArchiveEntry about, String fragmentIdentifier,
-		Element descriptionElement)
+		Element describingElement)
 	{
-		super (about, fragmentIdentifier);
-		this.description = descriptionElement;
+		super (about, fragmentIdentifier, describingElement);
 	}
 	
 	
@@ -97,17 +91,6 @@ public class DefaultMetaDataObject
 	{
 		for (Element child : description.getChildren ())
 			parent.addContent (child.clone ());
-	}
-	
-	
-	/**
-	 * Gets the node rooting the description(s).
-	 * 
-	 * @return the description
-	 */
-	public Element getDescription ()
-	{
-		return description;
 	}
 	
 	

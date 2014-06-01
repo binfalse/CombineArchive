@@ -52,17 +52,23 @@ public abstract class MetaDataObject
 	/** The fragment identifier. */
 	protected String				fragmentIdentifier;
 	
+	/** The description. */
+	protected Element				description;
+	
 	
 	/**
 	 * Instantiates a new meta data object.
 	 * 
 	 * @param about
 	 *          the entry to describe
+	 * @param describingElement
+	 *          the element rooting the subtree that describes about
 	 */
-	public MetaDataObject (ArchiveEntry about)
+	public MetaDataObject (ArchiveEntry about, Element describingElement)
 	{
 		this.about = about;
 		this.fragmentIdentifier = null;
+		this.description = describingElement;
 	}
 	
 	
@@ -73,11 +79,15 @@ public abstract class MetaDataObject
 	 *          the entry to describe
 	 * @param fragmentIdentifier
 	 *          the fragment identifier pointing into <code>about</code>
+	 * @param describingElement
+	 *          the element rooting the subtree that describes about
 	 */
-	public MetaDataObject (ArchiveEntry about, String fragmentIdentifier)
+	public MetaDataObject (ArchiveEntry about, String fragmentIdentifier,
+		Element describingElement)
 	{
 		this.about = about;
 		this.fragmentIdentifier = fragmentIdentifier;
+		this.description = describingElement;
 	}
 	
 	
@@ -89,9 +99,9 @@ public abstract class MetaDataObject
 	public String getAbout ()
 	{
 		if (fragmentIdentifier != null)
-			return about.getRelativeName () + "#" + fragmentIdentifier;
+			return about.getFilePath () + "#" + fragmentIdentifier;
 		
-		return about.getRelativeName ();
+		return about.getFilePath ();
 	}
 	
 	
@@ -121,5 +131,16 @@ public abstract class MetaDataObject
 		String fragmentIdentifier)
 	{
 		return null;
+	}
+	
+	
+	/**
+	 * Get the XML description of {@link #getAbout()}.
+	 * 
+	 * @return the XML subtree rooting the description
+	 */
+	public Element getXmlDescription ()
+	{
+		return description;
 	}
 }

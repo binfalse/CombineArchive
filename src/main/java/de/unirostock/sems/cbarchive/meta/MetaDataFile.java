@@ -36,11 +36,12 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.UUID;
 
 import javax.xml.transform.TransformerException;
 
@@ -50,6 +51,7 @@ import org.jdom2.JDOMException;
 
 import de.binfalse.bflog.LOGGER;
 import de.unirostock.sems.cbarchive.ArchiveEntry;
+import de.unirostock.sems.cbarchive.CombineArchiveException;
 import de.unirostock.sems.cbarchive.Utils;
 
 
@@ -64,23 +66,26 @@ public class MetaDataFile
 {
 	
 	/**
-	 * Read a meta data file containing descriptions about <code>entries</code>.
+	 * Read a meta data file containing descriptions about {@link ArchiveEntry
+	 * ArchiveEntries} given in <code>entries</code>.
 	 * 
 	 * @param file
 	 *          the file containing meta data
 	 * @param entries
-	 *          the entries available in this archive
+	 *          the entries available in the corresponding archive
 	 * @throws ParseException
 	 *           the parse exception
 	 * @throws JDOMException
 	 *           the jDOM exception
 	 * @throws IOException
 	 *           Signals that an I/O exception has occurred.
+	 * @throws CombineArchiveException
 	 */
-	public static void readFile (File file, HashMap<String, ArchiveEntry> entries)
+	public static void readFile (Path file, HashMap<String, ArchiveEntry> entries)
 		throws ParseException,
 			JDOMException,
-			IOException
+			IOException,
+			CombineArchiveException
 	{
 		Document doc = Utils.readXmlDocument (file);
 		
@@ -90,23 +95,30 @@ public class MetaDataFile
 		{
 			Element current = nl.get (i);
 			String about = current.getAttributeValue ("about", Utils.rdfNS);
+			if (about == null)
+				throw new CombineArchiveException ("cannot read about attribute");
+			
 			if (about.startsWith ("./"))
 				about = about.substring (2);
-			if (about.startsWith ("/"))
+			while (about.startsWith ("/"))
 				about = about.substring (1);
+			about = "/" + about;
 			ArchiveEntry currentEntry = null;
 			String fragmentIdentifier = null;
+			
+			about = Paths.get (about).normalize ().toString ();
 			
 			// try to find the corresponding entry
 			for (ArchiveEntry entry : entries.values ())
 			{
-				if (about.startsWith (entry.getRelativeName ().substring (2)))
+				if (about.startsWith (entry.getFilePath ()))
 				{
 					currentEntry = entry;
-					if (about.length () > entry.getRelativeName ().length () - 2
-						&& about.charAt (entry.getRelativeName ().length () - 2) == '#')
-						fragmentIdentifier = about.substring (entry.getRelativeName ()
+					if (about.length () > entry.getFilePath ().length () - 2
+						&& about.charAt (entry.getFilePath ().length () - 2) == '#')
+						fragmentIdentifier = about.substring (entry.getFilePath ()
 							.length () - 1);
+					break;
 				}
 			}
 			
@@ -147,12 +159,18 @@ public class MetaDataFile
 	
 	
 	/**
-	 * Write the meta data about <code>entries</code> to files. One meta data file
-	 * per entry.
+	 * Write the meta data about {@link ArchiveEntry ArchiveEntries} given in
+	 * <code>entries</code> to meta data files.
+	 * 
+	 * <p>
+	 * This method will create one meta data file per entry. Meta data files will
+	 * be named <code>baseDir/metadata(-[-0-9a-f]+)?.rdf</code>. See
+	 * {@link #writeFile(File,HashMap)} if you want to store all meta data in a
+	 * single file.
+	 * </p>
 	 * 
 	 * @param baseDir
-	 *          the base directory of the archive: the files will be stored in
-	 *          <code>baseDir/metadata(-[-0-9a-f]+)?.rdf"</code>
+	 *          the base directory to store the files
 	 * @param entries
 	 *          the archive entries
 	 * @return the list of files that were created
@@ -167,14 +185,15 @@ public class MetaDataFile
 			TransformerException
 	{
 		List<File> outputs = new ArrayList<File> ();
+		int it = 0;
 		
 		for (ArchiveEntry e : entries.values ())
 		{
 			File output = new File (baseDir.getAbsolutePath () + File.separator
-				+ "metadata-" + UUID.randomUUID ().toString () + ".rdf");
+				+ "metadata-" + ++it + ".rdf");
 			while (output.exists ())
 				output = new File (baseDir.getAbsolutePath () + File.separator
-					+ "metadata-" + UUID.randomUUID ().toString () + ".rdf");
+					+ "metadata-" + ++it + ".rdf");
 			
 			Document xmlDoc = new Document ();
 			Element rdf = new Element ("RDF", Utils.rdfNS);
@@ -207,11 +226,19 @@ public class MetaDataFile
 	
 	
 	/**
-	 * Write all meta data about <code>entries</code> to a single file.
+	 * Write the meta data about {@link ArchiveEntry ArchiveEntries} given in
+	 * <code>entries</code> to a single meta data file.
+	 * 
+	 * <p>
+	 * This method will create one meta data file for all entries. Thus, the
+	 * returned list of files will be of size one. The meta data file will be
+	 * named <code>baseDir/metadata(-[-0-9a-f]+)?.rdf</code>. See
+	 * {@link #writeFiles(File,HashMap)} if you want to store the meta data in a
+	 * multiple files, one for each entry.
+	 * </p>
 	 * 
 	 * @param baseDir
-	 *          the base directory of the archive: the file will be stored in
-	 *          <code>baseDir/metadata(-[-0-9a-f]+)?.rdf"</code>
+	 *          the base directory to store the file
 	 * @param entries
 	 *          the archive entries
 	 * @return the list of files that were created (should be always of size one)
@@ -227,9 +254,10 @@ public class MetaDataFile
 	{
 		File output = new File (baseDir.getAbsolutePath () + File.separator
 			+ "metadata.rdf");
+		int it = 0;
 		while (output.exists ())
 			output = new File (baseDir.getAbsolutePath () + File.separator
-				+ "metadata-" + UUID.randomUUID ().toString () + ".rdf");
+				+ "metadata-" + ++it + ".rdf");
 		
 		Document xmlDoc = new Document ();
 		Element rdf = new Element ("RDF", Utils.rdfNS);

@@ -33,16 +33,24 @@
 package de.unirostock.sems.cbarchive;
 
 import java.io.BufferedWriter;
+import java.io.Closeable;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.net.URI;
+import java.nio.file.DirectoryStream;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import javax.xml.transform.TransformerException;
 
@@ -62,62 +70,76 @@ import de.unirostock.sems.cbarchive.meta.omex.OmexDescription;
 /**
  * The Class CombineArchive to create/read/manipulate/store etc.
  * CombineArchives.
+ * <p>
+ * We directly operate on the ZIP file, which will be kept open. Therefore, do
+ * not forget to finally close the CombineArchive when you're finished.
+ * </p>
  * 
- * 
+ * @see <a href="https://sems.uni-rostock.de/projects/combinearchive/">
+ *      sems.uni-rostock.de/projects/combinearchive</a>
  * @author martin scharm
  */
 public class CombineArchive
+	implements Closeable
 {
 	
 	/** The Constant MANIFEST_LOCATION. */
-	public static final String						MANIFEST_LOCATION	= "manifest.xml";
+	public static final String						MANIFEST_LOCATION	= "/manifest.xml";
+	/** The Constant METADATA_LOCATION. */
+	public static final String						METADATA_LOCATION	= "/metadata.rdf";
 	
 	/** The archive entries. */
 	private HashMap<String, ArchiveEntry>	entries;
 	
-	/** The base directory - here we'll store the files. */
-	private File													baseDir;
+	/** The zip archive. */
+	private FileSystem										zipfs;
 	
 	/** The main entry. */
 	private ArchiveEntry									mainEntry;
 	
+	/** A list of files containing meta data. */
+	private List<Path>										metaDataFiles;
+	
 	
 	/**
 	 * Instantiates a new empty combine archive.
 	 * 
+	 * @param zipFile
+	 *          the archive to read, will be created if non-existent
+	 * 
 	 * @throws IOException
 	 *           if we cannot create a temporary directory
+	 * @throws CombineArchiveException
+	 * @throws ParseException
+	 * @throws JDOMException
 	 */
-	public CombineArchive () throws IOException
+	public CombineArchive (File zipFile)
+		throws IOException,
+			JDOMException,
+			ParseException,
+			CombineArchiveException
 	{
 		entries = new HashMap<String, ArchiveEntry> ();
-		baseDir = Files.createTempDirectory ("CombineArchive").toFile ();
-		baseDir.deleteOnExit ();
+		
+		Map<String, String> zip_properties = new HashMap<String, String> ();
+		zip_properties.put ("create", "true");
+		zip_properties.put ("encoding", "UTF-8");
+		zipfs = FileSystems.newFileSystem (
+			URI.create ("jar:file:" + zipFile.getAbsolutePath ()), zip_properties);
+		
+		metaDataFiles = new ArrayList<Path> ();
+		
+		// read manifest
+		Path mani = zipfs.getPath (MANIFEST_LOCATION).normalize ();
+		if (Files.isRegularFile (mani))
+			parseManifest (mani);
 	}
 	
 	
 	/**
-	 * Instantiates a new empty combine archive.
-	 * 
-	 * @return the main entry
-	 */
-	/*
-	 * private CombineArchive (File temporaryDirectory) throws IOException,
-	 * JDOMException, ParseException
-	 * {
-	 * entries = new HashMap<String, ArchiveEntry> ();
-	 * baseDir = temporaryDirectory;
-	 * File mani = new File (baseDir.getAbsolutePath () + File.separatorChar +
-	 * MANIFEST_LOCATION);
-	 * if (mani.exists ())
-	 * parseManifest (mani);
-	 * }
-	 */
-	
-	/**
 	 * Gets the main entry of this archive.
 	 * 
-	 * @return the main entry
+	 * @return the main entry, or <code>null</code> if there is no main entry
 	 */
 	public ArchiveEntry getMainEntry ()
 	{
@@ -126,31 +148,52 @@ public class CombineArchive
 	
 	
 	/**
-	 * Gets the base directory containing all files of this archive.
+	 * Prepare location for our entries-map.
+	 * <p>
+	 * Paths such as <code>./path/to/file</code> and <code>path/to/file</code> are
+	 * rewritten to <code>/path/to/file</code> to match the keys of the
+	 * entries-map.
+	 * </p>
 	 * 
-	 * @return the base directory
+	 * @param location
+	 *          the location
+	 * @return the string
 	 */
-	public File getBaseDir ()
+	private String prepareLocation (String location)
 	{
-		return baseDir;
+		if (location.startsWith ("./"))
+			location = location.substring (1);
+		
+		if (!location.startsWith ("/"))
+			location = "/" + location;
+		
+		return location;
 	}
 	
 	
 	/**
 	 * Removes an entry defined by its relative location from the archive. The
-	 * location has to start with <code>./</code>.
+	 * location should start with <code>/</code> (the root of the archive).
 	 * 
 	 * @param location
-	 *          the relative location of the corresponding file
+	 *          the location of the corresponding file
+	 * @return true if we found that entry and removed it successfully
+	 * @throws IOException
 	 */
-	public void removeEntry (String location)
+	public boolean removeEntry (String location) throws IOException
 	{
-		if (!location.startsWith ("./"))
-			throw new IllegalArgumentException ("location has to start with ./");
+		location = prepareLocation (location);
 		
 		ArchiveEntry entry = entries.remove (location);
-		if (mainEntry == entry)
-			mainEntry = null;
+		
+		if (entry != null)
+		{
+			if (mainEntry == entry)
+				mainEntry = null;
+			Files.delete (entry.getPath ());
+			return true;
+		}
+		return false;
 	}
 	
 	
@@ -159,49 +202,144 @@ public class CombineArchive
 	 * 
 	 * @param entry
 	 *          the entry to remove
+	 * @return true if we found that entry and removed it successfully
+	 * @throws IOException
 	 */
-	public void removeEntry (ArchiveEntry entry)
+	public boolean removeEntry (ArchiveEntry entry) throws IOException
 	{
-		entries.remove (entry.getRelativeName ());
-		if (mainEntry == entry)
-			mainEntry = null;
+		if (entries.remove (entry.getFilePath ()) != null)
+		{
+			if (mainEntry == entry)
+				mainEntry = null;
+			Files.delete (entry.getPath ());
+			return true;
+		}
+		return false;
 	}
 	
 	
 	/**
-	 * Gets an entry by its location.
+	 * Retireves an entry by its location.
 	 * 
 	 * @param location
-	 *          the relative location of the entry (according to the baseDir). Has
-	 *          to start with "./"!
-	 * @return the entry by location
+	 *          the location of the entry, should start with <code>/</code> (root
+	 *          of the archive).
+	 * @return the entry located at <code>location</code>, or <code>null</code> if
+	 *         there is no such entry
 	 */
 	public ArchiveEntry getEntryByLocation (String location)
 	{
-		if (!location.startsWith ("./"))
-			throw new IllegalArgumentException ("location has to start with ./");
+		location = prepareLocation (location);
 		return entries.get (location);
 	}
 	
 	
 	/**
 	 * Adds an entry to the archive.
+	 * <p>
 	 * The current version of the concerning file will be copied immediately.
-	 * Thus, upcoming modifications of the source file won't affect the version
-	 * in our archive.
-	 * The path of this file in the archive will be the path of <code>file</code>
-	 * relative to <code>baseDir</code>.
-	 * If there is already a file in the archive having the same relative path
-	 * we'll delete it.
+	 * Thus, upcoming modifications of the source file won't affect the version in
+	 * our archive. The path of this file in the archive will be
+	 * <code>targetName</code>, it may include sub directories, e.g.
+	 * <code>/path/in/archive/file.ext</code>. If there is already a file in the
+	 * archive having the same path we'll overwrite it.
+	 * </p>
+	 * 
+	 * @param toInsert
+	 *          the file to insert
+	 * @param targetName
+	 *          the target name of the file in the archive
+	 * @param format
+	 *          the format, see {@link CombineFormats}
+	 * @return the archive entry
+	 * @throws IOException
+	 *           Signals that an I/O exception has occurred.
+	 */
+	public ArchiveEntry addEntry (File toInsert, String targetName, String format)
+		throws IOException
+	{
+		return addEntry (toInsert, targetName, format, false);
+	}
+	
+	
+	/**
+	 * Adds an entry to the archive.
+	 * <p>
+	 * The current version of the concerning file will be copied immediately.
+	 * Thus, upcoming modifications of the source file won't affect the version in
+	 * our archive. The path of this file in the archive will be
+	 * <code>targetName</code>, it may include sub directories, e.g.
+	 * <code>/path/in/archive/file.ext</code>. If there is already a file in the
+	 * archive having the same path we'll overwrite it.
+	 * </p>
+	 * 
+	 * @param toInsert
+	 *          the file to insert
+	 * @param targetName
+	 *          the target name of the file in the archive
+	 * @param format
+	 *          the format, see {@link CombineFormats}
+	 * @param mainEntry
+	 *          the main entry
+	 * @return the archive entry
+	 * @throws IOException
+	 *           Signals that an I/O exception has occurred.
+	 */
+	public ArchiveEntry addEntry (File toInsert, String targetName,
+		String format, boolean mainEntry) throws IOException
+	{
+		targetName = prepareLocation (targetName);
+		
+		if (targetName.equals (MANIFEST_LOCATION))
+			throw new IllegalArgumentException ("it's not allowed to name a file "
+				+ MANIFEST_LOCATION);
+		
+		if (targetName.equals (METADATA_LOCATION))
+			throw new IllegalArgumentException ("it's not allowed to name a file "
+				+ METADATA_LOCATION);
+		
+		// we also do not allow files with names like metadata-[0-9]*.rdf
+		if (targetName.matches ("^/metadata-[0-9]*\\.rdf$"))
+			throw new IllegalArgumentException (
+				"it's not allowed to name a file like metadata-[0-9]*.rdf");
+		
+		// insert to zip
+		Path insertPath = zipfs.getPath (targetName).normalize ();
+		Files.createDirectories (insertPath.getParent ());
+		Files.copy (toInsert.toPath (), insertPath, Utils.COPY_OPTION);
+		
+		ArchiveEntry entry = new ArchiveEntry (this, insertPath, format);
+		entries.put (entry.getFilePath (), entry);
+		
+		if (mainEntry)
+		{
+			LOGGER.debug ("setting main entry:");
+			this.mainEntry = entry;
+		}
+		
+		return entry;
+	}
+	
+	
+	/**
+	 * Adds an entry to the archive.
+	 * <p>
+	 * The current version of the concerning file will be copied immediately.
+	 * Thus, upcoming modifications of the source file won't affect the version in
+	 * our archive. The path of this file in the archive will be the path of
+	 * <code>file</code> relative to <code>baseDir</code>. If there is already a
+	 * file in the archive having the same relative path we'll overwrite it.
+	 * </p>
 	 * 
 	 * @param baseDir
 	 *          the base dir
 	 * @param file
 	 *          the file
 	 * @param format
-	 *          the format
+	 *          the format, see {@link CombineFormats}
 	 * @param mainEntry
-	 *          is this the main entry of the archive?
+	 *          is this the main entry of the archive? (default:
+	 *          <code>false</code>)
 	 * @return the archive entry
 	 * @throws IOException
 	 *           Signals that an I/O exception has occurred.
@@ -217,29 +355,8 @@ public class CombineArchive
 		
 		String localName = file.getAbsolutePath ().replace (
 			baseDir.getAbsolutePath (), "");
-		if (localName.equals ("/" + MANIFEST_LOCATION))
-			throw new IllegalArgumentException (
-				"it's not allowed to name a file manifest.xml");
 		
-		File destination = new File (this.baseDir.getAbsolutePath () + localName);
-		destination.getParentFile ().mkdirs ();
-		destination.getParentFile ().deleteOnExit ();
-		
-		Files.copy (file.toPath (), destination.toPath (),
-			java.nio.file.StandardCopyOption.REPLACE_EXISTING);
-		destination.deleteOnExit ();
-		
-		ArchiveEntry entry = new ArchiveEntry (this, "." + localName, format);
-		
-		entries.put (entry.getRelativeName (), entry);
-		
-		if (mainEntry)
-		{
-			LOGGER.debug ("setting main entry:");
-			this.mainEntry = entry;
-		}
-		
-		return entry;
+		return addEntry (file, localName, format, mainEntry);
 	}
 	
 	
@@ -258,7 +375,7 @@ public class CombineArchive
 	 * @param file
 	 *          the file
 	 * @param format
-	 *          the format
+	 *          the format, see {@link CombineFormats}
 	 * @return the archive entry
 	 * @throws IOException
 	 *           Signals that an I/O exception has occurred.
@@ -274,23 +391,8 @@ public class CombineArchive
 		
 		String localName = file.getAbsolutePath ().replace (
 			baseDir.getAbsolutePath (), "");
-		if (localName.equals ("/" + MANIFEST_LOCATION))
-			throw new IllegalArgumentException (
-				"it's not allowed to name a file manifest.xml");
 		
-		File destination = new File (this.baseDir.getAbsolutePath () + localName);
-		destination.getParentFile ().mkdirs ();
-		destination.getParentFile ().deleteOnExit ();
-		
-		Files.copy (file.toPath (), destination.toPath (),
-			java.nio.file.StandardCopyOption.REPLACE_EXISTING);
-		destination.deleteOnExit ();
-		
-		ArchiveEntry entry = new ArchiveEntry (this, "." + localName, format);
-		
-		entries.put (entry.getRelativeName (), entry);
-		
-		return entry;
+		return addEntry (file, localName, format, false);
 	}
 	
 	
@@ -309,11 +411,12 @@ public class CombineArchive
 	 * @param file
 	 *          the file
 	 * @param format
-	 *          the format
+	 *          the format, see {@link CombineFormats}
 	 * @param description
 	 *          the description
 	 * @param mainEntry
-	 *          is this the main entry of the archive?
+	 *          is this the main entry of the archive? (default:
+	 *          <code>false</code>)
 	 * @return the archive entry
 	 * @throws IOException
 	 *           Signals that an I/O exception has occurred.
@@ -332,33 +435,9 @@ public class CombineArchive
 		
 		String localName = file.getAbsolutePath ().replace (
 			baseDir.getAbsolutePath (), "");
-		if (localName.equals ("/" + MANIFEST_LOCATION))
-			throw new IllegalArgumentException (
-				"it's not allowed to name a file manifest.xml");
 		
-		File destination = new File (this.baseDir.getAbsolutePath () + localName);
-		destination.getParentFile ().mkdirs ();
-		destination.getParentFile ().deleteOnExit ();
-		
-		Files.copy (file.toPath (), destination.toPath (),
-			java.nio.file.StandardCopyOption.REPLACE_EXISTING);
-		destination.deleteOnExit ();
-		
-		/*
-		 * ArchiveEntry entry = new ArchiveEntry (this, "." + localName, format,
-		 * description);
-		 */
-		ArchiveEntry entry = new ArchiveEntry (this, "." + localName, format);
+		ArchiveEntry entry = addEntry (file, localName, format, mainEntry);
 		entry.addDescription (new OmexMetaDataObject (entry, description));
-		
-		entries.put (entry.getRelativeName (), entry);
-		
-		if (mainEntry)
-		{
-			LOGGER.debug ("setting main entry:");
-			this.mainEntry = entry;
-		}
-		
 		return entry;
 	}
 	
@@ -378,7 +457,7 @@ public class CombineArchive
 	 * @param file
 	 *          the file
 	 * @param format
-	 *          the format
+	 *          the format, see {@link CombineFormats}
 	 * @param description
 	 *          the description
 	 * @return the archive entry
@@ -399,32 +478,18 @@ public class CombineArchive
 		
 		String localName = file.getAbsolutePath ().replace (
 			baseDir.getAbsolutePath (), "");
-		if (localName.equals ("/" + MANIFEST_LOCATION))
-			throw new IllegalArgumentException (
-				"it's not allowed to name a file manifest.xml");
 		
-		File destination = new File (this.baseDir.getAbsolutePath () + localName);
-		destination.getParentFile ().mkdirs ();
-		destination.getParentFile ().deleteOnExit ();
-		
-		Files.copy (file.toPath (), destination.toPath (),
-			java.nio.file.StandardCopyOption.REPLACE_EXISTING);
-		destination.deleteOnExit ();
-		
-		ArchiveEntry entry = new ArchiveEntry (this, "." + localName, format);
+		ArchiveEntry entry = addEntry (file, localName, format, false);
 		entry.addDescription (new OmexMetaDataObject (entry, description));
-		
-		entries.put (entry.getRelativeName (), entry);
-		
 		return entry;
 	}
 	
 	
 	/**
-	 * Gets entries having a certain format.
+	 * Gets entries sharing a certain format.
 	 * 
 	 * @param format
-	 *          the format of interest
+	 *          the format of interest, see {@link CombineFormats}
 	 * @return the entries with that format
 	 */
 	public List<ArchiveEntry> getEntriesWithFormat (String format)
@@ -441,10 +506,10 @@ public class CombineArchive
 	
 	
 	/**
-	 * Gets the number of entries with a certain format.
+	 * Counts entries with a certain format.
 	 * 
 	 * @param format
-	 *          the format of interest
+	 *          the format of interest, see {@link CombineFormats}
 	 * @return the number of entries with that format
 	 */
 	public int getNumEntriesWithFormat (String format)
@@ -454,10 +519,10 @@ public class CombineArchive
 	
 	
 	/**
-	 * Checks for entries with a certain format.
+	 * Checks whether there are entries with a certain format.
 	 * 
 	 * @param format
-	 *          the format of interest
+	 *          the format of interest, see {@link CombineFormats}
 	 * @return true, if there is at least one entry in this archive having this
 	 *         format
 	 */
@@ -468,13 +533,24 @@ public class CombineArchive
 	
 	
 	/**
-	 * Gets the entries.
+	 * Retrieves all entries.
 	 * 
 	 * @return the entries
 	 */
 	public Collection<ArchiveEntry> getEntries ()
 	{
 		return entries.values ();
+	}
+	
+	
+	/**
+	 * Gets the number of entries stored in this archive.
+	 * 
+	 * @return the number of entries
+	 */
+	public int getNumEntries ()
+	{
+		return entries.size ();
 	}
 	
 	
@@ -513,46 +589,52 @@ public class CombineArchive
 	/**
 	 * Write the manifest.
 	 * 
-	 * @return the list of files to zip
+	 * @param singleFile
+	 *          write meta data to a single file?
 	 * @throws IOException
 	 *           Signals that an I/O exception has occurred.
 	 * @throws TransformerException
 	 *           the transformer exception
 	 */
-	private List<File> writeManifest (boolean singleFile)
+	private void writeManifest (boolean singleFile)
 		throws IOException,
 			TransformerException
 	{
-		List<File> fileList = new ArrayList<File> ();
-		File manifestFile = new File (baseDir.getAbsolutePath () + File.separator
-			+ MANIFEST_LOCATION);
-		fileList.add (manifestFile);
+		File manifestFile = File.createTempFile ("combineArchiveManifest", "tmp");
 		
 		Document doc = new Document ();
 		Element root = new Element ("omexManifest", Utils.omexNs);
 		doc.addContent (root);
 		
-		root.addContent (createManifestEntry ("./" + MANIFEST_LOCATION,
+		root.addContent (createManifestEntry (MANIFEST_LOCATION,
 			Utils.omexNs.getURI (), false));
 		
 		for (ArchiveEntry e : entries.values ())
 		{
-			root.addContent (createManifestEntry (e.getRelativeName (),
+			root.addContent (createManifestEntry (e.getPath ().toString (),
 				e.getFormat (), e == mainEntry));
-			fileList.add (new File (baseDir.getAbsolutePath () + File.separator
-				+ e.getRelativeName ()));
 		}
 		
+		File baseDir = Files.createTempDirectory ("combineArchive").toFile ();
+		
 		List<File> descr = singleFile ? MetaDataFile.writeFile (baseDir, entries)
-			: MetaDataFile.writeFiles (baseDir, entries);// OmexDescriptionFile.writeFile
-																										// (descriptions, baseDir);
+			: MetaDataFile.writeFiles (baseDir, entries);
 		for (File f : descr)
 		{
 			root.addContent (createManifestEntry (
-				"." + f.getAbsolutePath ().replace (baseDir.getAbsolutePath (), ""),
+				f.getAbsolutePath ().replace (baseDir.getAbsolutePath (), ""),
 				"http://identifiers.org/combine.specifications/omex-metadata", false));
-			fileList.add (f);
+			
+			// copy to zip
+			Path newMeta = zipfs.getPath (
+				f.getAbsolutePath ().replace (baseDir.getAbsolutePath (), ""))
+				.normalize ();
+			Files.copy (f.toPath (), newMeta, Utils.COPY_OPTION);
+			metaDataFiles.add (newMeta);
+			// delete original
+			f.delete ();
 		}
+		baseDir.delete ();
 		
 		BufferedWriter bw = null;
 		try
@@ -577,56 +659,57 @@ public class CombineArchive
 				{
 				}
 		}
-		return fileList;
+		
+		// insert manifest into zip
+		Files.copy (manifestFile.toPath (), zipfs.getPath (MANIFEST_LOCATION)
+			.normalize (), Utils.COPY_OPTION);
+		
+		manifestFile.delete ();
 	}
 	
 	
 	/**
-	 * Export an archive. Will write the manifest and the meta data files and
-	 * packs everything to <code>destination</code>.
+	 * Pack this archive: generates manifest and meta data files.
+	 * <p>
+	 * While we're working directly in the ZIP this generates manifest and meta
+	 * data files. If <code>multipleMetaFiles</code> is set to <code>true</code>
+	 * (default: <code>false</code>, see {@link #pack()}) we will generate one
+	 * meta data file for each archive entry (instead of combining all meta data
+	 * in a single file).
+	 * </p>
 	 * 
-	 * @param destination
-	 *          the destination of the archive
 	 * @param multipleMetaFiles
-	 *          should we export the meta data to multiple files? (defaults to
-	 *          <code>false</code>)
-	 * @throws IOException
-	 *           Signals that an I/O exception has occurred.
+	 *          should we create one meta file per archive entry or combine all
+	 *          meta data in a single file?
 	 * @throws TransformerException
-	 *           the transformer exception
+	 * @throws IOException
 	 */
-	public void exportArchive (File destination, boolean multipleMetaFiles)
+	public void pack (boolean multipleMetaFiles)
 		throws IOException,
 			TransformerException
 	{
-		// write current version of manifest
-		List<File> fileList = writeManifest (!multipleMetaFiles);
-		
-		// create zip archive
-		Utils.packZip (baseDir, destination, fileList);
+		for (Path meta : metaDataFiles)
+			Files.delete (meta);
+		metaDataFiles = new ArrayList<Path> ();
+		writeManifest (!multipleMetaFiles);
 	}
 	
 	
 	/**
-	 * Export an archive. Will write the manifest and the meta data files and
-	 * packs everything to <code>destination</code>.
+	 * Pack this archive.
+	 * <p>
+	 * While we're working directly in the ZIP this generates manifest and meta
+	 * data files. This method will generate a single meta data file for all meta
+	 * data associated to the entries in this archive. See {@link #pack(boolean)}
+	 * if you prefer creating multiple meta data files.
+	 * </p>
 	 * 
-	 * @param destination
-	 *          the destination of the archive
-	 * @throws IOException
-	 *           Signals that an I/O exception has occurred.
 	 * @throws TransformerException
-	 *           the transformer exception
+	 * @throws IOException
 	 */
-	public void exportArchive (File destination)
-		throws IOException,
-			TransformerException
+	public void pack () throws IOException, TransformerException
 	{
-		// write current version of manifest
-		List<File> fileList = writeManifest (true);
-		
-		// create zip archive
-		Utils.packZip (baseDir, destination, fileList);
+		pack (false);
 	}
 	
 	
@@ -641,14 +724,16 @@ public class CombineArchive
 	 *           the jDOM exception
 	 * @throws ParseException
 	 *           the parse exception
+	 * @throws CombineArchiveException
 	 */
-	private void parseManifest (File manifest)
+	private void parseManifest (Path manifest)
 		throws IOException,
 			JDOMException,
-			ParseException
+			ParseException,
+			CombineArchiveException
 	{
 		Document doc = Utils.readXmlDocument (manifest);
-		List<File> descr = new ArrayList<File> ();
+		metaDataFiles = new ArrayList<Path> ();
 		List<Element> nl = Utils.getElementsByTagName (doc.getRootElement (),
 			"content", Utils.omexNs);
 		for (int i = 0; i < nl.size (); i++)
@@ -673,16 +758,16 @@ public class CombineArchive
 				throw new IOException ("manifest invalid. unknown location of entry "
 					+ i);
 			
-			File locFile = new File (baseDir.getAbsolutePath () + File.separator
-				+ location);
-			if (!locFile.exists ())
-				throw new IOException ("archive seems to be corrupt. file " + location
+			location = Paths.get ("/" + location).normalize ().toString ();
+			
+			Path locFile = zipfs.getPath (location).normalize ();
+			if (!Files.isRegularFile (locFile))
+				throw new IOException ("archive seems to be corrupt. file " + locFile
 					+ " not found.");
 			
 			if (format.equals (CombineFormats.getFormatIdentifier ("omex")))
 			{
-				descr.add (new File (baseDir.getAbsolutePath () + File.separator
-					+ location));
+				metaDataFiles.add (locFile);
 				// since that's not a real entry
 				continue;
 			}
@@ -693,14 +778,14 @@ public class CombineArchive
 				continue;
 			}
 			
-			ArchiveEntry entry = new ArchiveEntry (this, location, format);
+			ArchiveEntry entry = new ArchiveEntry (this, locFile, format);
 			if (master != null && Boolean.parseBoolean (master))
 				mainEntry = entry;
 			entries.put (location, entry);
 		}
 		
 		// parse all descriptions
-		for (File f : descr)
+		for (Path f : metaDataFiles)
 		{
 			MetaDataFile.readFile (f, entries);
 		}
@@ -708,106 +793,83 @@ public class CombineArchive
 	
 	
 	/**
-	 * Extracts an Combine archive and reads its contents.
+	 * Extract an entry from this archive.
 	 * 
-	 * @param zipFile
-	 *          the zipped archive
+	 * @param archivePath
+	 *          the path of the entry in our archive, should start with an
+	 *          <code>/</code>
+	 * @param destination
+	 *          the destination to write the entry to
+	 * @return the file that was written (=<code>destination</code>)
+	 * @throws IOException
+	 *           Signals that an I/O exception has occurred.
+	 */
+	public File extract (Path archivePath, File destination) throws IOException
+	{
+		if (!Files.isRegularFile (archivePath))
+			throw new IOException (archivePath + " is not a regular file");
+		
+		Files.createDirectories (destination.toPath ().getParent ());
+		Files.copy (archivePath, destination.toPath (), Utils.COPY_OPTION);
+		
+		return destination;
+	}
+	
+	
+	/**
+	 * Extract the whole archive to the disk.
+	 * 
 	 * @param destination
 	 *          the destination
-	 * @param deleteOnExit
-	 *          if true = delete all files after exit
-	 * @return the combine archive
+	 * @return true, if successful extracted
 	 * @throws IOException
-	 *           Signals that an I/O exception has occurred.
-	 * @throws JDOMException
-	 *           the jDOM exception
-	 * @throws ParseException
-	 *           the parse exception
 	 */
-	private static CombineArchive readArchive (File zipFile, File destination,
-		boolean deleteOnExit) throws IOException, JDOMException, ParseException
+	public File extractTo (File destination) throws IOException
 	{
-		if (deleteOnExit)
-			destination.deleteOnExit ();
-		if (!Utils.unpackZip (zipFile, destination, deleteOnExit))
-			throw new IOException ("unable to unpack zip file");
-		
-		return readExtractedArchive (destination);
+		try (DirectoryStream<Path> directoryStream = Files
+			.newDirectoryStream (zipfs.getPath ("/"));)
+		{
+			for (Path file : directoryStream)
+			{
+				extract (file, destination.toPath ());
+			}
+		}
+		return destination;
 	}
 	
 	
 	/**
-	 * Read an archive. The archive will be extracted to <code>destination</code>
-	 * and we won't delete the files after exit (as long as we are able to write
-	 * to destination).
-	 * Please note, we don't care if the destination directory is empty or not. If
-	 * it contains files they might get overwritten and thus lost.
+	 * Extract an entry or a directory.
 	 * 
-	 * @param zipFile
-	 *          the zipped Combine archive
+	 * @param zipPath
+	 *          the what
 	 * @param destination
-	 *          the destination directory to unpack the archive to
-	 * @return the combine archive
+	 *          the to
 	 * @throws IOException
-	 *           Signals that an I/O exception has occurred.
-	 * @throws JDOMException
-	 *           the jDOM exception
-	 * @throws ParseException
-	 *           the parse exception
-	 */
-	public static CombineArchive readArchive (File zipFile, File destination)
-		throws IOException,
-			JDOMException,
-			ParseException
-	{
-		if (!destination.isDirectory () && !destination.mkdirs ())
-			return readArchive (zipFile,
-				Files.createTempDirectory (CombineArchive.class.getName ()).toFile (),
-				true);
-		return readArchive (zipFile, destination, false);
-	}
-	
-	
-	/**
-	 * Read an archive. The archive will be extracted to a temporary directory.
-	 * All files will be deleted if the tool exits.
-	 * 
-	 * @param zipFile
-	 *          the zipped Combine archive
-	 * @return the combine archive
 	 * @throws Exception
 	 *           the exception
 	 */
-	public static CombineArchive readArchive (File zipFile) throws Exception
+	private static void extract (Path zipPath, Path destination)
+		throws IOException
 	{
-		return readArchive (zipFile,
-			Files.createTempDirectory (CombineArchive.class.getName ()).toFile (),
-			true);
-	}
-	
-	
-	/**
-	 * Read an extracted archive.
-	 * 
-	 * @param baseDir
-	 *          the dir containing the extracted archive
-	 * @return the combine archive
-	 * @throws IOException
-	 * @throws ParseException
-	 * @throws JDOMException
-	 */
-	public static CombineArchive readExtractedArchive (File baseDir)
-		throws IOException,
-			JDOMException,
-			ParseException
-	{
-		CombineArchive arch = new CombineArchive ();
-		arch.baseDir = baseDir;
-		File mani = new File (baseDir.getAbsolutePath () + File.separator
-			+ MANIFEST_LOCATION);
-		if (mani.exists ())
-			arch.parseManifest (mani);
-		return arch;
+		if (Files.isDirectory (zipPath))
+		{
+			try (DirectoryStream<Path> directoryStream = Files
+				.newDirectoryStream (zipPath);)
+			{
+				for (Path file : directoryStream)
+				{
+					extract (file, destination);
+				}
+			}
+		}
+		else
+		{
+			Path fileOutZip = destination.resolve (
+				"./" + zipPath.normalize ().toString ()).normalize ();
+			Files.createDirectories (fileOutZip.getParent ());
+			Files.copy (zipPath, fileOutZip, Utils.COPY_OPTION);
+		}
 	}
 	
 	
@@ -830,5 +892,17 @@ public class CombineArchive
 		}
 		
 		return descr;
+	}
+	
+	
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see java.io.Closeable#close()
+	 */
+	@Override
+	public void close () throws IOException
+	{
+		zipfs.close ();
 	}
 }

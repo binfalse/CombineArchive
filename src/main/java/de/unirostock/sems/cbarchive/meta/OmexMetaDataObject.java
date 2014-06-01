@@ -36,6 +36,7 @@ import org.jdom2.Element;
 
 import de.binfalse.bflog.LOGGER;
 import de.unirostock.sems.cbarchive.ArchiveEntry;
+import de.unirostock.sems.cbarchive.Utils;
 import de.unirostock.sems.cbarchive.meta.omex.OmexDescription;
 
 
@@ -63,7 +64,7 @@ public class OmexMetaDataObject
 	 */
 	public OmexMetaDataObject (ArchiveEntry about, OmexDescription description)
 	{
-		super (about);
+		super (about, createDummyXmltree (about, description));
 		this.description = description;
 	}
 	
@@ -81,7 +82,45 @@ public class OmexMetaDataObject
 	public OmexMetaDataObject (ArchiveEntry about, String fragmentIdentifier,
 		OmexDescription description)
 	{
-		super (about, fragmentIdentifier);
+		super (about, fragmentIdentifier, createDummyXmltree (about, description));
+		this.description = description;
+	}
+	
+	
+	/**
+	 * Instantiates a new OMEX meta data object.
+	 * 
+	 * @param about
+	 *          the entry described by this object
+	 * @param description
+	 *          the description
+	 * @param describingElement
+	 *          the element rooting the subtree that describes about
+	 */
+	public OmexMetaDataObject (ArchiveEntry about, OmexDescription description,
+		Element describingElement)
+	{
+		super (about, describingElement);
+		this.description = description;
+	}
+	
+	
+	/**
+	 * Instantiates a new OMEX meta data object.
+	 * 
+	 * @param about
+	 *          the entry described by this object
+	 * @param fragmentIdentifier
+	 *          the fragment identifier pointing into <code>about</code>
+	 * @param description
+	 *          the description
+	 * @param describingElement
+	 *          the element rooting the subtree that describes about
+	 */
+	public OmexMetaDataObject (ArchiveEntry about, String fragmentIdentifier,
+		OmexDescription description, Element describingElement)
+	{
+		super (about, fragmentIdentifier, describingElement);
 		this.description = description;
 	}
 	
@@ -112,6 +151,25 @@ public class OmexMetaDataObject
 	
 	
 	/**
+	 * Creates a dummy XML tree that represents the OMEX description.
+	 * 
+	 * @param about
+	 *          the entry that this is about
+	 * @param description
+	 *          the OMEX description description
+	 * @return the element
+	 */
+	private static final Element createDummyXmltree (ArchiveEntry about,
+		OmexDescription description)
+	{
+		Element descElem = new Element ("Description", Utils.rdfNS);
+		descElem.setAttribute ("about", about.getFilePath (), Utils.rdfNS);
+		description.toXML (descElem);
+		return descElem;
+	}
+	
+	
+	/**
 	 * Try to read a meta data object. Might return null if <code>element</code>
 	 * cannot be understood as an OMEX description.
 	 * 
@@ -134,8 +192,8 @@ public class OmexMetaDataObject
 			if (desc.isEmpty ())
 				return null;
 			if (fragmentIdentifier == null)
-				return new OmexMetaDataObject (about, desc);
-			return new OmexMetaDataObject (about, fragmentIdentifier, desc);
+				return new OmexMetaDataObject (about, desc, element);
+			return new OmexMetaDataObject (about, fragmentIdentifier, desc, element);
 		}
 		catch (Exception e)
 		{

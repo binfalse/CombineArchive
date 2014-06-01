@@ -39,6 +39,11 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.file.CopyOption;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+import java.nio.file.StandardOpenOption;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
@@ -99,24 +104,29 @@ public class Utils
 	public final static String						NEWLINE				= System
 																												.getProperty ("line.separator");
 	
+	/** The COPY_OPTION used to copy/move files. */
+	public static final CopyOption[]			COPY_OPTION		= new CopyOption[] {
+		StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES };
+	
 	
 	/**
 	 * Reads an XML file and creates a Document.
 	 * 
-	 * @param f
+	 * @param fileToRead
 	 *          the file to read
-	 * @return the document
+	 * @return the XML document
 	 * @throws JDOMException
 	 *           the JDOM exception
 	 * @throws IOException
 	 *           Signals that an I/O exception has occurred.
 	 */
-	public static final Document readXmlDocument (File f)
+	public static final Document readXmlDocument (Path fileToRead)
 		throws JDOMException,
 			IOException
 	{
 		SAXBuilder builder = new SAXBuilder ();
-		return (Document) builder.build (f);
+		return (Document) builder.build (Files.newInputStream (fileToRead,
+			StandardOpenOption.READ));
 	}
 	
 	
@@ -412,4 +422,19 @@ public class Utils
 		return out.toString ();
 	}
 	
+	
+	/**
+	 * Extracts the extension of a filename.
+	 * 
+	 * @param fileName
+	 *          the file name
+	 * @return the extension, or null if we're not able to find an extension
+	 */
+	public static String getExtension (String fileName)
+	{
+		int dot = fileName.lastIndexOf (".");
+		if (dot >= 0)
+			return fileName.substring (dot + 1);
+		return null;
+	}
 }

@@ -33,6 +33,8 @@
 package de.unirostock.sems.cbarchive;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -55,7 +57,7 @@ public class ArchiveEntry
 	private CombineArchive				archive;
 	
 	/** The relative path name to that file. */
-	private String								relativeName;
+	private Path									relativeName;
 	
 	/** The format. */
 	private String								format;
@@ -68,14 +70,13 @@ public class ArchiveEntry
 	 * Instantiates a new archive entry.
 	 * 
 	 * @param archive
-	 *          the CombineArchive
+	 *          the corresponding CombineArchive
 	 * @param relativeName
-	 *          the relative path name
+	 *          the relative path name within <code>archive</code>
 	 * @param format
 	 *          the format
 	 */
-	public ArchiveEntry (CombineArchive archive, String relativeName,
-		String format)
+	public ArchiveEntry (CombineArchive archive, Path relativeName, String format)
 	{
 		super ();
 		descriptions = new ArrayList<MetaDataObject> ();
@@ -86,30 +87,79 @@ public class ArchiveEntry
 	
 	
 	/**
-	 * Gets the corresponding file.
+	 * Extract this file to <code>target</code>.
 	 * 
-	 * @return the file
+	 * @param target
+	 *          the target to write this item to.
+	 * @return the file (=<code>target</code>)
+	 * @throws IOException
 	 */
-	public File getFile ()
+	public File extractFile (File target) throws IOException
 	{
-		return new File (archive.getBaseDir ().getAbsolutePath () + File.separator
-			+ relativeName);
+		return archive.extract (relativeName, target);
 	}
 	
 	
 	/**
-	 * Gets the relative path name.
+	 * Gets the corresponding file.
 	 * 
-	 * @return the relative path name
+	 * @return the file
+	 * @throws IOException
+	 * 
+	 * @deprecated as of version 0.6, replaced by {@link #extractFile (File target)}
 	 */
-	public String getRelativeName ()
+	@Deprecated
+	public File getFile () throws IOException
+	{
+		return extractFile (File.createTempFile ("combineArchive",
+			Utils.getExtension (relativeName.getFileName ().toString ())));
+	}
+	
+	
+	/**
+	 * Gets the path to this entry.
+	 * <p>
+	 * Be aware that this path points to the entry as it is zipped in the archive.
+	 * Thus, some operations might fail or result in unexpected behaviour.
+	 * </p>
+	 * 
+	 * @return the path
+	 */
+	public Path getPath ()
 	{
 		return relativeName;
 	}
 	
 	
 	/**
-	 * Gets the format.
+	 * Gets the file name (w/o path) of this entry in the archive.
+	 * 
+	 * @return the relative path name
+	 */
+	public String getFileName ()
+	{
+		return relativeName.getFileName ().toString ();
+	}
+	
+	
+	/**
+	 * Gets the relative path name of this file in the archive.
+	 * <p>
+	 * The path will usually start with '<code>/</code>', but do not rely on that.
+	 * Depending on the archive it might also start with '<code>./</code>' or
+	 * without anything.
+	 * </p>
+	 * 
+	 * @return the relative path name
+	 */
+	public String getFilePath ()
+	{
+		return relativeName.toString ();
+	}
+	
+	
+	/**
+	 * Gets the format as reported by the archive's manifest.
 	 * 
 	 * @return the format
 	 */
@@ -120,7 +170,12 @@ public class ArchiveEntry
 	
 	
 	/**
-	 * Gets the descriptions.
+	 * Gets the {@link MetaDataObject MetaDataObjects} describing this entry.
+	 * <p>
+	 * The returned list can contain any number of {@link MetaDataObject
+	 * MetaDataObjects}, but might as well be empty.
+	 * </p>
+	 * 
 	 * 
 	 * @return the descriptions
 	 */
