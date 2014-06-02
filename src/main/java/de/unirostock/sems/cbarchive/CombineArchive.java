@@ -148,6 +148,18 @@ public class CombineArchive
 	
 	
 	/**
+	 * Sets the main entry of the archive.
+	 * 
+	 * @param mainEntry
+	 *          the new main entry
+	 */
+	public void setMainEntry (ArchiveEntry mainEntry)
+	{
+		this.mainEntry = mainEntry;
+	}
+	
+	
+	/**
 	 * Prepare location for our entries-map.
 	 * <p>
 	 * Paths such as <code>./path/to/file</code> and <code>path/to/file</code> are
