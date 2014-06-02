@@ -186,6 +186,19 @@ public class ArchiveEntry
 	
 	
 	/**
+	 * Removes a certain description.
+	 * 
+	 * @param toDelete
+	 *          the meta data object to delete
+	 * @return true, if successful
+	 */
+	public boolean removeDescription (MetaDataObject toDelete)
+	{
+		return descriptions.remove (toDelete);
+	}
+	
+	
+	/**
 	 * Adds another meta object describing this entry.
 	 * 
 	 * @param description
