@@ -172,6 +172,21 @@ public class CombineArchive
 	
 	
 	/**
+	 * Retrieves an entry stored at a specified location. The location should
+	 * start with <code>/</code> (the root of the archive).
+	 * 
+	 * @param location
+	 *          the location
+	 * @return the entry
+	 */
+	public ArchiveEntry getEntry (String location)
+	{
+		location = prepareLocation (location);
+		return entries.get (location);
+	}
+	
+	
+	/**
 	 * Removes an entry defined by its relative location from the archive. The
 	 * location should start with <code>/</code> (the root of the archive).
 	 * 
