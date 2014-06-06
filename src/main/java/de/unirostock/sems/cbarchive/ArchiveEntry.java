@@ -38,9 +38,6 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-
 import de.unirostock.sems.cbarchive.meta.MetaDataObject;
 
 
@@ -207,24 +204,5 @@ public class ArchiveEntry
 	public void addDescription (MetaDataObject description)
 	{
 		this.descriptions.add (description);
-	}
-	
-	
-	/**
-	 * Export a JSON description of this entry.
-	 * 
-	 * @return the jSON object
-	 */
-	@SuppressWarnings("unchecked")
-	public JSONObject toJsonObject ()
-	{
-		JSONObject descr = new JSONObject ();
-		descr.put ("relativeName", relativeName);
-		descr.put ("format", format);
-		// TODO: JSONArray meta = new JSONArray ();
-		// for (MetaDataObject m : descriptions)
-		// meta.add (m.toJson ());
-		// descr.put ("meta", meta);
-		return descr;
 	}
 }

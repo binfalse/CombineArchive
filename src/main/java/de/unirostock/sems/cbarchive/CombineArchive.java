@@ -58,7 +58,6 @@ import org.jdom2.Attribute;
 import org.jdom2.Document;
 import org.jdom2.Element;
 import org.jdom2.JDOMException;
-import org.json.simple.JSONObject;
 
 import de.binfalse.bflog.LOGGER;
 import de.unirostock.sems.cbarchive.meta.MetaDataFile;
@@ -120,7 +119,6 @@ public class CombineArchive
 			CombineArchiveException
 	{
 		entries = new HashMap<String, ArchiveEntry> ();
-		
 		Map<String, String> zip_properties = new HashMap<String, String> ();
 		zip_properties.put ("create", "true");
 		zip_properties.put ("encoding", "UTF-8");
@@ -897,28 +895,6 @@ public class CombineArchive
 			Files.createDirectories (fileOutZip.getParent ());
 			Files.copy (zipPath, fileOutZip, Utils.COPY_OPTION);
 		}
-	}
-	
-	
-	/**
-	 * Export a JSON description of this archive.
-	 * 
-	 * @return the JSON object
-	 */
-	@SuppressWarnings("unchecked")
-	public JSONObject toJsonDescription ()
-	{
-		JSONObject descr = new JSONObject ();
-		
-		for (String s : entries.keySet ())
-		{
-			JSONObject entryDescr = entries.get (s).toJsonObject ();
-			if (entries.get (s) == mainEntry)
-				entryDescr.put ("master", "true");
-			descr.put (s, entryDescr);
-		}
-		
-		return descr;
 	}
 	
 	
