@@ -462,7 +462,7 @@ public class CombineArchive
 			baseDir.getAbsolutePath (), "");
 		
 		ArchiveEntry entry = addEntry (file, localName, format, mainEntry);
-		entry.addDescription (new OmexMetaDataObject (entry, description));
+		entry.addDescription (new OmexMetaDataObject (description));
 		return entry;
 	}
 	
@@ -505,7 +505,7 @@ public class CombineArchive
 			baseDir.getAbsolutePath (), "");
 		
 		ArchiveEntry entry = addEntry (file, localName, format, false);
-		entry.addDescription (new OmexMetaDataObject (entry, description));
+		entry.addDescription (new OmexMetaDataObject (description));
 		return entry;
 	}
 	

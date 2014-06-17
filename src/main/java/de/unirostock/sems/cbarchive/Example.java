@@ -121,9 +121,9 @@ public class Example
 		
 		// add an entry to the archive
 		ArchiveEntry SBMLFile = ca.addEntry (
-			// this command will add /tmp/base/path/file.sbml to the root of our archive
-			// (because base path in that case is /tmp/base/path/). thus we'll see
-			// /file.sbml in our archive.
+		// this command will add /tmp/base/path/file.sbml to the root of our archive
+		// (because base path in that case is /tmp/base/path/). thus we'll see
+		// /file.sbml in our archive.
 			new File ("/tmp/base/path"),
 			new File ("/tmp/base/path/file.sbml"),
 			// format is http://identifiers.org/combine.specifications/sbml - here i
@@ -131,15 +131,15 @@ public class Example
 			CombineFormats.getFormatIdentifier ("sbml"));
 		
 		// we'll also add some OMEX description. creators as defined above
-		SBMLFile.addDescription (new OmexMetaDataObject (SBMLFile,
-			new OmexDescription (creators, new Date ())));
+		SBMLFile.addDescription (new OmexMetaDataObject (new OmexDescription (
+			creators, new Date ())));
 		
 		// add another entry to the archive
 		ArchiveEntry CellMLFile = ca.addEntry (
-			// this time we add /tmp/base/path/subdir/file.cellml
+		// this time we add /tmp/base/path/subdir/file.cellml
 			new File ("/tmp/base/path/subdir/file.cellml"),
 			// and we'd like to see it in /subdir/file.cellml
-			"/subdir/file.cellml", 
+			"/subdir/file.cellml",
 			// format is http://identifiers.org/combine.specifications/cellml.1.0 -
 			// again using CombineFormats to get the correct identifier
 			CombineFormats.getFormatIdentifier ("cellml.1.0"),
@@ -147,8 +147,8 @@ public class Example
 			true);
 		
 		// same description, but feel free to define different authors.
-		CellMLFile.addDescription (new OmexMetaDataObject (CellMLFile,
-			new OmexDescription (creators, new Date ())));
+		CellMLFile.addDescription (new OmexMetaDataObject (new OmexDescription (
+			creators, new Date ())));
 		
 		// just for fun: add some other meta data:
 		Element metaParent = new Element ("stuff");
@@ -157,8 +157,8 @@ public class Example
 		metaElement.addContent ("some content");
 		metaParent.addContent (metaElement);
 		// but this time we describe the fragment 'someFragment' inside the model
-		CellMLFile.addDescription (new DefaultMetaDataObject (CellMLFile,
-			"someFragment", metaParent));
+		CellMLFile.addDescription ("someFragment", new DefaultMetaDataObject (
+			metaParent));
 		
 		// finalise the archive (write manifest and meta data) and close it
 		ca.pack ();
@@ -203,7 +203,8 @@ public class Example
 			
 			// if you just want to read it, you do not need to extract it
 			// instead call for an InputStream:
-			InputStream myReader = Files.newInputStream (entry.getPath (), StandardOpenOption.READ);
+			InputStream myReader = Files.newInputStream (entry.getPath (),
+				StandardOpenOption.READ);
 			// but here we do not use it...
 			myReader.close ();
 			

@@ -131,8 +131,7 @@ public class MetaDataFile
 			MetaDataObject object = null;
 			
 			// is that omex?
-			object = OmexMetaDataObject.tryToRead (current, currentEntry,
-				fragmentIdentifier);
+			object = OmexMetaDataObject.tryToRead (current);
 			
 			/*
 			 * ···································
@@ -143,13 +142,12 @@ public class MetaDataFile
 			if (object == null)
 			{
 				// is it default?
-				object = DefaultMetaDataObject.tryToRead (current, currentEntry,
-					fragmentIdentifier);
+				object = DefaultMetaDataObject.tryToRead (current);
 			}
 			
 			if (object != null)
 			{
-				currentEntry.addDescription (object);
+				currentEntry.addDescription (fragmentIdentifier, object);
 			}
 			else
 				LOGGER.warn ("could not parse description for ", about);

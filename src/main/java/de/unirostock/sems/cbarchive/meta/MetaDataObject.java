@@ -59,35 +59,42 @@ public abstract class MetaDataObject
 	/**
 	 * Instantiates a new meta data object.
 	 * 
-	 * @param about
-	 *          the entry to describe
 	 * @param describingElement
-	 *          the element rooting the subtree that describes about
+	 *          the element rooting the subtree that describes an entity
 	 */
-	public MetaDataObject (ArchiveEntry about, Element describingElement)
+	public MetaDataObject (Element describingElement)
 	{
-		this.about = about;
+		this.about = null;
 		this.fragmentIdentifier = null;
 		this.description = describingElement;
 	}
 	
 	
 	/**
-	 * Instantiates a new meta data object.
+	 * Sets the about.
 	 * 
 	 * @param about
-	 *          the entry to describe
+	 *          the path to the entity described by this object
+	 */
+	public void setAbout (ArchiveEntry about)
+	{
+		this.about = about;
+		this.fragmentIdentifier = null;
+	}
+	
+	
+	/**
+	 * Sets the about.
+	 * 
+	 * @param about
+	 *          the path to the entity described by this object
 	 * @param fragmentIdentifier
 	 *          the fragment identifier pointing into <code>about</code>
-	 * @param describingElement
-	 *          the element rooting the subtree that describes about
 	 */
-	public MetaDataObject (ArchiveEntry about, String fragmentIdentifier,
-		Element describingElement)
+	public void setAbout (ArchiveEntry about, String fragmentIdentifier)
 	{
 		this.about = about;
 		this.fragmentIdentifier = fragmentIdentifier;
-		this.description = describingElement;
 	}
 	
 	
@@ -112,26 +119,6 @@ public abstract class MetaDataObject
 	 *          the parent element that will host the description
 	 */
 	public abstract void injectDescription (Element parent);
-	
-	
-	/**
-	 * Dummy method. To be <em>overwritten</em> in sub-classes.
-	 * 
-	 * @param element
-	 *          the describing element
-	 * @param about
-	 *          the entry to be described
-	 * @param fragmentIdentifier
-	 *          the optional fragment identifier pointing into <code>about</code>
-	 *          (leave <code>null</code> if in doubt)
-	 * @return <code>null</code>, since this is abstract and we cannot read
-	 *         anything here.
-	 */
-	public static MetaDataObject tryToRead (Element element, ArchiveEntry about,
-		String fragmentIdentifier)
-	{
-		return null;
-	}
 	
 	
 	/**

@@ -198,11 +198,27 @@ public class ArchiveEntry
 	/**
 	 * Adds another meta object describing this entry.
 	 * 
+	 * @param fragmentIdentifier
+	 *          the fragment identifier pointing into this entry
+	 * @param description
+	 *          the new description
+	 */
+	public void addDescription (String fragmentIdentifier,
+		MetaDataObject description)
+	{
+		description.setAbout (this, fragmentIdentifier);
+		this.descriptions.add (description);
+	}
+	
+	
+	/**
+	 * Adds another meta object describing this entry.
+	 * 
 	 * @param description
 	 *          the new description
 	 */
 	public void addDescription (MetaDataObject description)
 	{
-		this.descriptions.add (description);
+		addDescription (null, description);
 	}
 }

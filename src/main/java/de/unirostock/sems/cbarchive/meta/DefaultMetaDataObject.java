@@ -34,8 +34,6 @@ package de.unirostock.sems.cbarchive.meta;
 
 import org.jdom2.Element;
 
-import de.unirostock.sems.cbarchive.ArchiveEntry;
-
 
 
 /**
@@ -51,31 +49,12 @@ public class DefaultMetaDataObject
 	/**
 	 * Instantiates a new default meta data object.
 	 * 
-	 * @param about
-	 *          the entry described by this object
 	 * @param describingElement
-	 *          the element rooting the subtree that describes about
+	 *          the element rooting the subtree that describes an entity
 	 */
-	public DefaultMetaDataObject (ArchiveEntry about, Element describingElement)
+	public DefaultMetaDataObject (Element describingElement)
 	{
-		super (about, describingElement);
-	}
-	
-	
-	/**
-	 * Instantiates a new default meta data object.
-	 * 
-	 * @param about
-	 *          the entry described by this object
-	 * @param fragmentIdentifier
-	 *          the fragment identifier pointing into <code>about</code>
-	 * @param describingElement
-	 *          the element rooting the subtree that describes about
-	 */
-	public DefaultMetaDataObject (ArchiveEntry about, String fragmentIdentifier,
-		Element describingElement)
-	{
-		super (about, fragmentIdentifier, describingElement);
+		super (describingElement);
 	}
 	
 	
@@ -99,19 +78,11 @@ public class DefaultMetaDataObject
 	 * 
 	 * @param element
 	 *          the element rooting the meta data subtree
-	 * @param about
-	 *          the entry the is described by <code>element</code>
-	 * @param fragmentIdentifier
-	 *          the optional fragment identifier pointing into <code>about</code>
-	 *          (leave <code>null</code> if in doubt)
 	 * @return the default meta data object
 	 */
-	public static DefaultMetaDataObject tryToRead (Element element,
-		ArchiveEntry about, String fragmentIdentifier)
+	public static DefaultMetaDataObject tryToRead (Element element)
 	{
-		if (fragmentIdentifier == null)
-			return new DefaultMetaDataObject (about, element);
-		return new DefaultMetaDataObject (about, fragmentIdentifier, element);
+		return new DefaultMetaDataObject (element);
 	}
 	
 }

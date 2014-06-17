@@ -35,7 +35,6 @@ package de.unirostock.sems.cbarchive.meta;
 import org.jdom2.Element;
 
 import de.binfalse.bflog.LOGGER;
-import de.unirostock.sems.cbarchive.ArchiveEntry;
 import de.unirostock.sems.cbarchive.Utils;
 import de.unirostock.sems.cbarchive.meta.omex.OmexDescription;
 
@@ -57,14 +56,12 @@ public class OmexMetaDataObject
 	/**
 	 * Instantiates a new OMEX meta data object.
 	 * 
-	 * @param about
-	 *          the entry described by this object
 	 * @param description
 	 *          the description
 	 */
-	public OmexMetaDataObject (ArchiveEntry about, OmexDescription description)
+	public OmexMetaDataObject (OmexDescription description)
 	{
-		super (about, createDummyXmltree (about, description));
+		super (createDummyXmltree (description));
 		this.description = description;
 	}
 	
@@ -72,55 +69,15 @@ public class OmexMetaDataObject
 	/**
 	 * Instantiates a new OMEX meta data object.
 	 * 
-	 * @param about
-	 *          the entry described by this object
-	 * @param fragmentIdentifier
-	 *          the fragment identifier pointing into <code>about</code>
-	 * @param description
-	 *          the description
-	 */
-	public OmexMetaDataObject (ArchiveEntry about, String fragmentIdentifier,
-		OmexDescription description)
-	{
-		super (about, fragmentIdentifier, createDummyXmltree (about, description));
-		this.description = description;
-	}
-	
-	
-	/**
-	 * Instantiates a new OMEX meta data object.
-	 * 
-	 * @param about
-	 *          the entry described by this object
 	 * @param description
 	 *          the description
 	 * @param describingElement
 	 *          the element rooting the subtree that describes about
 	 */
-	public OmexMetaDataObject (ArchiveEntry about, OmexDescription description,
+	public OmexMetaDataObject (OmexDescription description,
 		Element describingElement)
 	{
-		super (about, describingElement);
-		this.description = description;
-	}
-	
-	
-	/**
-	 * Instantiates a new OMEX meta data object.
-	 * 
-	 * @param about
-	 *          the entry described by this object
-	 * @param fragmentIdentifier
-	 *          the fragment identifier pointing into <code>about</code>
-	 * @param description
-	 *          the description
-	 * @param describingElement
-	 *          the element rooting the subtree that describes about
-	 */
-	public OmexMetaDataObject (ArchiveEntry about, String fragmentIdentifier,
-		OmexDescription description, Element describingElement)
-	{
-		super (about, fragmentIdentifier, describingElement);
+		super (describingElement);
 		this.description = description;
 	}
 	
@@ -153,17 +110,13 @@ public class OmexMetaDataObject
 	/**
 	 * Creates a dummy XML tree that represents the OMEX description.
 	 * 
-	 * @param about
-	 *          the entry that this is about
 	 * @param description
 	 *          the OMEX description description
 	 * @return the element
 	 */
-	private static final Element createDummyXmltree (ArchiveEntry about,
-		OmexDescription description)
+	private static final Element createDummyXmltree (OmexDescription description)
 	{
 		Element descElem = new Element ("Description", Utils.rdfNS);
-		descElem.setAttribute ("about", about.getFilePath (), Utils.rdfNS);
 		description.toXML (descElem);
 		return descElem;
 	}
@@ -175,25 +128,17 @@ public class OmexMetaDataObject
 	 * 
 	 * @param element
 	 *          the element rooting the meta data subtree
-	 * @param about
-	 *          the entry the is described by <code>element</code>
-	 * @param fragmentIdentifier
-	 *          the optional fragment identifier pointing into <code>about</code>
-	 *          (leave <code>null</code> if in doubt)
 	 * @return the OMEX meta data object if in proper format, or null if we cannot
 	 *         parse the element
 	 */
-	public static OmexMetaDataObject tryToRead (Element element,
-		ArchiveEntry about, String fragmentIdentifier)
+	public static OmexMetaDataObject tryToRead (Element element)
 	{
 		try
 		{
 			OmexDescription desc = new OmexDescription (element);
 			if (desc.isEmpty ())
 				return null;
-			if (fragmentIdentifier == null)
-				return new OmexMetaDataObject (about, desc, element);
-			return new OmexMetaDataObject (about, fragmentIdentifier, desc, element);
+			return new OmexMetaDataObject (desc, element);
 		}
 		catch (Exception e)
 		{
