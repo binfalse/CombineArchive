@@ -32,11 +32,8 @@
  */
 package de.unirostock.sems.cbarchive;
 
-import java.io.BufferedOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.CopyOption;
@@ -47,9 +44,6 @@ import java.nio.file.StandardOpenOption;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
-import java.util.zip.ZipOutputStream;
 
 import javax.xml.transform.TransformerException;
 
@@ -60,8 +54,6 @@ import org.jdom2.Namespace;
 import org.jdom2.input.SAXBuilder;
 import org.jdom2.output.Format;
 import org.jdom2.output.XMLOutputter;
-
-import de.binfalse.bflog.LOGGER;
 
 
 
@@ -127,205 +119,6 @@ public class Utils
 		SAXBuilder builder = new SAXBuilder ();
 		return (Document) builder.build (Files.newInputStream (fileToRead,
 			StandardOpenOption.READ));
-	}
-	
-	
-	/**
-	 * Write a ZIP file.
-	 * 
-	 * @param directoryToZip
-	 *          the directory to zip
-	 * @param destination
-	 *          the destination file
-	 * @param fileList
-	 *          the file list to store in the ZIP
-	 * @throws IOException
-	 *           Signals that an I/O exception has occurred.
-	 */
-	private static void writeZipFile (File directoryToZip, File destination,
-		List<File> fileList) throws IOException
-	{
-		
-		FileOutputStream fos = null;
-		ZipOutputStream zos = null;
-		try
-		{
-			fos = new FileOutputStream (destination);
-			zos = new ZipOutputStream (fos);
-			
-			for (File file : fileList)
-				if (!file.isDirectory ())
-					addZipEntry (directoryToZip, file, zos);
-		}
-		catch (IOException e)
-		{
-			LOGGER.error (e, "cannot write zip file: ", destination, " - zipping: ",
-				directoryToZip);
-			throw e;
-		}
-		finally
-		{
-			if (zos != null)
-				zos.close ();
-			if (fos != null)
-				fos.close ();
-		}
-	}
-	
-	
-	/**
-	 * Adds a zip entry to a zip file.
-	 * 
-	 * @param directoryToZip
-	 *          the directory to zip
-	 * @param file
-	 *          the file to add
-	 * @param zos
-	 *          the ZipOutputStream
-	 * @throws FileNotFoundException
-	 *           the file not found exception
-	 * @throws IOException
-	 *           Signals that an I/O exception has occurred.
-	 */
-	private static void addZipEntry (File directoryToZip, File file,
-		ZipOutputStream zos) throws FileNotFoundException, IOException
-	{
-		FileInputStream fis = null;
-		try
-		{
-			fis = new FileInputStream (file);
-			ZipEntry zipEntry = new ZipEntry (file.getCanonicalPath ().substring (
-				directoryToZip.getCanonicalPath ().length () + 1,
-				file.getCanonicalPath ().length ()));
-			zos.putNextEntry (zipEntry);
-			
-			byte[] bytes = new byte[BUFFER_SIZE];
-			int length;
-			while ( (length = fis.read (bytes)) >= 0)
-				zos.write (bytes, 0, length);
-			zos.closeEntry ();
-		}
-		catch (IOException e)
-		{
-			LOGGER.error (e, "add zip entry: ", file, " - zipping: ", directoryToZip);
-			throw e;
-		}
-		finally
-		{
-			fis.close ();
-		}
-	}
-	
-	
-	/**
-	 * Create a zip file.
-	 * 
-	 * @param directory
-	 *          the directory to zip
-	 * @param destination
-	 *          the destination of the zip file
-	 * @param fileList
-	 *          the file list
-	 * @throws FileNotFoundException
-	 *           the file not found exception
-	 * @throws IOException
-	 *           Signals that an I/O exception has occurred.
-	 */
-	public static void packZip (File directory, File destination,
-		List<File> fileList) throws FileNotFoundException, IOException
-	{
-		writeZipFile (directory, destination, fileList);
-	}
-	
-	
-	/**
-	 * Unpack a zip file.
-	 * 
-	 * @param zipFilePath
-	 *          the zip file path
-	 * @param destDirectory
-	 *          the destination directory to write the packed files to
-	 * @param deleteOnExit
-	 *          the delete on exit
-	 * @return true, if successful
-	 * @throws IOException
-	 *           Signals that an I/O exception has occurred.
-	 */
-	public static boolean unpackZip (File zipFilePath, File destDirectory,
-		boolean deleteOnExit) throws IOException
-	{
-		File destDir = destDirectory;
-		if (!destDir.exists ())
-			destDir.mkdir ();
-		ZipInputStream zipIn = null;
-		try
-		{
-			zipIn = new ZipInputStream (new FileInputStream (zipFilePath));
-			ZipEntry entry = zipIn.getNextEntry ();
-			while (entry != null)
-			{
-				File filePath = new File (destDirectory + File.separator
-					+ entry.getName ());
-				filePath.getParentFile ().mkdirs ();
-				if (deleteOnExit)
-				{
-					filePath.getParentFile ().deleteOnExit ();
-					filePath.deleteOnExit ();
-				}
-				if (!entry.isDirectory ())
-					extractFile (zipIn, filePath);
-				zipIn.closeEntry ();
-				entry = zipIn.getNextEntry ();
-			}
-		}
-		catch (IOException e)
-		{
-			LOGGER.error (e, "add unzip file: ", zipFilePath, " - to: ",
-				destDirectory);
-			throw e;
-		}
-		finally
-		{
-			if (zipIn != null)
-				zipIn.close ();
-		}
-		return true;
-	}
-	
-	
-	/**
-	 * Extract a file from a zip archive.
-	 * 
-	 * @param zipIn
-	 *          the zip stream
-	 * @param filePath
-	 *          the file path
-	 * @throws IOException
-	 *           Signals that an I/O exception has occurred.
-	 */
-	private static void extractFile (ZipInputStream zipIn, File filePath)
-		throws IOException
-	{
-		BufferedOutputStream bos = null;
-		try
-		{
-			bos = new BufferedOutputStream (new FileOutputStream (filePath));
-			byte[] bytesIn = new byte[BUFFER_SIZE];
-			int read = 0;
-			while ( (read = zipIn.read (bytesIn)) != -1)
-				bos.write (bytesIn, 0, read);
-		}
-		catch (IOException e)
-		{
-			LOGGER.error (e, "cannot unzip file: ", filePath);
-			throw e;
-			
-		}
-		finally
-		{
-			if (bos != null)
-				bos.close ();
-		}
 	}
 	
 	/**
