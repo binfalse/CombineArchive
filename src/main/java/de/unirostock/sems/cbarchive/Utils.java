@@ -437,4 +437,22 @@ public class Utils
 			return fileName.substring (dot + 1);
 		return null;
 	}
+	
+	
+	/**
+	 * Recursively delete file or directory.
+	 * 
+	 * @param f
+	 *          the file/dir to delete
+	 * @throws IOException
+	 *           Signals that an I/O exception has occurred.
+	 */
+	public static void delete (File f) throws IOException
+	{
+		if (f.isDirectory ())
+			for (File c : f.listFiles ())
+				delete (c);
+		if (!f.delete ())
+			throw new FileNotFoundException ("Failed to delete file: " + f);
+	}
 }

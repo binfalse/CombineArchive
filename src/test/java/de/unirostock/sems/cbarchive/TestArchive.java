@@ -9,16 +9,25 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import javax.xml.transform.TransformerException;
 
+import org.jdom2.Element;
 import org.jdom2.JDOMException;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+
+import de.binfalse.bflog.LOGGER;
+import de.unirostock.sems.cbarchive.meta.DefaultMetaDataObject;
+import de.unirostock.sems.cbarchive.meta.OmexMetaDataObject;
+import de.unirostock.sems.cbarchive.meta.omex.VCard;
+import de.unirostock.sems.cbarchive.meta.omex.OmexDescription;;
 
 
 /**
@@ -50,7 +59,14 @@ public class TestArchive
 	public static void destroy ()
 	{
 		for (File f : testFiles)
-			f.delete ();
+			try
+			{
+				Utils.delete (f);
+			}
+			catch (IOException e)
+			{
+				LOGGER.warn (e, "could not delete ", f);
+			}
 	}
 
 	/**
@@ -112,4 +128,67 @@ public class TestArchive
 		ca.close ();
 	}
 	
+	/**
+	 * @throws IOException
+	 * @throws JDOMException
+	 * @throws ParseException
+	 * @throws CombineArchiveException
+	 * @throws TransformerException 
+	 */
+	@Test
+	public void testAddWholeMetaFile () throws IOException, JDOMException, ParseException, CombineArchiveException, TransformerException
+	{
+		// this is basically the Example.java
+		
+		// lets create the archive
+		testFiles.get (0).delete ();
+		CombineArchive ca = new CombineArchive (testFiles.get (0));
+
+		List<VCard> creators = new ArrayList<VCard> ();
+		creators.add (new VCard ("Scharm", "Martin",
+			"martin.scharm@uni-rostock.de", "University of Rostock"));
+		creators.add (new VCard ("Waltemath", "Dagmar",
+			"dagmar.waltemath@uni-rostock.de", "University of Rostock"));
+		
+
+		ArchiveEntry SBMLFile = ca.addEntry (
+			new File ("/tmp/base/path"),
+			new File ("/tmp/base/path/file.sbml"),
+			CombineFormats.getFormatIdentifier ("sbml"));
+		
+		SBMLFile.addDescription (new OmexMetaDataObject (new OmexDescription (creators, new Date ())));
+
+		ArchiveEntry CellMLFile = ca.addEntry (
+			new File ("/tmp/base/path/subdir/file.cellml"),
+			"/subdir/file.cellml",
+			CombineFormats.getFormatIdentifier ("cellml.1.0"),
+			true);
+		
+		CellMLFile.addDescription (new OmexMetaDataObject (new OmexDescription (creators, new Date ())));
+		
+		Element metaParent = new Element ("stuff");
+		Element metaElement = new Element ("myMetaElement");
+		metaElement.setAttribute ("someAttribute", "someValue");
+		metaElement.addContent ("some content");
+		metaParent.addContent (metaElement);
+		CellMLFile.addDescription ("someFragment", new DefaultMetaDataObject (metaParent));
+		
+		ca.pack ();
+		
+		// end of Example.java
+		
+		// extract meta data file
+		testFiles.get (1).delete ();
+		Files.createDirectories (testFiles.get (1).toPath ());
+		ca.extractTo (testFiles.get (1));
+		
+		int prevDescriptions = CellMLFile.getDescriptions ().size ();
+		int toAdd = prevDescriptions + SBMLFile.getDescriptions ().size ();
+		CellMLFile.addAllDescriptions (new File (testFiles.get (1) + "/metadata.rdf"));
+		assertEquals ("expected so see a different number of descriptions after adding all descriptions from a file", prevDescriptions + toAdd, CellMLFile.getDescriptions ().size ());
+		
+
+		ca.close ();
+		
+	}
 }

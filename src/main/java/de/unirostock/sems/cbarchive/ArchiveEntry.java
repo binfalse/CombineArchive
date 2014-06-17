@@ -38,6 +38,9 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.jdom2.JDOMException;
+
+import de.unirostock.sems.cbarchive.meta.MetaDataFile;
 import de.unirostock.sems.cbarchive.meta.MetaDataObject;
 
 
@@ -220,5 +223,23 @@ public class ArchiveEntry
 	public void addDescription (MetaDataObject description)
 	{
 		addDescription (null, description);
+	}
+	
+	
+	/**
+	 * Add all descriptions in
+	 * <code>metaDataFile<code> (assuming all are about this entry).
+	 * 
+	 * @param metaDataFile
+	 *          the file containing the meta data
+	 * @return number of entries added, or -1 in case of an error
+	 * @throws IOException
+	 * @throws JDOMException
+	 */
+	public int addAllDescriptions (File metaDataFile)
+		throws JDOMException,
+			IOException
+	{
+		return MetaDataFile.addAllMetaToEntry (metaDataFile.toPath (), this);
 	}
 }

@@ -128,10 +128,62 @@ public class MetaDataFile
 				continue;
 			}
 			
+			if (!addMetaToEntry (currentEntry, current, fragmentIdentifier))
+				LOGGER.warn ("could not parse description for ", about);
+		}
+	}
+	
+	/**
+	 * Adds all descriptions of a file to a single entry.
+	 *
+	 * @param file the file containing the meta data
+	 * @param entry the entry in the archive
+	 * @return the number of descriptions added to <code>entry</code>
+	 * @throws JDOMException the jDOM exception
+	 * @throws IOException Signals that an I/O exception has occurred.
+	 */
+	public static int addAllMetaToEntry (Path file, ArchiveEntry entry) throws JDOMException, IOException
+	{
+		int added = 0;
+		Document doc = Utils.readXmlDocument (file);
+		
+		List<Element> nl = Utils.getElementsByTagName (doc.getRootElement (),
+			"Description", Utils.rdfNS);
+		for (int i = 0; i < nl.size (); i++)
+		{
+			Element current = nl.get (i);
+			String fragmentIdentifier = null;
+			String about = current.getAttributeValue ("about", Utils.rdfNS);
+			if (about != null)
+			{
+				// is there a fragment identifier
+				int p = about.indexOf ("#");
+				if (p >= 0 && about.length () > p + 1)
+					fragmentIdentifier = about.substring (p + 1);
+			}
+			
+			if (!addMetaToEntry (entry, current, fragmentIdentifier))
+				LOGGER.warn ("could not parse description for ", about);
+			else
+				added++;
+		}
+		return added;
+	}
+	
+	/**
+	 * Associates some meta data to a file.
+	 *
+	 * @param entry the archive entry that is described
+	 * @param subtree the current xml subtree which describes <code>entry</code>
+	 * @param fragmentIdentifier the fragment identifier
+	 * @return true, if successful
+	 */
+	private static boolean addMetaToEntry (ArchiveEntry entry, Element subtree, String fragmentIdentifier)
+	{
 			MetaDataObject object = null;
 			
 			// is that omex?
-			object = OmexMetaDataObject.tryToRead (current);
+			object = OmexMetaDataObject.tryToRead (subtree);
 			
 			/*
 			 * ···································
@@ -142,17 +194,17 @@ public class MetaDataFile
 			if (object == null)
 			{
 				// is it default?
-				object = DefaultMetaDataObject.tryToRead (current);
+				object = DefaultMetaDataObject.tryToRead (subtree);
 			}
 			
 			if (object != null)
 			{
-				currentEntry.addDescription (fragmentIdentifier, object);
+				entry.addDescription (fragmentIdentifier, object);
 			}
 			else
-				LOGGER.warn ("could not parse description for ", about);
-		}
-		
+				return false;
+			
+		return true;
 	}
 	
 	
