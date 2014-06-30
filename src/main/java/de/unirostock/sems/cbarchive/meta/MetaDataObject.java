@@ -34,8 +34,6 @@ package de.unirostock.sems.cbarchive.meta;
 
 import org.jdom2.Element;
 
-import de.unirostock.sems.cbarchive.ArchiveEntry;
-
 
 
 /**
@@ -47,13 +45,13 @@ public abstract class MetaDataObject
 {
 	
 	/** The entry this is all about. */
-	protected ArchiveEntry	about;
+	protected MetaDataHolder	about;
 	
 	/** The fragment identifier. */
-	protected String				fragmentIdentifier;
+	protected String					fragmentIdentifier;
 	
 	/** The description. */
-	protected Element				description;
+	protected Element					description;
 	
 	
 	/**
@@ -76,7 +74,7 @@ public abstract class MetaDataObject
 	 * @param about
 	 *          the path to the entity described by this object
 	 */
-	public void setAbout (ArchiveEntry about)
+	public void setAbout (MetaDataHolder about)
 	{
 		this.about = about;
 		this.fragmentIdentifier = null;
@@ -91,7 +89,7 @@ public abstract class MetaDataObject
 	 * @param fragmentIdentifier
 	 *          the fragment identifier pointing into <code>about</code>
 	 */
-	public void setAbout (ArchiveEntry about, String fragmentIdentifier)
+	public void setAbout (MetaDataHolder about, String fragmentIdentifier)
 	{
 		this.about = about;
 		this.fragmentIdentifier = fragmentIdentifier;
@@ -106,9 +104,9 @@ public abstract class MetaDataObject
 	public String getAbout ()
 	{
 		if (fragmentIdentifier != null)
-			return about.getFilePath () + "#" + fragmentIdentifier;
+			return about.getEntityPath () + "#" + fragmentIdentifier;
 		
-		return about.getFilePath ();
+		return about.getEntityPath ();
 	}
 	
 	

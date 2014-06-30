@@ -108,6 +108,7 @@ public class Example
 			ParseException,
 			CombineArchiveException
 	{
+		System.out.println ("--- creating archive. ---");
 		// let's create some 'creators' -> meta data.
 		List<VCard> creators = new ArrayList<VCard> ();
 		creators.add (new VCard ("Scharm", "Martin",
@@ -124,8 +125,7 @@ public class Example
 		// this command will add /tmp/base/path/file.sbml to the root of our archive
 		// (because base path in that case is /tmp/base/path/). thus we'll see
 		// /file.sbml in our archive.
-			new File ("/tmp/base/path"),
-			new File ("/tmp/base/path/file.sbml"),
+			new File ("/tmp/base/path"), new File ("/tmp/base/path/file.sbml"),
 			// format is http://identifiers.org/combine.specifications/sbml - here i
 			// use the class CombineFormats to get the SBML identifier
 			CombineFormats.getFormatIdentifier ("sbml"));
@@ -160,6 +160,10 @@ public class Example
 		CellMLFile.addDescription ("someFragment", new DefaultMetaDataObject (
 			metaParent));
 		
+		// last but not least, lets add some description to the archive itself
+		ca.addDescription (new OmexMetaDataObject (new OmexDescription (creators,
+			new Date ())));
+		
 		// finalise the archive (write manifest and meta data) and close it
 		ca.pack ();
 		ca.close ();
@@ -183,12 +187,17 @@ public class Example
 			ParseException,
 			CombineArchiveException
 	{
+		System.out.println ("--- reading archive. ---");
 		File archiveFile = new File ("/tmp/testArchive.zip");
 		File destination = new File ("/tmp/myDestination");
 		File tmpEntryExtract = new File ("/tmp/myExtractedEntry");
 		
 		// read the archive stored in `archiveFile`
 		CombineArchive ca = new CombineArchive (archiveFile);
+		
+		// read description of the archive itself
+		System.out.println ("found " + ca.getDescriptions ().size ()
+			+ " meta data entries describing the archive.");
 		
 		// iterate over all entries in the archive
 		for (ArchiveEntry entry : ca.getEntries ())

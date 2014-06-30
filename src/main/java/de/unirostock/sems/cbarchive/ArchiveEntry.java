@@ -35,13 +35,11 @@ package de.unirostock.sems.cbarchive;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
 
 import org.jdom2.JDOMException;
 
 import de.unirostock.sems.cbarchive.meta.MetaDataFile;
-import de.unirostock.sems.cbarchive.meta.MetaDataObject;
+import de.unirostock.sems.cbarchive.meta.MetaDataHolder;
 
 
 
@@ -51,19 +49,17 @@ import de.unirostock.sems.cbarchive.meta.MetaDataObject;
  * @author martin scharm
  */
 public class ArchiveEntry
+	extends MetaDataHolder
 {
 	
 	/** The archive containing this entry. */
-	private CombineArchive				archive;
+	private CombineArchive	archive;
 	
 	/** The relative path name to that file. */
-	private Path									relativeName;
+	private Path						relativeName;
 	
 	/** The format. */
-	private String								format;
-	
-	/** The descriptions. */
-	private List<MetaDataObject>	descriptions;
+	private String					format;
 	
 	
 	/**
@@ -79,7 +75,6 @@ public class ArchiveEntry
 	public ArchiveEntry (CombineArchive archive, Path relativeName, String format)
 	{
 		super ();
-		descriptions = new ArrayList<MetaDataObject> ();
 		this.archive = archive;
 		this.relativeName = relativeName;
 		this.format = format;
@@ -159,6 +154,19 @@ public class ArchiveEntry
 	
 	
 	/**
+	 * Gets the path to this entity. Equals {@link #getFilePath()} for entities of
+	 * type {@link ArchiveEntry}.
+	 * 
+	 * @return the file path
+	 */
+	@Override
+	public String getEntityPath ()
+	{
+		return getFilePath ();
+	}
+	
+	
+	/**
 	 * Gets the format as reported by the archive's manifest.
 	 * 
 	 * @return the format
@@ -166,63 +174,6 @@ public class ArchiveEntry
 	public String getFormat ()
 	{
 		return format;
-	}
-	
-	
-	/**
-	 * Gets the {@link MetaDataObject MetaDataObjects} describing this entry.
-	 * <p>
-	 * The returned list can contain any number of {@link MetaDataObject
-	 * MetaDataObjects}, but might as well be empty.
-	 * </p>
-	 * 
-	 * 
-	 * @return the descriptions
-	 */
-	public List<MetaDataObject> getDescriptions ()
-	{
-		return this.descriptions;
-	}
-	
-	
-	/**
-	 * Removes a certain description.
-	 * 
-	 * @param toDelete
-	 *          the meta data object to delete
-	 * @return true, if successful
-	 */
-	public boolean removeDescription (MetaDataObject toDelete)
-	{
-		return descriptions.remove (toDelete);
-	}
-	
-	
-	/**
-	 * Adds another meta object describing this entry.
-	 * 
-	 * @param fragmentIdentifier
-	 *          the fragment identifier pointing into this entry
-	 * @param description
-	 *          the new description
-	 */
-	public void addDescription (String fragmentIdentifier,
-		MetaDataObject description)
-	{
-		description.setAbout (this, fragmentIdentifier);
-		this.descriptions.add (description);
-	}
-	
-	
-	/**
-	 * Adds another meta object describing this entry.
-	 * 
-	 * @param description
-	 *          the new description
-	 */
-	public void addDescription (MetaDataObject description)
-	{
-		addDescription (null, description);
 	}
 	
 	

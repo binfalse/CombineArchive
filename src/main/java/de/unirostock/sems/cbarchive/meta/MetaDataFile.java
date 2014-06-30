@@ -51,6 +51,7 @@ import org.jdom2.JDOMException;
 
 import de.binfalse.bflog.LOGGER;
 import de.unirostock.sems.cbarchive.ArchiveEntry;
+import de.unirostock.sems.cbarchive.CombineArchive;
 import de.unirostock.sems.cbarchive.CombineArchiveException;
 import de.unirostock.sems.cbarchive.Utils;
 
@@ -66,13 +67,16 @@ public class MetaDataFile
 {
 	
 	/**
-	 * Read a meta data file containing descriptions about {@link ArchiveEntry
-	 * ArchiveEntries} given in <code>entries</code>.
+	 * Read a meta data file containing descriptions about the
+	 * {@link CombineArchive archive} and/or its {@link ArchiveEntry
+	 * entries} given in <code>entries</code>.
 	 * 
 	 * @param file
 	 *          the file containing meta data
 	 * @param entries
 	 *          the entries available in the corresponding archive
+	 * @param archive
+	 *          the archive which contains this file
 	 * @throws ParseException
 	 *           the parse exception
 	 * @throws JDOMException
@@ -80,8 +84,10 @@ public class MetaDataFile
 	 * @throws IOException
 	 *           Signals that an I/O exception has occurred.
 	 * @throws CombineArchiveException
+	 *           the combine archive exception
 	 */
-	public static void readFile (Path file, HashMap<String, ArchiveEntry> entries)
+	public static void readFile (Path file,
+		HashMap<String, ArchiveEntry> entries, CombineArchive archive)
 		throws ParseException,
 			JDOMException,
 			IOException,
@@ -97,6 +103,14 @@ public class MetaDataFile
 			String about = current.getAttributeValue ("about", Utils.rdfNS);
 			if (about == null)
 				throw new CombineArchiveException ("cannot read about attribute");
+			
+			if (about.equals (".") || about.equals ("/"))
+			{
+				// this entry describes the archive itself
+				if (!addMetaToEntry (archive, current, null))
+					LOGGER.warn ("could not parse description for ", about);
+				continue;
+			}
 			
 			if (about.startsWith ("./"))
 				about = about.substring (2);
@@ -133,16 +147,23 @@ public class MetaDataFile
 		}
 	}
 	
+	
 	/**
 	 * Adds all descriptions of a file to a single entry.
-	 *
-	 * @param file the file containing the meta data
-	 * @param entry the entry in the archive
+	 * 
+	 * @param file
+	 *          the file containing the meta data
+	 * @param entry
+	 *          the entry in the archive
 	 * @return the number of descriptions added to <code>entry</code>
-	 * @throws JDOMException the jDOM exception
-	 * @throws IOException Signals that an I/O exception has occurred.
+	 * @throws JDOMException
+	 *           the jDOM exception
+	 * @throws IOException
+	 *           Signals that an I/O exception has occurred.
 	 */
-	public static int addAllMetaToEntry (Path file, ArchiveEntry entry) throws JDOMException, IOException
+	public static int addAllMetaToEntry (Path file, ArchiveEntry entry)
+		throws JDOMException,
+			IOException
 	{
 		int added = 0;
 		Document doc = Utils.readXmlDocument (file);
@@ -170,93 +191,114 @@ public class MetaDataFile
 		return added;
 	}
 	
+	
 	/**
 	 * Associates some meta data to a file.
-	 *
-	 * @param entry the archive entry that is described
-	 * @param subtree the current xml subtree which describes <code>entry</code>
-	 * @param fragmentIdentifier the fragment identifier
+	 * 
+	 * @param entity
+	 *          the entity that is described by <code>subtree</code>
+	 * @param subtree
+	 *          the current xml subtree which describes <code>entry</code>
+	 * @param fragmentIdentifier
+	 *          the fragment identifier
 	 * @return true, if successful
 	 */
-	private static boolean addMetaToEntry (ArchiveEntry entry, Element subtree, String fragmentIdentifier)
+	private static boolean addMetaToEntry (MetaDataHolder entity,
+		Element subtree, String fragmentIdentifier)
 	{
-			MetaDataObject object = null;
-			
-			// is that omex?
-			object = OmexMetaDataObject.tryToRead (subtree);
-			
-			/*
-			 * ···································
-			 * optional: other meta data formats..
-			 * ···································
-			 */
-			
-			if (object == null)
-			{
-				// is it default?
-				object = DefaultMetaDataObject.tryToRead (subtree);
-			}
-			
-			if (object != null)
-			{
-				entry.addDescription (fragmentIdentifier, object);
-			}
-			else
-				return false;
-			
+		MetaDataObject object = null;
+		
+		// is that omex?
+		object = OmexMetaDataObject.tryToRead (subtree);
+		
+		/*
+		 * ···································
+		 * optional: other meta data formats..
+		 * ···································
+		 */
+		
+		if (object == null)
+		{
+			// is it default?
+			object = DefaultMetaDataObject.tryToRead (subtree);
+		}
+		
+		if (object != null)
+		{
+			entity.addDescription (fragmentIdentifier, object);
+		}
+		else
+			return false;
+		
 		return true;
 	}
 	
 	
 	/**
-	 * Write the meta data about {@link ArchiveEntry ArchiveEntries} given in
-	 * <code>entries</code> to meta data files.
+	 * Write the meta data about the {@link CombineArchive archive} and its
+	 * {@link ArchiveEntry entries} given in <code>archive</code> and
+	 * <code>entries</code> to a single meta data files.
 	 * 
 	 * <p>
 	 * This method will create one meta data file per entry. Meta data files will
 	 * be named <code>baseDir/metadata(-[-0-9a-f]+)?.rdf</code>. See
-	 * {@link #writeFile(File,HashMap)} if you want to store all meta data in a
-	 * single file.
-	 * </p>
 	 * 
 	 * @param baseDir
 	 *          the base directory to store the files
 	 * @param entries
 	 *          the archive entries
+	 * @param archive
+	 *          the archive which will contain the files
 	 * @return the list of files that were created
 	 * @throws IOException
 	 *           Signals that an I/O exception has occurred.
 	 * @throws TransformerException
 	 *           the transformer exception
+	 *           {@link #writeFile(File,HashMap,CombineArchive)} if you want to
+	 *           store all meta data in a
+	 *           single file.
+	 *           </p>
 	 */
 	public static List<File> writeFiles (File baseDir,
-		HashMap<String, ArchiveEntry> entries)
+		HashMap<String, ArchiveEntry> entries, CombineArchive archive)
 		throws IOException,
 			TransformerException
 	{
 		List<File> outputs = new ArrayList<File> ();
-		int it = 0;
 		
+		// archive itself
+		File output = getMetaOutputFile (baseDir);
+		
+		Document xmlDoc = new Document ();
+		Element rdf = new Element ("RDF", Utils.rdfNS);
+		xmlDoc.addContent (rdf);
+		rdf.addNamespaceDeclaration (Utils.dcNS);
+		rdf.addNamespaceDeclaration (Utils.vcNS);
+		
+		exportMetaData (archive, rdf);
+		
+		try (BufferedWriter bw = new BufferedWriter (new FileWriter (output)))
+		{
+			bw.write (Utils.prettyPrintDocument (xmlDoc));
+		}
+		catch (IOException | TransformerException e)
+		{
+			LOGGER.error (e, "cannot write omex descriptions to ", output);
+			throw e;
+		}
+		outputs.add (output);
+		
+		// all entries
 		for (ArchiveEntry e : entries.values ())
 		{
-			File output = new File (baseDir.getAbsolutePath () + File.separator
-				+ "metadata-" + ++it + ".rdf");
-			while (output.exists ())
-				output = new File (baseDir.getAbsolutePath () + File.separator
-					+ "metadata-" + ++it + ".rdf");
+			output = getMetaOutputFile (baseDir);
 			
-			Document xmlDoc = new Document ();
-			Element rdf = new Element ("RDF", Utils.rdfNS);
+			xmlDoc = new Document ();
+			rdf = new Element ("RDF", Utils.rdfNS);
 			xmlDoc.addContent (rdf);
 			rdf.addNamespaceDeclaration (Utils.dcNS);
 			rdf.addNamespaceDeclaration (Utils.vcNS);
-			for (MetaDataObject meta : e.getDescriptions ())
-			{
-				Element Description = new Element ("Description", Utils.rdfNS);
-				Description.setAttribute ("about", meta.getAbout (), Utils.rdfNS);
-				rdf.addContent (Description);
-				meta.injectDescription (Description);
-			}
+			exportMetaData (e, rdf);
 			
 			try (BufferedWriter bw = new BufferedWriter (new FileWriter (output)))
 			{
@@ -276,21 +318,24 @@ public class MetaDataFile
 	
 	
 	/**
-	 * Write the meta data about {@link ArchiveEntry ArchiveEntries} given in
+	 * Write the meta data about the {@link CombineArchive archive} and its
+	 * {@link ArchiveEntry entries} given in <code>archive</code> and
 	 * <code>entries</code> to a single meta data file.
 	 * 
 	 * <p>
-	 * This method will create one meta data file for all entries. Thus, the
+	 * This method will create one meta data file for all description. Thus, the
 	 * returned list of files will be of size one. The meta data file will be
 	 * named <code>baseDir/metadata(-[-0-9a-f]+)?.rdf</code>. See
-	 * {@link #writeFiles(File,HashMap)} if you want to store the meta data in a
-	 * multiple files, one for each entry.
+	 * {@link #writeFiles(File,HashMap,CombineArchive)} if you want to store the
+	 * meta data in a multiple files, one for each entry.
 	 * </p>
 	 * 
 	 * @param baseDir
 	 *          the base directory to store the file
 	 * @param entries
 	 *          the archive entries
+	 * @param archive
+	 *          the archive which will contain the files
 	 * @return the list of files that were created (should be always of size one)
 	 * @throws IOException
 	 *           Signals that an I/O exception has occurred.
@@ -298,16 +343,11 @@ public class MetaDataFile
 	 *           the transformer exception
 	 */
 	public static List<File> writeFile (File baseDir,
-		HashMap<String, ArchiveEntry> entries)
+		HashMap<String, ArchiveEntry> entries, CombineArchive archive)
 		throws IOException,
 			TransformerException
 	{
-		File output = new File (baseDir.getAbsolutePath () + File.separator
-			+ "metadata.rdf");
-		int it = 0;
-		while (output.exists ())
-			output = new File (baseDir.getAbsolutePath () + File.separator
-				+ "metadata-" + ++it + ".rdf");
+		File output = getMetaOutputFile (baseDir);
 		
 		Document xmlDoc = new Document ();
 		Element rdf = new Element ("RDF", Utils.rdfNS);
@@ -315,14 +355,12 @@ public class MetaDataFile
 		rdf.addNamespaceDeclaration (Utils.dcNS);
 		rdf.addNamespaceDeclaration (Utils.vcNS);
 		
+		// archive itself
+		exportMetaData (archive, rdf);
+		
+		// all entries
 		for (ArchiveEntry e : entries.values ())
-			for (MetaDataObject meta : e.getDescriptions ())
-			{
-				Element Description = new Element ("Description", Utils.rdfNS);
-				Description.setAttribute ("about", meta.getAbout (), Utils.rdfNS);
-				rdf.addContent (Description);
-				meta.injectDescription (Description);
-			}
+			exportMetaData (e, rdf);
 		
 		try (BufferedWriter bw = new BufferedWriter (new FileWriter (output)))
 		{
@@ -337,5 +375,45 @@ public class MetaDataFile
 		List<File> outputs = new ArrayList<File> ();
 		outputs.add (output);
 		return outputs;
+	}
+	
+	
+	/**
+	 * Find a file to write the meta data to.
+	 * 
+	 * @param baseDir
+	 *          the base directory
+	 * @return the output file
+	 */
+	private static File getMetaOutputFile (File baseDir)
+	{
+		File output = new File (baseDir.getAbsolutePath () + File.separator
+			+ "metadata.rdf");
+		int it = 0;
+		while (output.exists ())
+			output = new File (baseDir.getAbsolutePath () + File.separator
+				+ "metadata-" + ++it + ".rdf");
+		
+		return output;
+	}
+	
+	
+	/**
+	 * Export the meta data of an entity.
+	 * 
+	 * @param entity
+	 *          the entity
+	 * @param rdf
+	 *          the RDF node which will host the description
+	 */
+	private static void exportMetaData (MetaDataHolder entity, Element rdf)
+	{
+		for (MetaDataObject meta : entity.getDescriptions ())
+		{
+			Element Description = new Element ("Description", Utils.rdfNS);
+			Description.setAttribute ("about", meta.getAbout (), Utils.rdfNS);
+			rdf.addContent (Description);
+			meta.injectDescription (Description);
+		}
 	}
 }

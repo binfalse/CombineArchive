@@ -61,6 +61,7 @@ import org.jdom2.JDOMException;
 
 import de.binfalse.bflog.LOGGER;
 import de.unirostock.sems.cbarchive.meta.MetaDataFile;
+import de.unirostock.sems.cbarchive.meta.MetaDataHolder;
 import de.unirostock.sems.cbarchive.meta.OmexMetaDataObject;
 import de.unirostock.sems.cbarchive.meta.omex.OmexDescription;
 
@@ -79,6 +80,7 @@ import de.unirostock.sems.cbarchive.meta.omex.OmexDescription;
  * @author martin scharm
  */
 public class CombineArchive
+	extends MetaDataHolder
 	implements Closeable
 {
 	
@@ -590,6 +592,16 @@ public class CombineArchive
 	}
 	
 	
+	/* (non-Javadoc)
+	 * @see de.unirostock.sems.cbarchive.meta.MetaDataHolder#getEntityPath()
+	 */
+	@Override
+	public String getEntityPath ()
+	{
+		return ".";
+	}
+	
+	
 	/**
 	 * Creates a manifest entry.
 	 * 
@@ -642,8 +654,8 @@ public class CombineArchive
 		
 		File baseDir = Files.createTempDirectory ("combineArchive").toFile ();
 		
-		List<File> descr = singleFile ? MetaDataFile.writeFile (baseDir, entries)
-			: MetaDataFile.writeFiles (baseDir, entries);
+		List<File> descr = singleFile ? MetaDataFile.writeFile (baseDir, entries,
+			this) : MetaDataFile.writeFiles (baseDir, entries, this);
 		for (File f : descr)
 		{
 			root.addContent (createManifestEntry (
@@ -812,7 +824,7 @@ public class CombineArchive
 		// parse all descriptions
 		for (Path f : metaDataFiles)
 		{
-			MetaDataFile.readFile (f, entries);
+			MetaDataFile.readFile (f, entries, this);
 		}
 	}
 	
