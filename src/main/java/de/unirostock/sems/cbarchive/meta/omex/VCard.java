@@ -75,6 +75,19 @@ public class VCard
 	
 	
 	/**
+	 * Instantiates an empty VCard.
+	 * 
+	 */
+	public VCard ()
+	{
+		this.familyName = null;
+		this.givenName = null;
+		this.email = null;
+		this.organization = null;
+	}
+	
+	
+	/**
 	 * Instantiates a new VCard.
 	 * 
 	 * @param familyName

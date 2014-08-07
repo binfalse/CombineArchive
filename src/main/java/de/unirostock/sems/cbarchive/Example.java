@@ -125,7 +125,8 @@ public class Example
 		// this command will add /tmp/base/path/file.sbml to the root of our archive
 		// (because base path in that case is /tmp/base/path/). thus we'll see
 		// /file.sbml in our archive.
-			new File ("/tmp/base/path"), new File ("/tmp/base/path/file.sbml"),
+			new File ("/tmp/base/path"),
+			new File ("/tmp/base/path/file.sbml"),
 			// format is http://identifiers.org/combine.specifications/sbml - here i
 			// use the class CombineFormats to get the SBML identifier
 			CombineFormats.getFormatIdentifier ("sbml"));
