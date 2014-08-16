@@ -140,6 +140,14 @@ public class TestArchive
 	{
 		// this is basically the Example.java
 		
+		if (!new File ("/tmp/base/path/subdir/file.cellml").exists () || !new File ("/tmp/base/path/file.sbml").exists ())
+		{
+			LOGGER.warn ("");
+			LOGGER.warn (">>>>> cannot find test files. aborting... <<<<<");
+			LOGGER.warn ("");
+			return;
+		}
+		
 		// lets create the archive
 		testFiles.get (0).delete ();
 		CombineArchive ca = new CombineArchive (testFiles.get (0));
