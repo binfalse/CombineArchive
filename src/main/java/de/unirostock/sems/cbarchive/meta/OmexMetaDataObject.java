@@ -93,6 +93,7 @@ public class OmexMetaDataObject
 	public void injectDescription (Element parent)
 	{
 		description.toXML (parent);
+		super.description = parent;
 	}
 	
 	
