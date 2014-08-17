@@ -82,7 +82,8 @@ public class ArchiveEntry
 	
 	
 	/**
-	 * Extract this file to <code>target</code>.
+	 * Extract this file to <code>target</code>. If <code>target</code> is a
+	 * directory we'll write to <code>target/getFileName ()</code>.
 	 * 
 	 * @param target
 	 *          the target to write this item to.
@@ -91,6 +92,9 @@ public class ArchiveEntry
 	 */
 	public File extractFile (File target) throws IOException
 	{
+		if (target.isDirectory ())
+			target = new File (target.getAbsolutePath () + File.separatorChar
+				+ getFileName ());
 		return archive.extract (relativeName, target);
 	}
 	
