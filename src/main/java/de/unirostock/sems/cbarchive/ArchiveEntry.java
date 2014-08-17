@@ -97,6 +97,17 @@ public class ArchiveEntry
 	
 	
 	/**
+	 * Gets the archive that contains this entry.
+	 *
+	 * @return the archive
+	 */
+	public CombineArchive getArchive ()
+	{
+		return archive;
+	}
+	
+	
+	/**
 	 * Gets the corresponding file.
 	 * 
 	 * @return the file
