@@ -92,9 +92,6 @@ public class ArchiveEntry
 	 */
 	public File extractFile (File target) throws IOException
 	{
-		if (target.isDirectory ())
-			target = new File (target.getAbsolutePath () + File.separatorChar
-				+ getFileName ());
 		return archive.extract (relativeName, target);
 	}
 	

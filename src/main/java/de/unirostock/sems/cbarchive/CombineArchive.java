@@ -592,7 +592,9 @@ public class CombineArchive
 	}
 	
 	
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see de.unirostock.sems.cbarchive.meta.MetaDataHolder#getEntityPath()
 	 */
 	@Override
@@ -845,6 +847,11 @@ public class CombineArchive
 	{
 		if (!Files.isRegularFile (archivePath))
 			throw new IOException (archivePath + " is not a regular file");
+		
+		if (destination.isDirectory ())
+			destination = destination.toPath ()
+				.resolve ("./" + archivePath.normalize ().toString ()).normalize ()
+				.toFile ();
 		
 		Files.createDirectories (destination.toPath ().getParent ());
 		Files.copy (archivePath, destination.toPath (), Utils.COPY_OPTION);
