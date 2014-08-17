@@ -5,6 +5,8 @@ package de.unirostock.sems.cbarchive;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
@@ -25,6 +27,7 @@ import org.junit.Test;
 
 import de.binfalse.bflog.LOGGER;
 import de.unirostock.sems.cbarchive.meta.DefaultMetaDataObject;
+import de.unirostock.sems.cbarchive.meta.MetaDataObject;
 import de.unirostock.sems.cbarchive.meta.OmexMetaDataObject;
 import de.unirostock.sems.cbarchive.meta.omex.VCard;
 import de.unirostock.sems.cbarchive.meta.omex.OmexDescription;;
@@ -50,7 +53,7 @@ public class TestArchive
 		// lets create 6 test files, the first one will serve as an archive
 		for (int i = 0; i < 6; i++)
 			testFiles.add (File.createTempFile ("combineArchive", "test" + i));
-		
+		LOGGER.setMinLevel (LOGGER.DEBUG);
 	}
 	/**
 	 * delete test files
@@ -58,7 +61,7 @@ public class TestArchive
 	@AfterClass
 	public static void destroy ()
 	{
-		for (File f : testFiles)
+		/*for (File f : testFiles)
 			try
 			{
 				Utils.delete (f);
@@ -66,7 +69,7 @@ public class TestArchive
 			catch (IOException e)
 			{
 				LOGGER.warn (e, "could not delete ", f);
-			}
+			}*/
 	}
 
 	/**
@@ -145,6 +148,10 @@ public class TestArchive
 			LOGGER.warn ("");
 			LOGGER.warn (">>>>> cannot find test files. aborting... <<<<<");
 			LOGGER.warn ("");
+			LOGGER.warn ("run: ");
+			LOGGER.warn ("             mkdir -p /tmp/base/path/subdir");
+			LOGGER.warn ("             touch /tmp/base/path/{file.sbml,subdir/file.cellml}");
+			LOGGER.warn ("");
 			return;
 		}
 		
@@ -198,5 +205,91 @@ public class TestArchive
 
 		ca.close ();
 		
+	}
+	
+	/**
+	 * @throws IOException
+	 * @throws JDOMException
+	 * @throws ParseException
+	 * @throws CombineArchiveException
+	 * @throws TransformerException 
+	 * @throws InterruptedException 
+	 */
+	@Test
+	public void testMove () throws IOException, JDOMException, ParseException, CombineArchiveException, TransformerException, InterruptedException
+	{
+		// lets create the archive
+		for (int i = 0; i < 6; i++)
+		{
+			if (testFiles.get (i).isDirectory ())
+			{
+				Utils.delete (testFiles.get (i));
+				testFiles.get (i).createNewFile ();
+			}
+		}
+		testFiles.get (0).delete ();
+		
+		CombineArchive ca = new CombineArchive (testFiles.get (0));
+		
+		List<ArchiveEntry> entries = new ArrayList<ArchiveEntry> ();
+		for (int i = 1; i < testFiles.size (); i++)
+		{
+			entries.add (ca.addEntry (testFiles.get (i), "/sub" + i + "/file" + i + ".ext", CombineFormats.getFormatIdentifier ("sbml")));
+		}
+		
+		List<VCard> creators = new ArrayList<VCard> ();
+		creators.add (new VCard ("Scharm", "Martin",
+			"martin.scharm@uni-rostock.de", "University of Rostock"));
+		creators.add (new VCard ("Waltemath", "Dagmar",
+			"dagmar.waltemath@uni-rostock.de", "University of Rostock"));
+		
+		for (ArchiveEntry e : entries)
+			e.addDescription (new OmexMetaDataObject (new OmexDescription (creators, new Date ())));
+		
+		assertEquals ("unexpected number of entries in archive after creation", testFiles.size () - 1, ca.getNumEntries ());
+		
+		ca.pack ();
+		ca.close ();
+		
+		
+		// test the move
+		
+		ca = new CombineArchive (testFiles.get (0));
+		
+		ArchiveEntry entry = ca.getEntry ("/sub3/file3.ext");
+		assertEquals ("unexpected number of meta for /sub3/file3.ext", 1, entry.getDescriptions ().size ());
+		assertEquals ("meta of /sub3/file3.ext is not for /sub3/file3.ext", "/sub3/file3.ext", entry.getDescriptions ().get (0).getAbout ());
+		
+		
+		ca.moveEntry ("/sub3/file3.ext", "/sub1/file3.ext");
+		
+		
+		assertNull ("mhpf. this file shouldn't be there anymore.", ca.getEntry ("/sub3/file3.ext"));
+		
+		entry = ca.getEntry ("/sub1/file3.ext");
+		assertNotNull ("moving failed", entry);
+		List<MetaDataObject> meta = entry.getDescriptions ();
+		assertEquals ("unexpected number of meta for /sub1/file3.ext", 1, meta.size ());
+		for (MetaDataObject m : meta)
+			assertEquals ("meta of /sub1/file3.ext is not for /sub1/file3.ext", "/sub1/file3.ext", m.getAbout ());
+		
+		ca.pack ();
+		ca.close ();
+		
+		// finally make sure we also stored the stuff correctly!
+		
+		ca = new CombineArchive (testFiles.get (0));
+		
+		assertNull ("mhpf. this file shouldn't be there anymore.", ca.getEntry ("/sub3/file3.ext"));
+		
+		entry = ca.getEntry ("/sub1/file3.ext");
+		assertNotNull ("moving failed", entry);
+		meta = entry.getDescriptions ();
+		assertEquals ("unexpected number of meta for /sub1/file3.ext", 1, meta.size ());
+		for (MetaDataObject m : meta)
+			assertEquals ("meta of /sub1/file3.ext is not for /sub1/file3.ext", "/sub1/file3.ext", m.getAbout ());
+		
+		ca.pack ();
+		ca.close ();
 	}
 }

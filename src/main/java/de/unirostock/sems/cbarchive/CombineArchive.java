@@ -44,6 +44,7 @@ import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -62,6 +63,7 @@ import org.jdom2.JDOMException;
 import de.binfalse.bflog.LOGGER;
 import de.unirostock.sems.cbarchive.meta.MetaDataFile;
 import de.unirostock.sems.cbarchive.meta.MetaDataHolder;
+import de.unirostock.sems.cbarchive.meta.MetaDataObject;
 import de.unirostock.sems.cbarchive.meta.OmexMetaDataObject;
 import de.unirostock.sems.cbarchive.meta.omex.OmexDescription;
 
@@ -828,6 +830,47 @@ public class CombineArchive
 		{
 			MetaDataFile.readFile (f, entries, this);
 		}
+	}
+	
+	
+	/**
+	 * Move an entry. (rename it)
+	 * 
+	 * @param oldPath
+	 *          the old path to the entry
+	 * @param newPath
+	 *          the target path
+	 * @throws IOException
+	 *           Signals that an I/O exception has occurred.
+	 */
+	public void moveEntry (String oldPath, String newPath) throws IOException
+	{
+		String alt = prepareLocation (oldPath);
+		String neu = prepareLocation (newPath);
+		
+		ArchiveEntry entry = getEntryByLocation (alt);
+		if (entry == null)
+			throw new IOException ("no such entry in archive");
+		
+		boolean wasMain = entry == mainEntry;
+		entries.remove (alt);
+		
+		Path neuPath = zipfs.getPath (neu).normalize ();
+		Files.move (zipfs.getPath (alt).normalize (), neuPath,
+			StandardCopyOption.ATOMIC_MOVE);
+		ArchiveEntry newEntry = new ArchiveEntry (this, neuPath, entry.getFormat ());
+		
+		entries.put (neu, newEntry);
+		if (wasMain)
+			mainEntry = newEntry;
+		
+		// move meta data
+		List<MetaDataObject> meta = entry.getDescriptions ();
+		for (MetaDataObject m : meta)
+		{
+			newEntry.addDescription (m);
+		}
+		
 	}
 	
 	
