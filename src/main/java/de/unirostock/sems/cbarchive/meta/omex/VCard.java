@@ -69,8 +69,9 @@ public class VCard
 	 */
 	public boolean isEmpty ()
 	{
-		return familyName == null || givenName == null || familyName.length () < 1
-			|| givenName.length () < 1;
+		return (familyName == null || familyName.length () < 1)
+			&& (givenName == null || givenName.length () < 1)
+			&& (email == null || email.length () < 1);
 	}
 	
 	
