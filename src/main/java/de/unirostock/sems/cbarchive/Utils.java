@@ -209,10 +209,8 @@ public class Utils
 		throws IOException,
 			TransformerException
 	{
-		SimpleOutputStream out = new SimpleOutputStream ();
 		XMLOutputter outputter = new XMLOutputter (Format.getPrettyFormat ());
-		outputter.output (doc, out);
-		return out.toString ();
+		return outputter.outputString(doc);
 	}
 	
 	

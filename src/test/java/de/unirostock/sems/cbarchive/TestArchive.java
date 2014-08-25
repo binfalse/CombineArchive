@@ -61,7 +61,7 @@ public class TestArchive
 	@AfterClass
 	public static void destroy ()
 	{
-		/*for (File f : testFiles)
+		for (File f : testFiles)
 			try
 			{
 				Utils.delete (f);
@@ -69,7 +69,7 @@ public class TestArchive
 			catch (IOException e)
 			{
 				LOGGER.warn (e, "could not delete ", f);
-			}*/
+			}
 	}
 
 	/**
