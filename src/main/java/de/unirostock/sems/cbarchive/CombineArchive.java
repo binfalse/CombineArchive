@@ -127,7 +127,7 @@ public class CombineArchive
 		zip_properties.put ("create", "true");
 		zip_properties.put ("encoding", "UTF-8");
 		zipfs = FileSystems.newFileSystem (
-			URI.create ("jar:file:" + zipFile.getAbsolutePath ()), zip_properties);
+			URI.create ("jar:" + zipFile.toURI ()), zip_properties);
 		
 		metaDataFiles = new ArrayList<Path> ();
 		
