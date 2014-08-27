@@ -144,18 +144,6 @@ public class TestArchive
 	{
 		// this is basically the Example.java
 		
-		if (!new File ("/tmp/base/path/subdir/file.cellml").exists () || !new File ("/tmp/base/path/file.sbml").exists ())
-		{
-			LOGGER.warn ("");
-			LOGGER.warn (">>>>> cannot find test files. aborting... <<<<<");
-			LOGGER.warn ("");
-			LOGGER.warn ("run: ");
-			LOGGER.warn ("             mkdir -p /tmp/base/path/subdir");
-			LOGGER.warn ("             touch /tmp/base/path/{file.sbml,subdir/file.cellml}");
-			LOGGER.warn ("");
-			return;
-		}
-		
 		// lets create the archive
 		testFiles.get (0).delete ();
 		CombineArchive ca = new CombineArchive (testFiles.get (0));
@@ -168,14 +156,14 @@ public class TestArchive
 		
 
 		ArchiveEntry SBMLFile = ca.addEntry (
-			new File ("/tmp/base/path"),
-			new File ("/tmp/base/path/file.sbml"),
+			new File ("test/base/path"),
+			new File ("test/base/path/file.sbml"),
 			CombineFormats.getFormatIdentifier ("sbml"));
 		
 		SBMLFile.addDescription (new OmexMetaDataObject (new OmexDescription (creators, new Date ())));
 
 		ArchiveEntry CellMLFile = ca.addEntry (
-			new File ("/tmp/base/path/subdir/file.cellml"),
+			new File ("test/base/path/subdir/file.cellml"),
 			"/subdir/file.cellml",
 			CombineFormats.getFormatIdentifier ("cellml.1.0"),
 			true);
