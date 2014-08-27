@@ -8,6 +8,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.io.File;
 import java.io.IOException;
@@ -53,7 +54,7 @@ public class TestArchive
 		// lets create 6 test files, the first one will serve as an archive
 		for (int i = 0; i < 6; i++)
 			testFiles.add (File.createTempFile ("combineArchive", "test" + i));
-		LOGGER.setMinLevel (LOGGER.DEBUG);
+		//LOGGER.setMinLevel (LOGGER.DEBUG);
 	}
 	/**
 	 * delete test files
@@ -205,6 +206,39 @@ public class TestArchive
 
 		ca.close ();
 		
+	}
+
+	/**
+	 */
+	@Test
+	public void testBrokenArchive ()
+	{
+		try
+		{
+			LOGGER.setLogToStdErr (false);
+			CombineArchive ca = new CombineArchive (new File ("test/broken-archive-by-felix.omex"), true);
+			assertTrue ("expected to see some errors", ca.hasErrors ());
+			assertEquals ("expected to nevertheless find some entries", 2, ca.getEntries ().size ());
+			int meta = 0;
+			for (ArchiveEntry entry : ca.getEntries ())
+			{
+				meta += entry.getDescriptions ().size ();
+				/*for (MetaDataObject mo : entry.getDescriptions ())
+					System.out.println (entry.getEntityPath () + " -> " + mo.getAbout ());*/
+			}
+			assertEquals ("expected to see exactly 2 descriptions.", 2, meta);
+			/*List<String> errors = ca.getErrors ();
+			for (String s : errors)
+				System.out.println (s);*/
+			assertEquals ("expected to see exactly 2 errors.", 2, ca.getErrors ().size ());
+			ca.close ();
+		}
+		catch (Exception e)
+		{
+			e.printStackTrace ();
+			fail ("unexpected error occured");
+		}
+		LOGGER.setLogToStdErr (true);
 	}
 	
 	/**

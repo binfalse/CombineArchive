@@ -103,6 +103,8 @@ public class CombineArchive
 	/** A list of files containing meta data. */
 	private List<Path>										metaDataFiles;
 	
+	private List<String> errors;
+	
 	
 	/**
 	 * Instantiates a new empty combine archive.
@@ -122,6 +124,7 @@ public class CombineArchive
 			ParseException,
 			CombineArchiveException
 	{
+		errors = new ArrayList<String> ();
 		entries = new HashMap<String, ArchiveEntry> ();
 		Map<String, String> zip_properties = new HashMap<String, String> ();
 		zip_properties.put ("create", "true");
@@ -134,7 +137,62 @@ public class CombineArchive
 		// read manifest
 		Path mani = zipfs.getPath (MANIFEST_LOCATION).normalize ();
 		if (Files.isRegularFile (mani))
-			parseManifest (mani);
+			parseManifest (mani, false);
+	}
+	
+	
+	/**
+	 * Instantiates a new empty combine archive.
+	 * 
+	 * If <code>continueOnError</code> is true we won't raise an exception
+	 * in case of errors. So you can continue working on the archive even
+	 * if a file is missing. <strong>But handle with care!</strong> You
+	 * might worsen the whole situation. In any case you should make sure
+	 * that there are no errors using {@link #hasErrors()}. The list of
+	 * occurred errors can then be obtained using {@link #getErrors()}.
+	 * 
+	 * @param zipFile
+	 *          the archive to read, will be created if non-existent
+	 * @param continueOnError
+	 * 					ignore errors and continue (as far as possible)
+	 * 
+	 * @throws IOException
+	 *           if we cannot create a temporary directory
+	 * @throws CombineArchiveException
+	 * @throws ParseException
+	 * @throws JDOMException
+	 */
+	public CombineArchive (File zipFile, boolean continueOnError)
+		throws IOException,
+		JDOMException,
+		ParseException,
+		CombineArchiveException
+	{
+		errors = new ArrayList<String> ();
+		entries = new HashMap<String, ArchiveEntry> ();
+		Map<String, String> zip_properties = new HashMap<String, String> ();
+		zip_properties.put ("create", "true");
+		zip_properties.put ("encoding", "UTF-8");
+		try
+		{
+			zipfs = FileSystems.newFileSystem (
+				URI.create ("jar:" + zipFile.toURI ()), zip_properties);
+		}
+		catch (IOException e)
+		{
+			LOGGER.error (e, "cannot read archive " + zipFile.toURI () + " (file system creation failed)");
+			errors.add ("cannot read archive " + zipFile.toURI () + " (file system creation failed)");
+			if (!continueOnError)
+				throw e;
+			return;
+		}
+		
+		metaDataFiles = new ArrayList<Path> ();
+		
+		// read manifest
+		Path mani = zipfs.getPath (MANIFEST_LOCATION).normalize ();
+		if (Files.isRegularFile (mani))
+			parseManifest (mani, continueOnError);
 	}
 	
 	
@@ -759,6 +817,8 @@ public class CombineArchive
 	 * 
 	 * @param manifest
 	 *          the manifest
+	 * @param continueOnError
+	 * 					ignore errors and continue
 	 * @throws IOException
 	 *           Signals that an I/O exception has occurred.
 	 * @throws JDOMException
@@ -767,13 +827,33 @@ public class CombineArchive
 	 *           the parse exception
 	 * @throws CombineArchiveException
 	 */
-	private void parseManifest (Path manifest)
+	private void parseManifest (Path manifest, boolean continueOnError)
 		throws IOException,
 			JDOMException,
 			ParseException,
 			CombineArchiveException
 	{
-		Document doc = Utils.readXmlDocument (manifest);
+		Document doc = null;
+		try
+		{
+			doc = Utils.readXmlDocument (manifest);
+		}
+		catch (JDOMException e)
+		{
+			LOGGER.error (e, "cannot read manifest of archive");
+			errors.add ("cannot read manifest of archive. xml seems to be invalid.");
+			if (!continueOnError)
+				throw e;
+			return;
+		}
+		catch (IOException e)
+		{
+			LOGGER.error (e, "cannot read manifest of archive.");
+			errors.add ("cannot read manifest of archive. io error.");
+			if (!continueOnError)
+				throw e;
+			return;
+		}
 		metaDataFiles = new ArrayList<Path> ();
 		List<Element> nl = Utils.getElementsByTagName (doc.getRootElement (),
 			"content", Utils.omexNs);
@@ -796,15 +876,29 @@ public class CombineArchive
 				master = attr.getValue ();
 			
 			if (location == null)
-				throw new IOException ("manifest invalid. unknown location of entry "
-					+ i);
+			{
+				LOGGER.error ("manifest invalid. unknown location of entry ", i);
+				errors.add ("manifest invalid. unknown location of entry " + i);
+				if (!continueOnError)
+					throw new IOException ("manifest invalid. unknown location of entry "
+						+ i);
+				continue;
+			}
 			
 			location = Paths.get ("/" + location).normalize ().toString ();
 			
 			Path locFile = zipfs.getPath (location).normalize ();
 			if (!Files.isRegularFile (locFile))
-				throw new IOException ("archive seems to be corrupt. file " + locFile
+			{
+				LOGGER.error ("archive seems to be corrupt. file ", locFile,
+					" not found.");
+				errors.add ("archive seems to be corrupt. file " + locFile
 					+ " not found.");
+				if (!continueOnError)
+					throw new IOException ("archive seems to be corrupt. file " + locFile
+						+ " not found.");
+				continue;
+			}
 			
 			if (format.equals (CombineFormats.getFormatIdentifier ("omex")))
 			{
@@ -828,7 +922,7 @@ public class CombineArchive
 		// parse all descriptions
 		for (Path f : metaDataFiles)
 		{
-			MetaDataFile.readFile (f, entries, this);
+			MetaDataFile.readFile (f, entries, this, continueOnError, errors);
 		}
 	}
 	
@@ -957,6 +1051,35 @@ public class CombineArchive
 			Files.createDirectories (fileOutZip.getParent ());
 			Files.copy (zipPath, fileOutZip, Utils.COPY_OPTION);
 		}
+	}
+	
+	
+	/**
+	 * Gets the errors that occurred during creating/reading of an archive.
+	 *
+	 * @return the errors
+	 */
+	public List<String> getErrors ()
+	{
+		return errors;
+	}
+	
+	/**
+	 * Checks for errors.
+	 *
+	 * @return true, if there are errors
+	 */
+	public boolean hasErrors ()
+	{
+		return errors.size () > 0;
+	}
+	
+	/**
+	 * Clear all errors.
+	 */
+	public void clearErrors ()
+	{
+		errors.clear ();
 	}
 	
 	

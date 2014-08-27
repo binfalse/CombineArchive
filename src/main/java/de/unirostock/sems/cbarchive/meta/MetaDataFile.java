@@ -77,6 +77,10 @@ public class MetaDataFile
 	 *          the entries available in the corresponding archive
 	 * @param archive
 	 *          the archive which contains this file
+	 * @param continueOnError 
+	 * 					ignore errors and continue (as far as possible)
+	 * @param errors
+	 * 					the list of occurred errors
 	 * @throws ParseException
 	 *           the parse exception
 	 * @throws JDOMException
@@ -87,13 +91,33 @@ public class MetaDataFile
 	 *           the combine archive exception
 	 */
 	public static void readFile (Path file,
-		HashMap<String, ArchiveEntry> entries, CombineArchive archive)
+		HashMap<String, ArchiveEntry> entries, CombineArchive archive, boolean continueOnError, List<String> errors)
 		throws ParseException,
 			JDOMException,
 			IOException,
 			CombineArchiveException
 	{
-		Document doc = Utils.readXmlDocument (file);
+		Document doc = null;
+		try
+		{
+			doc = Utils.readXmlDocument (file);
+		}
+		catch (JDOMException e)
+		{
+			LOGGER.error (e, "cannot read manifest of archive");
+			errors.add ("cannot read manifest of archive. xml seems to be invalid.");
+			if (!continueOnError)
+				throw e;
+			return;
+		}
+		catch (IOException e)
+		{
+			LOGGER.error (e, "cannot read manifest of archive.");
+			errors.add ("cannot read manifest of archive. io error.");
+			if (!continueOnError)
+				throw e;
+			return;
+		}
 		
 		List<Element> nl = Utils.getElementsByTagName (doc.getRootElement (),
 			"Description", Utils.rdfNS);
@@ -102,7 +126,13 @@ public class MetaDataFile
 			Element current = nl.get (i);
 			String about = current.getAttributeValue ("about", Utils.rdfNS);
 			if (about == null)
-				throw new CombineArchiveException ("cannot read about attribute");
+			{
+				LOGGER.error ("meta description " + i + " in " + file + " does not contain an `about` value. so we cannot assign it to an entity.");
+				errors.add ("meta description " + i + " in " + file + " does not contain an `about` value. so we cannot assign it to an entity.");
+				if (!continueOnError)
+					throw new CombineArchiveException ("meta description " + i + " in " + file + " does not contain an `about` value. so we cannot assign it to an entity.");
+				continue;
+			}
 			
 			if (about.equals (".") || about.equals ("/"))
 			{
@@ -125,11 +155,13 @@ public class MetaDataFile
 			// try to find the corresponding entry
 			for (ArchiveEntry entry : entries.values ())
 			{
-				if (about.startsWith (entry.getFilePath ()))
+				if (about.startsWith (entry.getFilePath ()) &&
+					(about.length () == entry.getFilePath ().length ()
+						|| about.charAt (entry.getFilePath ().length ()) == '#'))
 				{
 					currentEntry = entry;
-					if (about.length () > entry.getFilePath ().length () - 2
-						&& about.charAt (entry.getFilePath ().length () - 2) == '#')
+					if (about.length () > entry.getFilePath ().length ()
+						&& about.charAt (entry.getFilePath ().length ()) == '#')
 						fragmentIdentifier = about.substring (entry.getFilePath ()
 							.length () - 1);
 					break;
@@ -138,7 +170,10 @@ public class MetaDataFile
 			
 			if (currentEntry == null)
 			{
-				LOGGER.warn ("found no entry for description (about=", about, ")");
+				LOGGER.error ("found no entry for description ", i, " in ", file, " (about=", about, ").");
+				errors.add ("found no entry for description " + i + " in " + file + " (about=" + about + ").");
+				if (!continueOnError)
+					throw new CombineArchiveException ("found no entry for description " + i + " in " + file + " (about=" + about + ").");
 				continue;
 			}
 			
