@@ -81,6 +81,10 @@ public class Utils
 																												.getNamespace ("vCard",
 																													"http://www.w3.org/2006/vcard/ns#");
 	
+	/** The OMEX spec namespace. */
+	public static final Namespace					omexSpecNs		= Namespace
+																												.getNamespace ("http://identifiers.org/combine.specifications/omex");
+	
 	/** The OMEX namespace. */
 	public static final Namespace					omexNs				= Namespace
 																												.getNamespace ("http://identifiers.org/combine.specifications/omex-manifest");

@@ -742,7 +742,9 @@ public class CombineArchive
 		Document doc = new Document ();
 		Element root = new Element ("omexManifest", Utils.omexNs);
 		doc.addContent (root);
-		
+		 
+		root.addContent (createManifestEntry (".",
+			Utils.omexSpecNs.getURI (), false));
 		root.addContent (createManifestEntry (MANIFEST_LOCATION,
 			Utils.omexNs.getURI (), false));
 		
@@ -920,6 +922,12 @@ public class CombineArchive
 				if (!continueOnError)
 					throw new IOException ("manifest invalid. unknown location of entry "
 						+ i);
+				continue;
+			}
+			
+			if (format.equals (Utils.omexSpecNs.getURI ()))
+			{
+				// that's the archive itself -> skip
 				continue;
 			}
 			
