@@ -988,6 +988,7 @@ public class CombineArchive
 		entries.remove (alt);
 		
 		Path neuPath = zipfs.getPath (neu).normalize ();
+		Files.createDirectories (neuPath.getParent ());
 		Files.move (zipfs.getPath (alt).normalize (), neuPath,
 			StandardCopyOption.ATOMIC_MOVE);
 		ArchiveEntry newEntry = new ArchiveEntry (this, neuPath, entry.getFormat ());

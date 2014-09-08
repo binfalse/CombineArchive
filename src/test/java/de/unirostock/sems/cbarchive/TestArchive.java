@@ -415,6 +415,7 @@ public class TestArchive
 		try
 		{
 			ca.moveEntry ("/sub3/file3.ext", "/sub1/file3.ext");
+			ca.moveEntry ("/sub4/file4.ext", "/sub4-2/file4.ext");
 		}
 		catch (IOException e)
 		{
@@ -424,6 +425,7 @@ public class TestArchive
 		
 		
 		assertNull ("mhpf. this file shouldn't be there anymore.", ca.getEntry ("/sub3/file3.ext"));
+		assertNull ("mhpf. this file shouldn't be there anymore.", ca.getEntry ("/sub4/file4.ext"));
 		
 		entry = ca.getEntry ("/sub1/file3.ext");
 		assertNotNull ("moving failed", entry);
@@ -431,6 +433,13 @@ public class TestArchive
 		assertEquals ("unexpected number of meta for /sub1/file3.ext", 1, meta.size ());
 		for (MetaDataObject m : meta)
 			assertEquals ("meta of /sub1/file3.ext is not for /sub1/file3.ext", "/sub1/file3.ext", m.getAbout ());
+		
+		entry = ca.getEntry ("/sub4-2/file4.ext");
+		assertNotNull ("moving failed", entry);
+		meta = entry.getDescriptions ();
+		assertEquals ("unexpected number of meta for /sub4-2/file4.ext", 1, meta.size ());
+		for (MetaDataObject m : meta)
+			assertEquals ("meta of /sub1/file3.ext is not for /sub4-2/file4.ext", "/sub4-2/file4.ext", m.getAbout ());
 		
 
 		try
@@ -457,6 +466,7 @@ public class TestArchive
 		}
 		
 		assertNull ("mhpf. this file shouldn't be there anymore.", ca.getEntry ("/sub3/file3.ext"));
+		assertNull ("mhpf. this file shouldn't be there anymore.", ca.getEntry ("/sub4/file4.ext"));
 		
 		entry = ca.getEntry ("/sub1/file3.ext");
 		assertNotNull ("moving failed", entry);
@@ -464,6 +474,13 @@ public class TestArchive
 		assertEquals ("unexpected number of meta for /sub1/file3.ext", 1, meta.size ());
 		for (MetaDataObject m : meta)
 			assertEquals ("meta of /sub1/file3.ext is not for /sub1/file3.ext", "/sub1/file3.ext", m.getAbout ());
+		
+		entry = ca.getEntry ("/sub4-2/file4.ext");
+		assertNotNull ("moving failed", entry);
+		meta = entry.getDescriptions ();
+		assertEquals ("unexpected number of meta for /sub4-2/file4.ext", 1, meta.size ());
+		for (MetaDataObject m : meta)
+			assertEquals ("meta of /sub1/file3.ext is not for /sub4-2/file4.ext", "/sub4-2/file4.ext", m.getAbout ());
 		
 
 		try

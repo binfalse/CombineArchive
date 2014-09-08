@@ -4,7 +4,7 @@
 	</description>
 	
 	<property name="app.name" value="CombineArchive" />
-	<property name="app.version" value="0.8.2" />
+	<property name="app.version" value="0.8.3" />
 	<property name="src" location="src/main/java" />
 	<property name="build" location="build" />
 	<property name="dist" location="dist" />
