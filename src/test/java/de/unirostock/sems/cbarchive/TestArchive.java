@@ -195,6 +195,100 @@ public class TestArchive
 		ca.close ();
 		
 	}
+	
+	/**
+	 * 
+	 */
+	@Test
+	public void testMainEntries ()
+	{
+		// lets create the archive
+		for (int i = 0; i < 6; i++)
+		{
+			if (testFiles.get (i).isDirectory ())
+			{
+				try
+				{
+					Utils.delete (testFiles.get (i));
+					testFiles.get (i).createNewFile ();
+				}
+				catch (IOException e)
+				{
+					LOGGER.error (e, "couldn't recreate testfiles.");
+				}
+			}
+		}
+		testFiles.get (0).delete ();
+		
+		
+		
+		CombineArchive ca = null;
+		try
+		{
+			ca = new CombineArchive (testFiles.get (0));
+		}
+		catch (IOException | JDOMException | ParseException
+			| CombineArchiveException e)
+		{
+			LOGGER.error (e, "couldn't read archive");
+			fail ("couldn't read archive");
+		}
+		
+
+		
+		List<ArchiveEntry> entries = new ArrayList<ArchiveEntry> ();
+		for (int i = 1; i < testFiles.size (); i++)
+		{
+			try
+			{
+				if (i % 2 == 0)
+				{
+					ArchiveEntry ae = ca.addEntry (testFiles.get (i), "/sub" + i + "/file" + i + ".ext", CombineFormats.getFormatIdentifier ("sbml"));
+					entries.add (ae);
+					if (i == 2)
+						ca.addMainEntry (ae);
+				}
+				else
+				{
+					entries.add (ca.addEntry (testFiles.get (i), "/sub" + i + "/file" + i + ".ext", CombineFormats.getFormatIdentifier ("sbml"), true));
+				}
+			}
+			catch (IOException e)
+			{
+				LOGGER.error (e, "couldn't add entry ", i, " to archive");
+				fail ("couldn't add entry "+ i + " to archive");
+			}
+		}
+		
+		assertEquals ("expected 4 master files", 4, ca.getMainEntries ().size ());
+		assertNotNull ("main entries not backwards compatible", ca.getMainEntry ());
+		
+		List<VCard> creators = new ArrayList<VCard> ();
+		creators.add (new VCard ("Scharm", "Martin",
+			"martin.scharm@uni-rostock.de", "University of Rostock"));
+		creators.add (new VCard ("Waltemath", "Dagmar",
+			"dagmar.waltemath@uni-rostock.de", "University of Rostock"));
+		
+		for (ArchiveEntry e : entries)
+			e.addDescription (new OmexMetaDataObject (new OmexDescription (creators, new Date ())));
+		
+		assertEquals ("unexpected number of entries in archive after creation", testFiles.size () - 1, ca.getNumEntries ());
+		
+		
+		
+		try
+		{
+			ca.pack ();
+			ca.close ();
+		}
+		catch (IOException | TransformerException e)
+		{
+			LOGGER.error (e, "couldn't pack/close archive");
+			fail ("couldn't pack/close archive");
+		}
+		
+		
+	}
 
 	/**
 	 */
@@ -230,33 +324,52 @@ public class TestArchive
 	}
 	
 	/**
-	 * @throws IOException
-	 * @throws JDOMException
-	 * @throws ParseException
-	 * @throws CombineArchiveException
-	 * @throws TransformerException 
-	 * @throws InterruptedException 
 	 */
 	@Test
-	public void testMove () throws IOException, JDOMException, ParseException, CombineArchiveException, TransformerException, InterruptedException
+	public void testMove ()
 	{
 		// lets create the archive
 		for (int i = 0; i < 6; i++)
 		{
 			if (testFiles.get (i).isDirectory ())
 			{
-				Utils.delete (testFiles.get (i));
-				testFiles.get (i).createNewFile ();
+				try
+				{
+					Utils.delete (testFiles.get (i));
+					testFiles.get (i).createNewFile ();
+				}
+				catch (IOException e)
+				{
+					LOGGER.error (e, "couldn't recreate testfiles.");
+				}
 			}
 		}
 		testFiles.get (0).delete ();
 		
-		CombineArchive ca = new CombineArchive (testFiles.get (0));
+		CombineArchive ca = null;
+		try
+		{
+			ca = new CombineArchive (testFiles.get (0));
+		}
+		catch (IOException | JDOMException | ParseException
+			| CombineArchiveException e)
+		{
+			LOGGER.error (e, "couldn't read archive");
+			fail ("couldn't read archive");
+		}
 		
 		List<ArchiveEntry> entries = new ArrayList<ArchiveEntry> ();
 		for (int i = 1; i < testFiles.size (); i++)
 		{
-			entries.add (ca.addEntry (testFiles.get (i), "/sub" + i + "/file" + i + ".ext", CombineFormats.getFormatIdentifier ("sbml")));
+			try
+			{
+				entries.add (ca.addEntry (testFiles.get (i), "/sub" + i + "/file" + i + ".ext", CombineFormats.getFormatIdentifier ("sbml")));
+			}
+			catch (IOException e)
+			{
+				LOGGER.error (e, "couldn't add entry ", i, " to archive");
+				fail ("couldn't add entry "+ i + " to archive");
+			}
 		}
 		
 		List<VCard> creators = new ArrayList<VCard> ();
@@ -270,20 +383,44 @@ public class TestArchive
 		
 		assertEquals ("unexpected number of entries in archive after creation", testFiles.size () - 1, ca.getNumEntries ());
 		
-		ca.pack ();
-		ca.close ();
+		try
+		{
+			ca.pack ();
+			ca.close ();
+		}
+		catch (IOException | TransformerException e)
+		{
+			LOGGER.error (e, "couldn't pack/close archive");
+			fail ("couldn't pack/close archive");
+		}
 		
 		
 		// test the move
-		
-		ca = new CombineArchive (testFiles.get (0));
+		try
+		{
+			ca = new CombineArchive (testFiles.get (0));
+		}
+		catch (IOException | JDOMException | ParseException
+			| CombineArchiveException e)
+		{
+			LOGGER.error (e, "couldn't read archive");
+			fail ("couldn't read archive");
+		}
 		
 		ArchiveEntry entry = ca.getEntry ("/sub3/file3.ext");
 		assertEquals ("unexpected number of meta for /sub3/file3.ext", 1, entry.getDescriptions ().size ());
 		assertEquals ("meta of /sub3/file3.ext is not for /sub3/file3.ext", "/sub3/file3.ext", entry.getDescriptions ().get (0).getAbout ());
 		
 		
-		ca.moveEntry ("/sub3/file3.ext", "/sub1/file3.ext");
+		try
+		{
+			ca.moveEntry ("/sub3/file3.ext", "/sub1/file3.ext");
+		}
+		catch (IOException e)
+		{
+			LOGGER.error (e, "couldn't move entry");
+			fail ("couldn't move entry");
+		}
 		
 		
 		assertNull ("mhpf. this file shouldn't be there anymore.", ca.getEntry ("/sub3/file3.ext"));
@@ -295,12 +432,29 @@ public class TestArchive
 		for (MetaDataObject m : meta)
 			assertEquals ("meta of /sub1/file3.ext is not for /sub1/file3.ext", "/sub1/file3.ext", m.getAbout ());
 		
-		ca.pack ();
-		ca.close ();
+
+		try
+		{
+			ca.pack ();
+			ca.close ();
+		}
+		catch (IOException | TransformerException e)
+		{
+			LOGGER.error (e, "couldn't pack/close archive");
+			fail ("couldn't pack/close archive");
+		}
 		
 		// finally make sure we also stored the stuff correctly!
-		
-		ca = new CombineArchive (testFiles.get (0));
+		try
+		{
+			ca = new CombineArchive (testFiles.get (0));
+		}
+		catch (IOException | JDOMException | ParseException
+			| CombineArchiveException e)
+		{
+			LOGGER.error (e, "couldn't read archive");
+			fail ("couldn't read archive");
+		}
 		
 		assertNull ("mhpf. this file shouldn't be there anymore.", ca.getEntry ("/sub3/file3.ext"));
 		
@@ -311,7 +465,16 @@ public class TestArchive
 		for (MetaDataObject m : meta)
 			assertEquals ("meta of /sub1/file3.ext is not for /sub1/file3.ext", "/sub1/file3.ext", m.getAbout ());
 		
-		ca.pack ();
-		ca.close ();
+
+		try
+		{
+			ca.pack ();
+			ca.close ();
+		}
+		catch (IOException | TransformerException e)
+		{
+			LOGGER.error (e, "couldn't pack/close archive");
+			fail ("couldn't pack/close archive");
+		}
 	}
 }

@@ -98,7 +98,7 @@ public class CombineArchive
 	private FileSystem										zipfs;
 	
 	/** The main entry. */
-	private ArchiveEntry									mainEntry;
+	private List<ArchiveEntry>									mainEntries;
 	
 	/** A list of files containing meta data. */
 	private List<Path>										metaDataFiles;
@@ -125,6 +125,7 @@ public class CombineArchive
 			CombineArchiveException
 	{
 		errors = new ArrayList<String> ();
+		mainEntries = new ArrayList<ArchiveEntry> ();
 		entries = new HashMap<String, ArchiveEntry> ();
 		Map<String, String> zip_properties = new HashMap<String, String> ();
 		zip_properties.put ("create", "true");
@@ -169,6 +170,7 @@ public class CombineArchive
 		CombineArchiveException
 	{
 		errors = new ArrayList<String> ();
+		mainEntries = new ArrayList<ArchiveEntry> ();
 		entries = new HashMap<String, ArchiveEntry> ();
 		Map<String, String> zip_properties = new HashMap<String, String> ();
 		zip_properties.put ("create", "true");
@@ -197,25 +199,61 @@ public class CombineArchive
 	
 	
 	/**
-	 * Gets the main entry of this archive.
+	 * Gets the the first main entry of this archive, if defined. As of RC2 of the spec there may be more than one main entry, so you should use {@link #getMainEntries()} instead.
 	 * 
-	 * @return the main entry, or <code>null</code> if there is no main entry
+	 * @return the first main entry, or <code>null</code> if there is no main entry
+	 * @deprecated as of version 0.8.2, replaced by
+	 *             {@link #getMainEntries()}
 	 */
 	public ArchiveEntry getMainEntry ()
 	{
-		return mainEntry;
+		if (mainEntries == null)
+			return null;
+		return mainEntries.size () > 0 ? mainEntries.get (0) : null;
+	}
+	
+	/**
+	 * Gets the main entries as defined in the archive.
+	 *
+	 * @return the main entries
+	 */
+	public List<ArchiveEntry> getMainEntries ()
+	{
+		return mainEntries;
 	}
 	
 	
 	/**
-	 * Sets the main entry of the archive.
+	 * Sets a main entry of the archive. Other main entries get replaced. Use {@link #addMainEntry(ArchiveEntry)} to add another main entry.
 	 * 
 	 * @param mainEntry
 	 *          the new main entry
 	 */
 	public void setMainEntry (ArchiveEntry mainEntry)
 	{
-		this.mainEntry = mainEntry;
+		this.mainEntries.clear ();
+		addMainEntry (mainEntry);
+	}
+	
+	/**
+	 * Adds an entry to the list of main entries in this archive.
+	 *
+	 * @param mainEntry the main entry
+	 */
+	public void addMainEntry (ArchiveEntry mainEntry)
+	{
+		this.mainEntries.add (mainEntry);
+	}
+	
+	
+	/**
+	 * Removes an entry from the list of main entries.
+	 *
+	 * @param entry the entry to be removed
+	 */
+	public void removeMainEntry (ArchiveEntry entry)
+	{
+		this.mainEntries.remove (entry);
 	}
 	
 	
@@ -275,8 +313,8 @@ public class CombineArchive
 		
 		if (entry != null)
 		{
-			if (mainEntry == entry)
-				mainEntry = null;
+			if (mainEntries == entry)
+				mainEntries = null;
 			Files.delete (entry.getPath ());
 			return true;
 		}
@@ -296,8 +334,8 @@ public class CombineArchive
 	{
 		if (entries.remove (entry.getFilePath ()) != null)
 		{
-			if (mainEntry == entry)
-				mainEntry = null;
+			if (mainEntries == entry)
+				mainEntries = null;
 			Files.delete (entry.getPath ());
 			return true;
 		}
@@ -401,7 +439,7 @@ public class CombineArchive
 		if (mainEntry)
 		{
 			LOGGER.debug ("setting main entry:");
-			this.mainEntry = entry;
+			addMainEntry (entry);
 		}
 		
 		return entry;
@@ -711,7 +749,7 @@ public class CombineArchive
 		for (ArchiveEntry e : entries.values ())
 		{
 			root.addContent (createManifestEntry (e.getPath ().toString (),
-				e.getFormat (), e == mainEntry));
+				e.getFormat (), mainEntries.contains (e)));
 		}
 		
 		File baseDir = Files.createTempDirectory ("combineArchive").toFile ();
@@ -915,7 +953,7 @@ public class CombineArchive
 			
 			ArchiveEntry entry = new ArchiveEntry (this, locFile, format);
 			if (master != null && Boolean.parseBoolean (master))
-				mainEntry = entry;
+				addMainEntry (entry);
 			entries.put (location, entry);
 		}
 		
@@ -946,7 +984,7 @@ public class CombineArchive
 		if (entry == null)
 			throw new IOException ("no such entry in archive");
 		
-		boolean wasMain = entry == mainEntry;
+		boolean wasMain = mainEntries.contains (entry);
 		entries.remove (alt);
 		
 		Path neuPath = zipfs.getPath (neu).normalize ();
@@ -956,7 +994,9 @@ public class CombineArchive
 		
 		entries.put (neu, newEntry);
 		if (wasMain)
-			mainEntry = newEntry;
+		{
+			addMainEntry (newEntry);
+		}
 		
 		// move meta data
 		List<MetaDataObject> meta = entry.getDescriptions ();
