@@ -36,6 +36,8 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.file.CopyOption;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -54,6 +56,8 @@ import org.jdom2.Namespace;
 import org.jdom2.input.SAXBuilder;
 import org.jdom2.output.Format;
 import org.jdom2.output.XMLOutputter;
+
+import de.binfalse.bflog.LOGGER;
 
 
 
@@ -250,4 +254,60 @@ public class Utils
 		if (!f.delete ())
 			throw new FileNotFoundException ("Failed to delete file: " + f);
 	}
+	
+	
+	/**
+	 * Get the URI representing OMEX meta data
+	 * 
+	 * @return OMEX meta data URI
+	 */
+	public static URI getOmexMetaDataUri ()
+	{
+		try
+		{
+			return new URI ("http://identifiers.org/combine.specifications/omex-metadata");
+		}
+		catch (URISyntaxException e)
+		{
+			LOGGER.error (e, "failed to create omex meta data uri. that shouldn't happen!!!");
+			return null;
+		}
+	}
+	
+	/**
+	 * Gets the URI representing the OMEX specification.
+	 *
+	 * @return the OMEX specification URI
+	 */
+	public static URI getOmexSpecUri ()
+	{
+		try
+		{
+			return new URI ("http://identifiers.org/combine.specifications/omex");
+		}
+		catch (URISyntaxException e)
+		{
+			LOGGER.error (e, "failed to create omex spec uri. that shouldn't happen!!!");
+			return null;
+		}
+	}
+	
+	/**
+	 * Gets the OMEX manifest URI.
+	 *
+	 * @return the OMEX manifest URI
+	 */
+	public static URI getOmexManifestUri ()
+	{
+		try
+		{
+			return new URI ("http://identifiers.org/combine.specifications/omex-manifest");
+		}
+		catch (URISyntaxException e)
+		{
+			LOGGER.error (e, "failed to create omex manifest uri. that shouldn't happen!!!");
+			return null;
+		}
+	}
+	
 }

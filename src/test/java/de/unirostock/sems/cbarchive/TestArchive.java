@@ -12,6 +12,8 @@ import static org.junit.Assert.fail;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -22,7 +24,9 @@ import javax.xml.transform.TransformerException;
 
 import org.jdom2.Element;
 import org.jdom2.JDOMException;
+import org.junit.After;
 import org.junit.AfterClass;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -42,14 +46,14 @@ import de.unirostock.sems.cbarchive.meta.omex.OmexDescription;;
 public class TestArchive
 {
 	
-	private static List<File> testFiles = new ArrayList<File> ();
+	private List<File> testFiles = new ArrayList<File> ();
 	
 	/**
 	 * create some test files
 	 * @throws IOException 
 	 */
-	@BeforeClass
-	public static void initialize () throws IOException
+	@Before
+	public void initialize () throws IOException
 	{
 		// lets create 6 test files, the first one will serve as an archive
 		for (int i = 0; i < 6; i++)
@@ -59,8 +63,8 @@ public class TestArchive
 	/**
 	 * delete test files
 	 */
-	@AfterClass
-	public static void destroy ()
+	@After
+	public void destroy ()
 	{
 		for (File f : testFiles)
 			try
@@ -80,9 +84,10 @@ public class TestArchive
 	 * @throws JDOMException 
 	 * @throws IOException 
 	 * @throws TransformerException 
+	 * @throws URISyntaxException 
 	 */
 	@Test
-	public void someRandomTests () throws IOException, JDOMException, ParseException, CombineArchiveException, TransformerException
+	public void someRandomTests () throws IOException, JDOMException, ParseException, CombineArchiveException, TransformerException, URISyntaxException
 	{
 		// lets create the archive
 		testFiles.get (0).delete ();
@@ -90,7 +95,7 @@ public class TestArchive
 		
 		List<ArchiveEntry> entries = new ArrayList<ArchiveEntry> ();
 		for (int i = 1; i < testFiles.size (); i++)
-			entries.add (ca.addEntry (testFiles.get (i), "/sub" + i + "/file" + i + ".ext", CombineFormats.getFormatIdentifier ("sbml")));
+			entries.add (ca.addEntry (testFiles.get (i), "/sub" + i + "/file" + i + ".ext", new URI ("http://identifiers.org/combine.specifications/sbml")));
 		
 		assertEquals ("unexpected number of entries in archive after creation", testFiles.size () - 1, ca.getNumEntries ());
 		
@@ -109,17 +114,17 @@ public class TestArchive
 		// lets re-add all and make sure we do not have doubles..
 		entries = new ArrayList<ArchiveEntry> ();
 		for (int i = 1; i < testFiles.size (); i++)
-			entries.add (ca.addEntry (testFiles.get (i), "/sub" + i + "/file" + i + ".ext", CombineFormats.getFormatIdentifier ("sbml")));
+			entries.add (ca.addEntry (testFiles.get (i), "/sub" + i + "/file" + i + ".ext", new URI ("http://identifiers.org/combine.specifications/sbml")));
 		assertEquals ("unexpected number of entries in archive after resubmitting all files", testFiles.size () - 1, ca.getNumEntries ());
 		
 		// we should still be able to add known file under a different name
 		for (int i = 1; i < testFiles.size (); i++)
-			entries.add (ca.addEntry (testFiles.get (i), "./file" + i + ".ext", CombineFormats.getFormatIdentifier ("sbml")));
+			entries.add (ca.addEntry (testFiles.get (i), "./file" + i + ".ext", new URI ("http://identifiers.org/combine.specifications/sbml")));
 		assertEquals ("unexpected number of entries in archive after adding all files under different names", 2 * (testFiles.size () - 1), ca.getNumEntries ());
 		
 		// and this should overwrite our last commit
 		for (int i = 1; i < testFiles.size (); i++)
-			entries.add (ca.addEntry (testFiles.get (i), "file" + i + ".ext", CombineFormats.getFormatIdentifier ("sbml")));
+			entries.add (ca.addEntry (testFiles.get (i), "file" + i + ".ext", new URI ("http://identifiers.org/combine.specifications/sbml")));
 		assertEquals ("unexpected number of entries in archive after submitting last commit with same path", 2 * (testFiles.size () - 1), ca.getNumEntries ());
 		
 		// and lets remove top-level entries
@@ -138,9 +143,10 @@ public class TestArchive
 	 * @throws ParseException
 	 * @throws CombineArchiveException
 	 * @throws TransformerException 
+	 * @throws URISyntaxException 
 	 */
 	@Test
-	public void testAddWholeMetaFile () throws IOException, JDOMException, ParseException, CombineArchiveException, TransformerException
+	public void testAddWholeMetaFile () throws IOException, JDOMException, ParseException, CombineArchiveException, TransformerException, URISyntaxException
 	{
 		// this is basically the Example.java
 		
@@ -158,14 +164,14 @@ public class TestArchive
 		ArchiveEntry SBMLFile = ca.addEntry (
 			new File ("test/base/path"),
 			new File ("test/base/path/file.sbml"),
-			CombineFormats.getFormatIdentifier ("sbml"));
+			new URI ("http://identifiers.org/combine.specifications/sbml"));
 		
 		SBMLFile.addDescription (new OmexMetaDataObject (new OmexDescription (creators, new Date ())));
 
 		ArchiveEntry CellMLFile = ca.addEntry (
 			new File ("test/base/path/subdir/file.cellml"),
 			"/subdir/file.cellml",
-			CombineFormats.getFormatIdentifier ("cellml.1.0"),
+			new URI ("http://identifiers.org/combine.specifications/cellml.1.0"),
 			true);
 		
 		CellMLFile.addDescription (new OmexMetaDataObject (new OmexDescription (creators, new Date ())));
@@ -243,17 +249,17 @@ public class TestArchive
 			{
 				if (i % 2 == 0)
 				{
-					ArchiveEntry ae = ca.addEntry (testFiles.get (i), "/sub" + i + "/file" + i + ".ext", CombineFormats.getFormatIdentifier ("sbml"));
+					ArchiveEntry ae = ca.addEntry (testFiles.get (i), "/sub" + i + "/file" + i + ".ext", new URI ("http://identifiers.org/combine.specifications/sbml"));
 					entries.add (ae);
 					if (i == 2)
 						ca.addMainEntry (ae);
 				}
 				else
 				{
-					entries.add (ca.addEntry (testFiles.get (i), "/sub" + i + "/file" + i + ".ext", CombineFormats.getFormatIdentifier ("sbml"), true));
+					entries.add (ca.addEntry (testFiles.get (i), "/sub" + i + "/file" + i + ".ext", new URI ("http://identifiers.org/combine.specifications/sbml"), true));
 				}
 			}
-			catch (IOException e)
+			catch (IOException | URISyntaxException e)
 			{
 				LOGGER.error (e, "couldn't add entry ", i, " to archive");
 				fail ("couldn't add entry "+ i + " to archive");
@@ -363,9 +369,9 @@ public class TestArchive
 		{
 			try
 			{
-				entries.add (ca.addEntry (testFiles.get (i), "/sub" + i + "/file" + i + ".ext", CombineFormats.getFormatIdentifier ("sbml")));
+				entries.add (ca.addEntry (testFiles.get (i), "/sub" + i + "/file" + i + ".ext", new URI ("http://identifiers.org/combine.specifications/sbml")));
 			}
-			catch (IOException e)
+			catch (IOException | URISyntaxException e)
 			{
 				LOGGER.error (e, "couldn't add entry ", i, " to archive");
 				fail ("couldn't add entry "+ i + " to archive");

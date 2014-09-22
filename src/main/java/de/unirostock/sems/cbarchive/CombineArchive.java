@@ -38,6 +38,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
@@ -104,6 +105,8 @@ public class CombineArchive
 	private List<Path>										metaDataFiles;
 	
 	private List<String> errors;
+	
+	private static final String MIME_REGEX = "[a-zA-Z0-9+.-]+/[a-zA-Z0-9+.-]+";
 	
 	
 	/**
@@ -375,12 +378,12 @@ public class CombineArchive
 	 * @param targetName
 	 *          the target name of the file in the archive
 	 * @param format
-	 *          the format, see {@link CombineFormats}
-	 * @return the archive entry
+	 *          the format URI, see <a href="https://sems.uni-rostock.de/trac/combine-ext/wiki/CombineFormatizer">CombineFormatizer</a>
+	 * @return the archive entry or null if adding failed
 	 * @throws IOException
 	 *           Signals that an I/O exception has occurred.
 	 */
-	public ArchiveEntry addEntry (File toInsert, String targetName, String format)
+	public ArchiveEntry addEntry (File toInsert, String targetName, URI format)
 		throws IOException
 	{
 		return addEntry (toInsert, targetName, format, false);
@@ -403,15 +406,57 @@ public class CombineArchive
 	 * @param targetName
 	 *          the target name of the file in the archive
 	 * @param format
-	 *          the format, see {@link CombineFormats}
+	 *          the format URI, see <a href="https://sems.uni-rostock.de/trac/combine-ext/wiki/CombineFormatizer">CombineFormatizer</a>
+	 * @return the archive entry or null if adding failed
+	 * @throws IOException
+	 *           Signals that an I/O exception has occurred.
+	 * @deprecated as of version 0.9, replaced by
+	 *             {@link #addEntry(java.io.File,java.lang.String,java.net.URI)}
+	 */
+	public ArchiveEntry addEntry (File toInsert, String targetName, String format)
+		throws IOException
+	{
+		URI formatUri = null;
+		try
+		{
+			formatUri = new URI (format);
+		}
+		catch (URISyntaxException e)
+		{
+			LOGGER.warn (e, "could not parse URI ", format);
+			errors.add ("could not parse URI " + format);
+			return null;
+		}
+		
+		return addEntry (toInsert, targetName, formatUri, false);
+	}
+	
+	
+	/**
+	 * Adds an entry to the archive.
+	 * <p>
+	 * The current version of the concerning file will be copied immediately.
+	 * Thus, upcoming modifications of the source file won't affect the version in
+	 * our archive. The path of this file in the archive will be
+	 * <code>targetName</code>, it may include sub directories, e.g.
+	 * <code>/path/in/archive/file.ext</code>. If there is already a file in the
+	 * archive having the same path we'll overwrite it.
+	 * </p>
+	 * 
+	 * @param toInsert
+	 *          the file to insert
+	 * @param targetName
+	 *          the target name of the file in the archive
+	 * @param format
+	 *          the format URI, see <a href="https://sems.uni-rostock.de/trac/combine-ext/wiki/CombineFormatizer">CombineFormatizer</a>
 	 * @param mainEntry
 	 *          the main entry
-	 * @return the archive entry
+	 * @return the archive entry or null if adding failed
 	 * @throws IOException
 	 *           Signals that an I/O exception has occurred.
 	 */
 	public ArchiveEntry addEntry (File toInsert, String targetName,
-		String format, boolean mainEntry) throws IOException
+		URI format, boolean mainEntry) throws IOException
 	{
 		targetName = prepareLocation (targetName);
 		
@@ -451,6 +496,50 @@ public class CombineArchive
 	 * <p>
 	 * The current version of the concerning file will be copied immediately.
 	 * Thus, upcoming modifications of the source file won't affect the version in
+	 * our archive. The path of this file in the archive will be
+	 * <code>targetName</code>, it may include sub directories, e.g.
+	 * <code>/path/in/archive/file.ext</code>. If there is already a file in the
+	 * archive having the same path we'll overwrite it.
+	 * </p>
+	 * 
+	 * @param toInsert
+	 *          the file to insert
+	 * @param targetName
+	 *          the target name of the file in the archive
+	 * @param format
+	 *          the format URI, see <a href="https://sems.uni-rostock.de/trac/combine-ext/wiki/CombineFormatizer">CombineFormatizer</a>
+	 * @param mainEntry
+	 *          the main entry
+	 * @return the archive entry or null if adding failed
+	 * @throws IOException
+	 *           Signals that an I/O exception has occurred.
+	 * @deprecated as of version 0.9, replaced by
+	 *             {@link #addEntry(java.io.File,java.lang.String,java.net.URI,boolean)}
+	 */
+	public ArchiveEntry addEntry (File toInsert, String targetName,
+		String format, boolean mainEntry) throws IOException
+	{
+		URI formatUri = null;
+		try
+		{
+			formatUri = new URI (format);
+		}
+		catch (URISyntaxException e)
+		{
+			LOGGER.warn (e, "could not parse URI ", format);
+			errors.add ("could not parse URI " + format);
+			return null;
+		}
+		
+		return addEntry (toInsert, targetName, formatUri, mainEntry);
+	}
+	
+	
+	/**
+	 * Adds an entry to the archive.
+	 * <p>
+	 * The current version of the concerning file will be copied immediately.
+	 * Thus, upcoming modifications of the source file won't affect the version in
 	 * our archive. The path of this file in the archive will be the path of
 	 * <code>file</code> relative to <code>baseDir</code>. If there is already a
 	 * file in the archive having the same relative path we'll overwrite it.
@@ -461,15 +550,15 @@ public class CombineArchive
 	 * @param file
 	 *          the file
 	 * @param format
-	 *          the format, see {@link CombineFormats}
+	 *          the format URI, see <a href="https://sems.uni-rostock.de/trac/combine-ext/wiki/CombineFormatizer">CombineFormatizer</a>
 	 * @param mainEntry
 	 *          is this the main entry of the archive? (default:
 	 *          <code>false</code>)
-	 * @return the archive entry
+	 * @return the archive entry or null if adding failed
 	 * @throws IOException
 	 *           Signals that an I/O exception has occurred.
 	 */
-	public ArchiveEntry addEntry (File baseDir, File file, String format,
+	public ArchiveEntry addEntry (File baseDir, File file, URI format,
 		boolean mainEntry) throws IOException
 	{
 		if (!file.exists ())
@@ -482,6 +571,50 @@ public class CombineArchive
 			baseDir.getAbsolutePath (), "");
 		
 		return addEntry (file, localName, format, mainEntry);
+	}
+	
+	
+	/**
+	 * Adds an entry to the archive.
+	 * <p>
+	 * The current version of the concerning file will be copied immediately.
+	 * Thus, upcoming modifications of the source file won't affect the version in
+	 * our archive. The path of this file in the archive will be the path of
+	 * <code>file</code> relative to <code>baseDir</code>. If there is already a
+	 * file in the archive having the same relative path we'll overwrite it.
+	 * </p>
+	 * 
+	 * @param baseDir
+	 *          the base dir
+	 * @param file
+	 *          the file
+	 * @param format
+	 *          the format URI, see <a href="https://sems.uni-rostock.de/trac/combine-ext/wiki/CombineFormatizer">CombineFormatizer</a>
+	 * @param mainEntry
+	 *          is this the main entry of the archive? (default:
+	 *          <code>false</code>)
+	 * @return the archive entry or null if adding failed
+	 * @throws IOException
+	 *           Signals that an I/O exception has occurred.
+	 * @deprecated as of version 0.9, replaced by
+	 *             {@link #addEntry(java.io.File,java.io.File,java.net.URI,boolean)}
+	 */
+	public ArchiveEntry addEntry (File baseDir, File file, String format,
+		boolean mainEntry) throws IOException
+	{
+		URI formatUri = null;
+		try
+		{
+			formatUri = new URI (format);
+		}
+		catch (URISyntaxException e)
+		{
+			LOGGER.warn (e, "could not parse URI ", format);
+			errors.add ("could not parse URI " + format);
+			return null;
+		}
+		
+		return addEntry (baseDir, file, formatUri, mainEntry);
 	}
 	
 	
@@ -500,12 +633,12 @@ public class CombineArchive
 	 * @param file
 	 *          the file
 	 * @param format
-	 *          the format, see {@link CombineFormats}
-	 * @return the archive entry
+	 *          the format URI, see <a href="https://sems.uni-rostock.de/trac/combine-ext/wiki/CombineFormatizer">CombineFormatizer</a>
+	 * @return the archive entry or null if adding failed
 	 * @throws IOException
 	 *           Signals that an I/O exception has occurred.
 	 */
-	public ArchiveEntry addEntry (File baseDir, File file, String format)
+	public ArchiveEntry addEntry (File baseDir, File file, URI format)
 		throws IOException
 	{
 		if (!file.exists ())
@@ -536,13 +669,54 @@ public class CombineArchive
 	 * @param file
 	 *          the file
 	 * @param format
-	 *          the format, see {@link CombineFormats}
+	 *          the format URI, see <a href="https://sems.uni-rostock.de/trac/combine-ext/wiki/CombineFormatizer">CombineFormatizer</a>
+	 * @return the archive entry or null if adding failed
+	 * @throws IOException
+	 *           Signals that an I/O exception has occurred.
+	 * @deprecated as of version 0.9, replaced by
+	 *             {@link #addEntry(java.io.File,java.io.File,java.net.URI)}
+	 */
+	public ArchiveEntry addEntry (File baseDir, File file, String format)
+		throws IOException
+	{
+		URI formatUri = null;
+		try
+		{
+			formatUri = new URI (format);
+		}
+		catch (URISyntaxException e)
+		{
+			LOGGER.warn (e, "could not parse URI ", format);
+			errors.add ("could not parse URI " + format);
+			return null;
+		}
+		
+		return addEntry (baseDir, file, formatUri, false);
+	}
+	
+	
+	/**
+	 * Adds an entry to the archive.
+	 * The current version of the concerning file will be copied immediately.
+	 * Thus, upcoming modifications of the source file won't affect the version
+	 * in our archive.
+	 * The path of this file in the archive will be the path of <code>file</code>
+	 * relative to <code>baseDir</code>.
+	 * If there is already a file in the archive having the same relative path
+	 * we'll delete it.
+	 * 
+	 * @param baseDir
+	 *          the base dir
+	 * @param file
+	 *          the file
+	 * @param format
+	 *          the format URI, see <a href="https://sems.uni-rostock.de/trac/combine-ext/wiki/CombineFormatizer">CombineFormatizer</a>
 	 * @param description
 	 *          the description
 	 * @param mainEntry
 	 *          is this the main entry of the archive? (default:
 	 *          <code>false</code>)
-	 * @return the archive entry
+	 * @return the archive entry or null if adding failed
 	 * @throws IOException
 	 *           Signals that an I/O exception has occurred.
 	 * @deprecated as of version 0.5, replaced by
@@ -582,10 +756,10 @@ public class CombineArchive
 	 * @param file
 	 *          the file
 	 * @param format
-	 *          the format, see {@link CombineFormats}
+	 *          the format URI, see <a href="https://sems.uni-rostock.de/trac/combine-ext/wiki/CombineFormatizer">CombineFormatizer</a>
 	 * @param description
 	 *          the description
-	 * @return the archive entry
+	 * @return the archive entry or null if adding failed
 	 * @throws IOException
 	 *           Signals that an I/O exception has occurred.
 	 * @deprecated as of version 0.5, replaced by
@@ -614,16 +788,15 @@ public class CombineArchive
 	 * Gets entries sharing a certain format.
 	 * 
 	 * @param format
-	 *          the format of interest, see {@link CombineFormats}
+	 *          the format URI of interest, see <a href="https://sems.uni-rostock.de/trac/combine-ext/wiki/CombineFormatizer">CombineFormatizer</a>
 	 * @return the entries with that format
 	 */
-	public List<ArchiveEntry> getEntriesWithFormat (String format)
+	public List<ArchiveEntry> getEntriesWithFormat (URI format)
 	{
-		String shortFormat = CombineFormats.getFormatIdentifier (format);
 		
 		List<ArchiveEntry> list = new ArrayList<ArchiveEntry> ();
 		for (ArchiveEntry e : entries.values ())
-			if (e.getFormat ().equals (format) || e.getFormat ().equals (shortFormat))
+			if (e.getFormat ().equals (format))
 				list.add (e);
 		
 		return list;
@@ -634,10 +807,10 @@ public class CombineArchive
 	 * Counts entries with a certain format.
 	 * 
 	 * @param format
-	 *          the format of interest, see {@link CombineFormats}
+	 *          the format URI of interest, see <a href="https://sems.uni-rostock.de/trac/combine-ext/wiki/CombineFormatizer">CombineFormatizer</a>
 	 * @return the number of entries with that format
 	 */
-	public int getNumEntriesWithFormat (String format)
+	public int getNumEntriesWithFormat (URI format)
 	{
 		return getEntriesWithFormat (format).size ();
 	}
@@ -647,11 +820,11 @@ public class CombineArchive
 	 * Checks whether there are entries with a certain format.
 	 * 
 	 * @param format
-	 *          the format of interest, see {@link CombineFormats}
+	 *          the format URI of interest, see <a href="https://sems.uni-rostock.de/trac/combine-ext/wiki/CombineFormatizer">CombineFormatizer</a>
 	 * @return true, if there is at least one entry in this archive having this
 	 *         format
 	 */
-	public boolean HasEntriesWithFormat (String format)
+	public boolean HasEntriesWithFormat (URI format)
 	{
 		return getEntriesWithFormat (format).size () > 0;
 	}
@@ -708,15 +881,15 @@ public class CombineArchive
 	 * @param location
 	 *          the location of the entry
 	 * @param format
-	 *          the format of the entry
+	 *          the format of the entry, see <a href="https://sems.uni-rostock.de/trac/combine-ext/wiki/CombineFormatizer">CombineFormatizer</a>
 	 * @return the XML node
 	 */
-	private Element createManifestEntry (String location, String format,
+	private Element createManifestEntry (String location, URI format,
 		boolean mainEntry)
 	{
 		Element element = new Element ("content", Utils.omexNs);
 		element.setAttribute ("location", location);
-		element.setAttribute ("format", format);
+		element.setAttribute ("format", format.toString ());
 		if (mainEntry)
 			element.setAttribute ("master", "" + mainEntry);
 		return element;
@@ -744,9 +917,9 @@ public class CombineArchive
 		doc.addContent (root);
 		 
 		root.addContent (createManifestEntry (".",
-			Utils.omexSpecNs.getURI (), false));
+			Utils.getOmexSpecUri (), false));
 		root.addContent (createManifestEntry (MANIFEST_LOCATION,
-			Utils.omexNs.getURI (), false));
+			Utils.getOmexManifestUri (), false));
 		
 		for (ArchiveEntry e : entries.values ())
 		{
@@ -762,7 +935,7 @@ public class CombineArchive
 		{
 			root.addContent (createManifestEntry (
 				f.getAbsolutePath ().replace (baseDir.getAbsolutePath (), ""),
-				"http://identifiers.org/combine.specifications/omex-metadata", false));
+				Utils.getOmexMetaDataUri (), false));
 			
 			// copy to zip
 			Path newMeta = zipfs.getPath (
@@ -903,14 +1076,37 @@ public class CombineArchive
 			
 			String location = null;
 			String master = null;
-			String format = null;
+			URI format = null;
 			
 			Attribute attr = content.getAttribute ("location");
 			if (attr != null)
 				location = attr.getValue ();
 			attr = content.getAttribute ("format");
 			if (attr != null)
-				format = attr.getValue ();
+			{
+				try
+				{
+					format = new URI (attr.getValue ());
+				}
+				catch (URISyntaxException e)
+				{
+					// is it a mimetype?
+					String mime = attr.getValue ();
+					if (mime.matches (MIME_REGEX))
+					{
+						
+					}
+					
+					LOGGER.error ("archive seems to be corrupt. format ", attr.getValue (),
+						" not a valid URI.");
+					errors.add ("archive seems to be corrupt. format " + attr.getValue () +
+						" not a valid URI.");
+					if (!continueOnError)
+						throw new IOException ("archive seems to be corrupt. format " + attr.getValue () +
+							" not a valid URI.");
+					continue;
+				}
+			}
 			attr = content.getAttribute ("master");
 			if (attr != null)
 				master = attr.getValue ();
@@ -925,7 +1121,7 @@ public class CombineArchive
 				continue;
 			}
 			
-			if (format.equals (Utils.omexSpecNs.getURI ()))
+			if (format.equals (Utils.getOmexSpecUri ()))
 			{
 				// that's the archive itself -> skip
 				continue;
@@ -946,14 +1142,14 @@ public class CombineArchive
 				continue;
 			}
 			
-			if (format.equals (CombineFormats.getFormatIdentifier ("omex")))
+			if (format.equals (Utils.getOmexMetaDataUri ()))
 			{
 				metaDataFiles.add (locFile);
 				// since that's not a real entry
 				continue;
 			}
 			
-			if (format.equals (CombineFormats.getFormatIdentifier ("manifest")))
+			if (format.equals (Utils.getOmexManifestUri ()))
 			{
 				// that's this manifest -> skip
 				continue;

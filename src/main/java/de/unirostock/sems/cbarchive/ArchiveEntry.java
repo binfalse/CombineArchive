@@ -34,6 +34,7 @@ package de.unirostock.sems.cbarchive;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
 import java.nio.file.Path;
 
 import org.jdom2.JDOMException;
@@ -58,8 +59,8 @@ public class ArchiveEntry
 	/** The relative path name to that file. */
 	private Path						relativeName;
 	
-	/** The format. */
-	private String					format;
+	/** The format, see <a href="https://sems.uni-rostock.de/trac/combine-ext/wiki/CombineFormatizer">CombineFormatizer</a>. */
+	private URI					format;
 	
 	
 	/**
@@ -70,9 +71,9 @@ public class ArchiveEntry
 	 * @param relativeName
 	 *          the relative path name within <code>archive</code>
 	 * @param format
-	 *          the format
+	 *          the format, see <a href="https://sems.uni-rostock.de/trac/combine-ext/wiki/CombineFormatizer">CombineFormatizer</a>
 	 */
-	public ArchiveEntry (CombineArchive archive, Path relativeName, String format)
+	public ArchiveEntry (CombineArchive archive, Path relativeName, URI format)
 	{
 		super ();
 		this.archive = archive;
@@ -181,9 +182,9 @@ public class ArchiveEntry
 	/**
 	 * Gets the format as reported by the archive's manifest.
 	 * 
-	 * @return the format
+	 * @return the format, see <a href="https://sems.uni-rostock.de/trac/combine-ext/wiki/CombineFormatizer">CombineFormatizer</a>
 	 */
-	public String getFormat ()
+	public URI getFormat ()
 	{
 		return format;
 	}

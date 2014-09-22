@@ -35,6 +35,8 @@ package de.unirostock.sems.cbarchive;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
 import java.text.ParseException;
@@ -100,13 +102,14 @@ public class Example
 	 * @throws CombineArchiveException
 	 * @throws ParseException
 	 * @throws JDOMException
+	 * @throws URISyntaxException 
 	 */
 	public static void createExample ()
 		throws IOException,
 			TransformerException,
 			JDOMException,
 			ParseException,
-			CombineArchiveException
+			CombineArchiveException, URISyntaxException
 	{
 		System.out.println ("--- creating archive. ---");
 		// let's create some 'creators' -> meta data.
@@ -128,8 +131,9 @@ public class Example
 			new File ("/tmp/base/path"),
 			new File ("/tmp/base/path/file.sbml"),
 			// format is http://identifiers.org/combine.specifications/sbml - here i
-			// use the class CombineFormats to get the SBML identifier
-			CombineFormats.getFormatIdentifier ("sbml"));
+			// see https://sems.uni-rostock.de/trac/combine-ext/wiki/CombineFormatizer
+			// to find a convenient way to generate these URIs
+			new URI ("http://identifiers.org/combine.specifications/sbml"));
 		
 		// we'll also add some OMEX description. creators as defined above
 		SBMLFile.addDescription (new OmexMetaDataObject (new OmexDescription (
@@ -142,8 +146,9 @@ public class Example
 			// and we'd like to see it in /subdir/file.cellml
 			"/subdir/file.cellml",
 			// format is http://identifiers.org/combine.specifications/cellml.1.0 -
-			// again using CombineFormats to get the correct identifier
-			CombineFormats.getFormatIdentifier ("cellml.1.0"),
+			// see https://sems.uni-rostock.de/trac/combine-ext/wiki/CombineFormatizer
+			// to find a convenient way to generate these URIs
+			new URI ("http://identifiers.org/combine.specifications/cellml.1.0"),
 			// in addition: set this entry as main entry in this archive
 			true);
 		
