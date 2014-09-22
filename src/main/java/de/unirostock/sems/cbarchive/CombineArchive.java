@@ -931,7 +931,11 @@ public class CombineArchive
 				continue;
 			}
 			
-			location = Paths.get ("/" + location).normalize ().toString ();
+			if( !location.startsWith("/") )
+			{
+				location = "/" + location;
+			}
+			location = Paths.get (location).normalize ().toString ();
 			
 			Path locFile = zipfs.getPath (location).normalize ();
 			if (!Files.isRegularFile (locFile))
