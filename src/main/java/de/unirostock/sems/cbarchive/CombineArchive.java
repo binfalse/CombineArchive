@@ -107,6 +107,7 @@ public class CombineArchive
 	private List<String> errors;
 	
 	private static final String MIME_REGEX = "[a-zA-Z0-9+.-]+/[a-zA-Z0-9+.-]+";
+	private static final String PURL_PREFIX = "http://purl.org/NET/mediatypes/";
 	
 	
 	/**
@@ -1090,21 +1091,33 @@ public class CombineArchive
 				}
 				catch (URISyntaxException e)
 				{
+					boolean foundMime = false;
 					// is it a mimetype?
 					String mime = attr.getValue ();
 					if (mime.matches (MIME_REGEX))
 					{
-						
+						try
+						{
+							format = new URI (PURL_PREFIX + mime);
+							foundMime = true;
+						}
+						catch (URISyntaxException e1)
+						{
+							LOGGER.error ("couldn't convert mime ", mime, " to uri ", PURL_PREFIX, mime);
+							errors.add ("couldn't convert mime " + mime + " to uri " + PURL_PREFIX + mime);
+						}
 					}
-					
-					LOGGER.error ("archive seems to be corrupt. format ", attr.getValue (),
-						" not a valid URI.");
-					errors.add ("archive seems to be corrupt. format " + attr.getValue () +
-						" not a valid URI.");
-					if (!continueOnError)
-						throw new IOException ("archive seems to be corrupt. format " + attr.getValue () +
+					if (!foundMime)
+					{
+						LOGGER.error ("archive seems to be corrupt. format ", attr.getValue (),
 							" not a valid URI.");
-					continue;
+						errors.add ("archive seems to be corrupt. format " + attr.getValue () +
+							" not a valid URI.");
+						if (!continueOnError)
+							throw new IOException ("archive seems to be corrupt. format " + attr.getValue () +
+								" not a valid URI.");
+						continue;
+					}
 				}
 			}
 			attr = content.getAttribute ("master");
