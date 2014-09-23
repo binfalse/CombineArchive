@@ -1087,6 +1087,8 @@ public class CombineArchive
 			{
 				try
 				{
+					if (!attr.getValue ().startsWith ("http"))
+						throw new URISyntaxException (attr.getValue (), "expected http uri");
 					format = new URI (attr.getValue ());
 				}
 				catch (URISyntaxException e)
