@@ -113,12 +113,109 @@ public class OmexDescription
 	
 	/**
 	 * Instantiates a new omex description.
+	 * 
+	 * @param description
+	 *          the textual description
+	 */
+	public OmexDescription (String description)
+	{
+		creators = new ArrayList<VCard> ();
+		modified = new ArrayList<Date> ();
+		created = new Date ();
+		this.description = description;
+	}
+	
+	
+	/**
+	 * Instantiates a new omex description.
+	 * 
+	 * @param creators
+	 *          the creators
+	 * @param modified
+	 *          the date of modifications
+	 * @param description
+	 *          the textual description
+	 */
+	public OmexDescription (List<VCard> creators, List<Date> modified,
+		String description)
+	{
+		this.creators = creators;
+		this.modified = modified;
+		this.created = new Date ();
+		this.description = description;
+	}
+	
+	
+	/**
+	 * Instantiates a new omex description.
+	 * 
+	 * @param creator
+	 *          the creator
+	 * @param created
+	 *          the date of creation
+	 * @param description
+	 *          the textual description
+	 */
+	public OmexDescription (VCard creator, Date created, String description)
+	{
+		this.creators = new ArrayList<VCard> ();
+		this.creators.add (creator);
+		this.modified = new ArrayList<Date> ();
+		this.created = created;
+		this.description = description;
+	}
+	
+	
+	/**
+	 * Instantiates a new omex description.
+	 * 
+	 * @param creators
+	 *          the creators
+	 * @param created
+	 *          the date of creation
+	 * @param description
+	 *          the textual description
+	 */
+	public OmexDescription (List<VCard> creators, Date created, String description)
+	{
+		this.creators = creators;
+		this.modified = new ArrayList<Date> ();
+		this.created = created;
+		this.description = description;
+	}
+	
+	
+	/**
+	 * Instantiates a new omex description.
+	 * 
+	 * @param creators
+	 *          the creators
+	 * @param modified
+	 *          the date of modifications
+	 * @param created
+	 *          the date of creation
+	 * @param description
+	 *          the textual description
+	 */
+	public OmexDescription (List<VCard> creators, List<Date> modified,
+		Date created, String description)
+	{
+		this.creators = creators;
+		this.modified = modified;
+		this.created = created;
+		this.description = description;
+	}
+	
+	
+	/**
+	 * Instantiates a new omex description.
 	 */
 	public OmexDescription ()
 	{
 		creators = new ArrayList<VCard> ();
 		modified = new ArrayList<Date> ();
 		created = new Date ();
+		description = null;
 	}
 	
 	
@@ -135,6 +232,7 @@ public class OmexDescription
 		this.creators = creators;
 		this.modified = modified;
 		this.created = new Date ();
+		description = null;
 	}
 	
 	
@@ -152,6 +250,7 @@ public class OmexDescription
 		this.creators.add (creator);
 		this.modified = new ArrayList<Date> ();
 		this.created = created;
+		description = null;
 	}
 	
 	
@@ -168,6 +267,7 @@ public class OmexDescription
 		this.creators = creators;
 		this.modified = new ArrayList<Date> ();
 		this.created = created;
+		description = null;
 	}
 	
 	
@@ -187,6 +287,7 @@ public class OmexDescription
 		this.creators = creators;
 		this.modified = modified;
 		this.created = created;
+		description = null;
 	}
 	
 	
