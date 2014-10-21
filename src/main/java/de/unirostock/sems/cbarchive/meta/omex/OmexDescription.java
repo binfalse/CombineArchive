@@ -79,6 +79,18 @@ public class OmexDescription
 	
 	
 	/**
+	 * Sets the description.
+	 * 
+	 * @param description
+	 * 				  the description
+	 */
+	public void setDescription (String description)
+	{
+		this.description = description;
+	}
+	
+	
+	/**
 	 * Gets the creators.
 	 * 
 	 * @return the creators

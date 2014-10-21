@@ -3,7 +3,7 @@
     <groupId>de.unirostock.sems</groupId>
     <artifactId>CombineArchive</artifactId>
     <packaging>jar</packaging>
-    <version>0.9.3</version>
+    <version>0.9.4</version>
     <name>CombineArchive</name>
     <description>Library to read/create/write/manipulate/... COMBINE archives</description>
     <url>http://sems.uni-rostock.de/projects/combinearchive/</url>
