@@ -22,6 +22,7 @@ import java.util.List;
 
 import javax.xml.transform.TransformerException;
 
+import org.jdom2.Document;
 import org.jdom2.Element;
 import org.jdom2.JDOMException;
 import org.junit.After;
@@ -499,5 +500,82 @@ public class TestArchive
 			LOGGER.error (e, "couldn't pack/close archive");
 			fail ("couldn't pack/close archive");
 		}
+	}
+	
+	/**
+	 * @throws URISyntaxException 
+	 * @throws IOException 
+	 * @throws TransformerException 
+	 */
+	@Test
+	public void testModifyMeta () throws IOException, URISyntaxException, TransformerException
+	{
+		fail ("this is to be done");
+		
+		// lets create the archive
+		for (int i = 0; i < 6; i++)
+		{
+			if (testFiles.get (i).isDirectory ())
+			{
+				try
+				{
+					Utils.delete (testFiles.get (i));
+					testFiles.get (i).createNewFile ();
+				}
+				catch (IOException e)
+				{
+					LOGGER.error (e, "couldn't recreate testfiles.");
+				}
+			}
+		}
+		testFiles.get (0).delete ();
+		
+		
+		
+		CombineArchive ca = null;
+		try
+		{
+			ca = new CombineArchive (testFiles.get (0));
+		}
+		catch (IOException | JDOMException | ParseException
+			| CombineArchiveException e)
+		{
+			LOGGER.error (e, "couldn't read archive");
+			fail ("couldn't read archive");
+		}
+		
+		
+		
+
+		ArchiveEntry SBMLFile = ca.addEntry (
+			testFiles.get (1),
+			"/somefile",
+			new URI ("http://identifiers.org/combine.specifications/sbml"));
+		
+		Element metaParent = new Element ("stuff");
+		Element metaElement = new Element ("myMetaElement");
+		metaElement.setAttribute ("someAttribute", "someValue");
+		metaElement.addContent ("some content");
+		metaParent.addContent (metaElement);
+		SBMLFile.addDescription ("someFragment", new DefaultMetaDataObject (metaParent));
+
+		ca.pack ();
+		
+		MetaDataObject mdo = SBMLFile.getDescriptions ().get (0);
+		assertNotNull ("expected to find some meta data", mdo);
+		
+		String meta = Utils.prettyPrintDocument (new Document (mdo.getXmlDescription ()));
+		System.out.println (meta);
+		
+		
+		
+		
+		
+		
+		metaParent = new Element ("stuff");
+		metaElement = new Element ("myMetaElement");
+		metaElement.setAttribute ("someAttribute", "someValue");
+		metaElement.addContent ("some content");
+		metaParent.addContent (metaElement);
 	}
 }

@@ -3,7 +3,7 @@
     <groupId>de.unirostock.sems</groupId>
     <artifactId>CombineArchive</artifactId>
     <packaging>jar</packaging>
-    <version>0.9.1</version>
+    <version>0.9.2</version>
     <name>CombineArchive</name>
     <description>Library to read/create/write/manipulate/... COMBINE archives</description>
     <url>http://sems.uni-rostock.de/projects/combinearchive/</url>
@@ -77,8 +77,6 @@
                     <descriptorRefs>
                         <descriptorRef>jar-with-dependencies</descriptorRef>
                     </descriptorRefs>
-                    <finalName>${project.artifactId}-${project.version}-fat</finalName>
-                    <appendAssemblyId>false</appendAssemblyId>
                 </configuration>
                 <executions>
                     <execution>

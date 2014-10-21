@@ -191,6 +191,17 @@ public class ArchiveEntry
 	
 	
 	/**
+	 * Sets the format of this entry.
+	 * 
+	 * @param format the format of this entry
+	 */
+	public void setFormat (URI format)
+	{
+		this.format = format;
+	}
+	
+	
+	/**
 	 * Add all descriptions in
 	 * <code>metaDataFile<code> (assuming all are about this entry).
 	 * 
