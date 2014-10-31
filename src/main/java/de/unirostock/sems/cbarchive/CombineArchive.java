@@ -919,12 +919,12 @@ public class CombineArchive
 		 
 		root.addContent (createManifestEntry (".",
 			Utils.getOmexSpecUri (), false));
-		root.addContent (createManifestEntry (MANIFEST_LOCATION,
+		root.addContent (createManifestEntry ("." + MANIFEST_LOCATION,
 			Utils.getOmexManifestUri (), false));
 		
 		for (ArchiveEntry e : entries.values ())
 		{
-			root.addContent (createManifestEntry (e.getPath ().toString (),
+			root.addContent (createManifestEntry ("." + e.getPath ().toString (),
 				e.getFormat (), mainEntries.contains (e)));
 		}
 		
@@ -935,7 +935,7 @@ public class CombineArchive
 		for (File f : descr)
 		{
 			root.addContent (createManifestEntry (
-				f.getAbsolutePath ().replace (baseDir.getAbsolutePath (), ""),
+				"." + f.getAbsolutePath ().replace (baseDir.getAbsolutePath (), ""),
 				Utils.getOmexMetaDataUri (), false));
 			
 			// copy to zip
