@@ -1136,7 +1136,7 @@ public class CombineArchive
 				continue;
 			}
 			
-			if (format.equals (Utils.getOmexSpecUri ()))
+			if (format.equals (Utils.getOmexSpecUri ()) || format.toString ().startsWith ((Utils.getOmexSpecUri ().toString () + ".version")))
 			{
 				// that's the archive itself -> skip
 				continue;

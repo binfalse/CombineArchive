@@ -300,6 +300,34 @@ public class TestArchive
 	/**
 	 */
 	@Test
+	public void testPaperExample ()
+	{
+		try
+		{
+			LOGGER.setLogToStdErr (false);
+			CombineArchive ca = new CombineArchive (new File ("test/paper-repressilator.omex"), true);
+			assertFalse ("did not expected to see some errors", ca.hasErrors ());
+			assertEquals ("expected to nevertheless find some entries", 2, ca.getEntries ().size ());
+			int meta = 0;
+			for (ArchiveEntry entry : ca.getEntries ())
+			{
+				meta += entry.getDescriptions ().size ();
+			}
+			assertEquals ("expected to see exactly 0 descriptions.", 0, meta);
+			assertEquals ("expected to see exactly 1 description for the archive.", 1, ca.getDescriptions ().size ());
+			ca.close ();
+		}
+		catch (Exception e)
+		{
+			e.printStackTrace ();
+			fail ("unexpected error occured");
+		}
+		LOGGER.setLogToStdErr (true);
+	}
+
+	/**
+	 */
+	@Test
 	public void testBrokenArchive ()
 	{
 		try
