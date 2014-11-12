@@ -143,6 +143,8 @@ public class CombineArchive
 		Path mani = zipfs.getPath (MANIFEST_LOCATION).normalize ();
 		if (Files.isRegularFile (mani))
 			parseManifest (mani, false);
+
+		cleanUp ();
 	}
 	
 	
@@ -1022,6 +1024,7 @@ public class CombineArchive
 	 */
 	public void pack () throws IOException, TransformerException
 	{
+		cleanUp ();
 		pack (false);
 	}
 	
@@ -1266,7 +1269,7 @@ public class CombineArchive
 	 * 
 	 * @param destination
 	 *          the destination
-	 * @return true, if successful extracted
+	 * @return the destination
 	 * @throws IOException
 	 */
 	public File extractTo (File destination) throws IOException
@@ -1346,6 +1349,40 @@ public class CombineArchive
 		errors.clear ();
 	}
 	
+	
+	private void cleanUp ()
+	{
+		for (Path p : zipfs.getRootDirectories ())
+			cleanUp (p);
+	}
+	
+	private void cleanUp (Path p)
+	{
+		if (Files.isDirectory (p))
+			try
+			{
+				try (DirectoryStream<Path> stream = Files.newDirectoryStream(p)) {
+			    for (Path file : stream)
+			    {
+			    	cleanUp (file);
+			    }
+				}
+				catch (Exception e)
+				{
+					LOGGER.warn (e, "couldn't look into directory ", p);
+				}
+				// delete the dir if it is empty
+				Files.delete (p);
+			}
+			catch (IOException e)
+			{
+				// this dir is apparently not empty..
+			}
+		else
+		{
+			// TODO: find unused files.. and maybe warn?
+		}
+	}
 	
 	/*
 	 * (non-Javadoc)
