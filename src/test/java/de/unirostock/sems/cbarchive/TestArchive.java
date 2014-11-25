@@ -10,13 +10,16 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
@@ -26,9 +29,7 @@ import org.jdom2.Document;
 import org.jdom2.Element;
 import org.jdom2.JDOMException;
 import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 import de.binfalse.bflog.LOGGER;
@@ -58,8 +59,15 @@ public class TestArchive
 	{
 		// lets create 6 test files, the first one will serve as an archive
 		for (int i = 0; i < 6; i++)
-			testFiles.add (File.createTempFile ("combineArchive", "test" + i));
+		{
+			File f = File.createTempFile ("combineArchive", "test" + i);
+			testFiles.add (f);
+			BufferedWriter bw = new BufferedWriter( new FileWriter (f));
+			bw.write ("i:" + i);
+			bw.close ();
+		}
 		//LOGGER.setMinLevel (LOGGER.DEBUG);
+		
 	}
 	/**
 	 * delete test files
@@ -127,6 +135,27 @@ public class TestArchive
 		for (int i = 1; i < testFiles.size (); i++)
 			entries.add (ca.addEntry (testFiles.get (i), "file" + i + ".ext", new URI ("http://identifiers.org/combine.specifications/sbml")));
 		assertEquals ("unexpected number of entries in archive after submitting last commit with same path", 2 * (testFiles.size () - 1), ca.getNumEntries ());
+		
+		// test replacing a file
+		File tmp1 = File.createTempFile ("combineArchiveTestFile", "tmp");
+		File tmp2 = File.createTempFile ("combineArchiveTestFile", "tmp");
+		tmp1.deleteOnExit (); tmp2.deleteOnExit ();
+		ArchiveEntry ae = entries.get (entries.size () - 1);
+		ca.extract (ae.getPath (), tmp1);
+		List<VCard> creators = new ArrayList<VCard> ();
+		creators.add (new VCard ("Scharm", "Martin",
+			"martin.scharm@uni-rostock.de", "University of Rostock"));
+		ae.addDescription (new OmexMetaDataObject (new OmexDescription (creators, new Date ())));
+		ArchiveEntry ae2 = ca.replaceFile (testFiles.get (1), ae);
+		// make sure we still have the meta data
+		assertEquals ("lost some meta data while replacing file?", ae.getDescriptions ().size (), ae2.getDescriptions ().size ());
+		ca.extract (ae.getPath (), tmp2);
+		// make sure the files differ
+		byte [] a = Files.readAllBytes (tmp1.toPath ());
+		byte [] b = Files.readAllBytes (tmp2.toPath ());
+		assertFalse ("files do not have changed...", Arrays.equals (a, b));
+		tmp1.delete (); tmp2.delete ();
+		
 		
 		// and lets remove top-level entries
 		assertTrue ("unable to remove /file3.ext", ca.removeEntry ("/file3.ext"));

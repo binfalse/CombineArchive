@@ -366,6 +366,26 @@ public class CombineArchive
 	
 	
 	/**
+	 * Replace the file associated with a certain entry while keeping the meta
+	 * data.
+	 * 
+	 * @param toInsert
+	 *          the new file to insert
+	 * @param oldEntry
+	 *          the old entry whose file should be replaces
+	 * @return the new entry.
+	 * @throws IOException
+	 */
+	public ArchiveEntry replaceFile (File toInsert, ArchiveEntry oldEntry) throws IOException
+	{
+		addEntry (toInsert, oldEntry.getFilePath (), oldEntry.getFormat (), false);
+		entries.put (oldEntry.getFilePath (), oldEntry);
+		return oldEntry;
+	}
+	
+	
+	
+	/**
 	 * Adds an entry to the archive.
 	 * <p>
 	 * The current version of the concerning file will be copied immediately.
@@ -1372,7 +1392,8 @@ public class CombineArchive
 					LOGGER.warn (e, "couldn't look into directory ", p);
 				}
 				// delete the dir if it is empty
-				Files.delete (p);
+				if (!p.toString ().equals ("/"))
+					Files.delete (p);
 			}
 			catch (IOException e)
 			{
