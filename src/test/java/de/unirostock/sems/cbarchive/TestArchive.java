@@ -567,8 +567,6 @@ public class TestArchive
 	@Test
 	public void testModifyMeta () throws IOException, URISyntaxException, TransformerException
 	{
-		fail ("this is to be done");
-		
 		// lets create the archive
 		for (int i = 0; i < 6; i++)
 		{
@@ -600,9 +598,6 @@ public class TestArchive
 			LOGGER.error (e, "couldn't read archive");
 			fail ("couldn't read archive");
 		}
-		
-		
-		
 
 		ArchiveEntry SBMLFile = ca.addEntry (
 			testFiles.get (1),
@@ -621,18 +616,27 @@ public class TestArchive
 		MetaDataObject mdo = SBMLFile.getDescriptions ().get (0);
 		assertNotNull ("expected to find some meta data", mdo);
 		
-		String meta = Utils.prettyPrintDocument (new Document (mdo.getXmlDescription ()));
-		System.out.println (meta);
-		
-		
-		
-		
-		
+		String meta = Utils.prettyPrintDocument (new Document (mdo.getXmlDescription ().clone ()));
 		
 		metaParent = new Element ("stuff");
 		metaElement = new Element ("myMetaElement");
 		metaElement.setAttribute ("someAttribute", "someValue");
-		metaElement.addContent ("some content");
+		metaElement.addContent ("some other content");
 		metaParent.addContent (metaElement);
+		mdo.getXmlDescription ().addContent (metaParent);
+		
+		// make sure we have the new meta
+		MetaDataObject mdo2 = SBMLFile.getDescriptions ().get (0);
+		String meta2 = Utils.prettyPrintDocument (new Document (mdo2.getXmlDescription ().clone ()));
+		assertFalse ("meta did not change!?", meta.equals (meta2));
+		
+
+		ca.pack ();
+		
+		ArchiveEntry SBMLFile2 = ca.getEntry ("/somefile");
+		mdo2 = SBMLFile2.getDescriptions ().get (0);
+		String meta3 = Utils.prettyPrintDocument (new Document (mdo2.getXmlDescription ().clone ()));
+		assertFalse ("meta did not change!?", meta.equals (meta3));
+		assertTrue ("meta did change!?", meta2.equals (meta3));
 	}
 }
