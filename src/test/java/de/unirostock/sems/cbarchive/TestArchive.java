@@ -149,6 +149,7 @@ public class TestArchive
 		ArchiveEntry ae2 = ca.replaceFile (testFiles.get (1), ae);
 		// make sure we still have the meta data
 		assertEquals ("lost some meta data while replacing file?", ae.getDescriptions ().size (), ae2.getDescriptions ().size ());
+		assertEquals ("lost some meta data while replacing file?", 1, ae2.getDescriptions ().size ());
 		ca.extract (ae.getPath (), tmp2);
 		// make sure the files differ
 		byte [] a = Files.readAllBytes (tmp1.toPath ());
