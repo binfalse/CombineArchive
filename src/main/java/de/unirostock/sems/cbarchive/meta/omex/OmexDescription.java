@@ -82,7 +82,7 @@ public class OmexDescription
 	 * Sets the description.
 	 * 
 	 * @param description
-	 * 				  the description
+	 *          the description
 	 */
 	public void setDescription (String description)
 	{
@@ -155,6 +155,23 @@ public class OmexDescription
 		this.modified = modified;
 		this.created = new Date ();
 		this.description = description;
+	}
+	
+	
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see java.lang.Object#clone()
+	 */
+	public OmexDescription clone ()
+	{
+		List<VCard> creators = new ArrayList<VCard> ();
+		for (VCard vc : this.creators)
+			creators.add (vc);
+		List<Date> modified = new ArrayList<Date> ();
+		for (Date d : this.modified)
+			modified.add (d);
+		return new OmexDescription (creators, modified, created, description);
 	}
 	
 	
