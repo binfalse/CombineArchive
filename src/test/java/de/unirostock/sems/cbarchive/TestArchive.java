@@ -85,7 +85,37 @@ public class TestArchive
 				LOGGER.warn (e, "could not delete ", f);
 			}
 	}
-
+	
+	
+	
+	@Test
+	public void shouldGetAndRemoveEntryFromExistingArchive() throws IOException, URISyntaxException, JDOMException, ParseException, CombineArchiveException, TransformerException{
+	    final String WIN_FILE = "\\sub1\\file1.ext";
+	    final String UNIX_FILE = "/sub1/file2.ext";
+	    
+	    testFiles.get (0).delete ();
+	       CombineArchive ca = new CombineArchive (testFiles.get(0));
+	       
+	       ca.addEntry (testFiles.get(0), WIN_FILE, new URI ("http://identifiers.org/combine.specifications/sbml"));
+	       ca.addEntry (testFiles.get(1), UNIX_FILE, new URI ("http://identifiers.org/combine.specifications/sbml"));
+	       
+	       assertEquals ("unexpected number of entries in archive after creation", 2, ca.getNumEntries ());
+	       
+	       ca.pack ();
+	       ca.close ();
+	       
+	       CombineArchive readArchive = new CombineArchive (testFiles.get(0));
+	       String message = " ";
+	       boolean isUnixFileRemoved = readArchive.removeEntry (UNIX_FILE);
+	       message= (isUnixFileRemoved == false)? message+" Failed to remove file in Unix format : "+ UNIX_FILE+"\n":message;
+	       boolean isWinFileRemoved = readArchive.removeEntry (WIN_FILE);
+	       message= (isWinFileRemoved == false)? message+" Failed to remove file Windows format : "+ WIN_FILE+"\n":message;
+	       
+	       readArchive.close();
+	       assertTrue (message, (isUnixFileRemoved && isWinFileRemoved));
+	}
+	
+	
 	/**
 	 * Test local files by URI -> file:/path/to/file.
 	 * @throws CombineArchiveException 
