@@ -218,7 +218,7 @@ public class Utils
 			TransformerException
 	{
 		XMLOutputter outputter = new XMLOutputter (Format.getPrettyFormat ());
-		return outputter.outputString(doc);
+		return outputter.outputString (doc);
 	}
 	
 	
@@ -265,18 +265,21 @@ public class Utils
 	{
 		try
 		{
-			return new URI ("http://identifiers.org/combine.specifications/omex-metadata");
+			return new URI (
+				"http://identifiers.org/combine.specifications/omex-metadata");
 		}
 		catch (URISyntaxException e)
 		{
-			LOGGER.error (e, "failed to create omex meta data uri. that shouldn't happen!!!");
+			LOGGER.error (e,
+				"failed to create omex meta data uri. that shouldn't happen!!!");
 			return null;
 		}
 	}
 	
+	
 	/**
 	 * Gets the URI representing the OMEX specification.
-	 *
+	 * 
 	 * @return the OMEX specification URI
 	 */
 	public static URI getOmexSpecUri ()
@@ -287,27 +290,51 @@ public class Utils
 		}
 		catch (URISyntaxException e)
 		{
-			LOGGER.error (e, "failed to create omex spec uri. that shouldn't happen!!!");
+			LOGGER.error (e,
+				"failed to create omex spec uri. that shouldn't happen!!!");
 			return null;
 		}
 	}
 	
+	
 	/**
 	 * Gets the OMEX manifest URI.
-	 *
+	 * 
 	 * @return the OMEX manifest URI
 	 */
 	public static URI getOmexManifestUri ()
 	{
 		try
 		{
-			return new URI ("http://identifiers.org/combine.specifications/omex-manifest");
+			return new URI (
+				"http://identifiers.org/combine.specifications/omex-manifest");
 		}
 		catch (URISyntaxException e)
 		{
-			LOGGER.error (e, "failed to create omex manifest uri. that shouldn't happen!!!");
+			LOGGER.error (e,
+				"failed to create omex manifest uri. that shouldn't happen!!!");
 			return null;
 		}
+	}
+	
+	
+	/**
+	 * Utility to fix paths on different operating systems.
+	 * 
+	 * Will make sure that all paths use '/'. If the operation systems uses
+	 * something else, such as '\' or ':', we're going to replace that with an
+	 * '/'.
+	 * 
+	 * @param path
+	 *          the path as retrieved by your operating system
+	 * @return the fixed path
+	 */
+	public static String pathFixer (String path)
+	{
+		if (!File.separator.equals ("/"))
+			path = path.replaceAll (File.separator.replaceAll ("\\\\", "\\\\\\\\"),
+				"/");
+		return path;
 	}
 	
 }
