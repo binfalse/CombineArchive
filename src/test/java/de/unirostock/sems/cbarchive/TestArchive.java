@@ -37,7 +37,8 @@ import de.unirostock.sems.cbarchive.meta.DefaultMetaDataObject;
 import de.unirostock.sems.cbarchive.meta.MetaDataObject;
 import de.unirostock.sems.cbarchive.meta.OmexMetaDataObject;
 import de.unirostock.sems.cbarchive.meta.omex.VCard;
-import de.unirostock.sems.cbarchive.meta.omex.OmexDescription;;
+import de.unirostock.sems.cbarchive.meta.omex.OmexDescription;
+
 
 
 /**
@@ -48,11 +49,13 @@ import de.unirostock.sems.cbarchive.meta.omex.OmexDescription;;
 public class TestArchive
 {
 	
+	/** The test files. */
 	private List<File> testFiles = new ArrayList<File> ();
 	
 	/**
-	 * create some test files
-	 * @throws IOException 
+	 * create some test files.
+	 *
+	 * @throws IOException Signals that an I/O exception has occurred.
 	 */
 	@Before
 	public void initialize () throws IOException
@@ -69,8 +72,9 @@ public class TestArchive
 		//LOGGER.setMinLevel (LOGGER.DEBUG);
 		
 	}
+	
 	/**
-	 * delete test files
+	 * delete test files.
 	 */
 	@After
 	public void destroy ()
@@ -88,42 +92,65 @@ public class TestArchive
 	
 	
 	
+	/**
+	 * Test slashes/backslashes conversation on non-slash-based os'..
+	 * This test was actually written by the DDMoRe team.
+	 *
+	 * @throws IOException Signals that an I/O exception has occurred.
+	 * @throws URISyntaxException the uRI syntax exception
+	 * @throws JDOMException the jDOM exception
+	 * @throws ParseException the parse exception
+	 * @throws CombineArchiveException the combine archive exception
+	 * @throws TransformerException the transformer exception
+	 */
 	@Test
-	public void shouldGetAndRemoveEntryFromExistingArchive() throws IOException, URISyntaxException, JDOMException, ParseException, CombineArchiveException, TransformerException{
-	    final String WIN_FILE = "\\sub1\\file1.ext";
-	    final String UNIX_FILE = "/sub1/file2.ext";
-	    
-	    testFiles.get (0).delete ();
-	       CombineArchive ca = new CombineArchive (testFiles.get(0));
-	       
-	       ca.addEntry (testFiles.get(0), WIN_FILE, new URI ("http://identifiers.org/combine.specifications/sbml"));
-	       ca.addEntry (testFiles.get(1), UNIX_FILE, new URI ("http://identifiers.org/combine.specifications/sbml"));
-	       
-	       assertEquals ("unexpected number of entries in archive after creation", 2, ca.getNumEntries ());
-	       
-	       ca.pack ();
-	       ca.close ();
-	       
-	       CombineArchive readArchive = new CombineArchive (testFiles.get(0));
-	       String message = " ";
-	       boolean isUnixFileRemoved = readArchive.removeEntry (UNIX_FILE);
-	       message= (isUnixFileRemoved == false)? message+" Failed to remove file in Unix format : "+ UNIX_FILE+"\n":message;
-	       boolean isWinFileRemoved = readArchive.removeEntry (WIN_FILE);
-	       message= (isWinFileRemoved == false)? message+" Failed to remove file Windows format : "+ WIN_FILE+"\n":message;
-	       
-	       readArchive.close();
-	       assertTrue (message, (isUnixFileRemoved && isWinFileRemoved));
+	public void shouldGetAndRemoveEntryFromExistingArchive ()
+		throws IOException,
+			URISyntaxException,
+			JDOMException,
+			ParseException,
+			CombineArchiveException,
+			TransformerException
+	{
+	  // skip that check if our os uses slashes...
+		if (File.separator.equals ("/"))
+			return;
+		
+		final String WIN_FILE = "\\sub1\\file1.ext";
+		final String UNIX_FILE = "/sub1/file2.ext";
+		
+		testFiles.get (0).delete ();
+		CombineArchive ca = new CombineArchive (testFiles.get(0));
+		
+		ca.addEntry (testFiles.get(0), WIN_FILE, new URI ("http://identifiers.org/combine.specifications/sbml"));
+		ca.addEntry (testFiles.get(1), UNIX_FILE, new URI ("http://identifiers.org/combine.specifications/sbml"));
+		
+		assertEquals ("unexpected number of entries in archive after creation", 2, ca.getNumEntries ());
+		
+		ca.pack ();
+		ca.close ();
+		
+		CombineArchive readArchive = new CombineArchive (testFiles.get(0));
+		String message = " ";
+		boolean isUnixFileRemoved = readArchive.removeEntry (UNIX_FILE);
+		message= (isUnixFileRemoved == false)? message+" Failed to remove file in Unix format : "+ UNIX_FILE+"\n":message;
+		boolean isWinFileRemoved = readArchive.removeEntry (WIN_FILE);
+		message= (isWinFileRemoved == false)? message+" Failed to remove file Windows format : "+ WIN_FILE+"\n":message;
+		
+		readArchive.close();
+		assertTrue (message, (isUnixFileRemoved && isWinFileRemoved));
 	}
 	
 	
 	/**
 	 * Test local files by URI -> file:/path/to/file.
-	 * @throws CombineArchiveException 
-	 * @throws ParseException 
-	 * @throws JDOMException 
-	 * @throws IOException 
-	 * @throws TransformerException 
-	 * @throws URISyntaxException 
+	 *
+	 * @throws IOException Signals that an I/O exception has occurred.
+	 * @throws JDOMException the jDOM exception
+	 * @throws ParseException the parse exception
+	 * @throws CombineArchiveException the combine archive exception
+	 * @throws TransformerException the transformer exception
+	 * @throws URISyntaxException the uRI syntax exception
 	 */
 	@Test
 	public void someRandomTests () throws IOException, JDOMException, ParseException, CombineArchiveException, TransformerException, URISyntaxException
@@ -199,12 +226,14 @@ public class TestArchive
 	}
 	
 	/**
-	 * @throws IOException
-	 * @throws JDOMException
-	 * @throws ParseException
-	 * @throws CombineArchiveException
-	 * @throws TransformerException 
-	 * @throws URISyntaxException 
+	 * Test add whole meta file.
+	 *
+	 * @throws IOException Signals that an I/O exception has occurred.
+	 * @throws JDOMException the jDOM exception
+	 * @throws ParseException the parse exception
+	 * @throws CombineArchiveException the combine archive exception
+	 * @throws TransformerException the transformer exception
+	 * @throws URISyntaxException the uRI syntax exception
 	 */
 	@Test
 	public void testAddWholeMetaFile () throws IOException, JDOMException, ParseException, CombineArchiveException, TransformerException, URISyntaxException
@@ -264,7 +293,7 @@ public class TestArchive
 	}
 	
 	/**
-	 * 
+	 * Test main entries.
 	 */
 	@Test
 	public void testMainEntries ()
@@ -358,6 +387,7 @@ public class TestArchive
 	}
 
 	/**
+	 * Test paper example.
 	 */
 	@Test
 	public void testPaperExample ()
@@ -386,6 +416,7 @@ public class TestArchive
 	}
 
 	/**
+	 * Test broken archive.
 	 */
 	@Test
 	public void testBrokenArchive ()
@@ -419,6 +450,7 @@ public class TestArchive
 	}
 	
 	/**
+	 * Test move.
 	 */
 	@Test
 	public void testMove ()
@@ -591,9 +623,11 @@ public class TestArchive
 	}
 	
 	/**
-	 * @throws URISyntaxException 
-	 * @throws IOException 
-	 * @throws TransformerException 
+	 * Test modify meta.
+	 *
+	 * @throws IOException Signals that an I/O exception has occurred.
+	 * @throws URISyntaxException the uRI syntax exception
+	 * @throws TransformerException the transformer exception
 	 */
 	@Test
 	public void testModifyMeta () throws IOException, URISyntaxException, TransformerException

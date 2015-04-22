@@ -277,6 +277,7 @@ public class CombineArchive
 	 */
 	private String prepareLocation (String location)
 	{
+		location = Utils.pathFixer(location);
 		if (location.startsWith ("./"))
 			location = location.substring (1);
 		
@@ -1169,7 +1170,7 @@ public class CombineArchive
 			{
 				location = "/" + location;
 			}
-			location = Paths.get (location).normalize ().toString ();
+			location = prepareLocation(Paths.get (location).normalize ().toString ());
 			
 			Path locFile = zipfs.getPath (location).normalize ();
 			if (!Files.isRegularFile (locFile))

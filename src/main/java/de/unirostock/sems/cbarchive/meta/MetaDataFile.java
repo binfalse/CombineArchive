@@ -150,7 +150,7 @@ public class MetaDataFile
 			ArchiveEntry currentEntry = null;
 			String fragmentIdentifier = null;
 			
-			about = Paths.get (about).normalize ().toString ();
+			about = Utils.pathFixer(Paths.get (about).normalize ().toString ());
 			
 			// try to find the corresponding entry
 			for (ArchiveEntry entry : entries.values ())
