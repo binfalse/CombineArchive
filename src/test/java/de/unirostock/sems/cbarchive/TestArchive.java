@@ -706,6 +706,18 @@ public class TestArchive
 		assertTrue ("meta did change!?", meta2.equals (meta3));
 	}
 	
+	
+
+	/**
+	 * Test exceptions.
+	 */
+	@Test
+	public void testExceptions ()
+	{
+		Exception e = new CombineArchiveException ("some exception");
+		assertEquals ("expected different message", "some exception", e.getMessage ());
+	}
+	
 	/**
 	 * @throws TransformerException 
 	 * @throws IOException 
