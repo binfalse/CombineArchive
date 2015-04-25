@@ -33,8 +33,10 @@
 package de.unirostock.sems.cbarchive;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PrintStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
@@ -92,6 +94,12 @@ import de.unirostock.sems.cbarchive.meta.omex.VCard;
 public class Example
 {
 	
+	/** should we print to sys out?. */
+	public static boolean PRINT = true;
+	
+	/** The out stream. */
+	private static PrintStream ps = System.out;
+	
 	/**
 	 * Creates an example archive in <code>/tmp/testArchive.zip</code>.
 	 * 
@@ -111,7 +119,7 @@ public class Example
 			ParseException,
 			CombineArchiveException, URISyntaxException
 	{
-		System.out.println ("--- creating archive. ---");
+		ps.println ("--- creating archive. ---");
 		// let's create some 'creators' -> meta data.
 		List<VCard> creators = new ArrayList<VCard> ();
 		creators.add (new VCard ("Scharm", "Martin",
@@ -193,7 +201,7 @@ public class Example
 			ParseException,
 			CombineArchiveException
 	{
-		System.out.println ("--- reading archive. ---");
+		ps.println ("--- reading archive. ---");
 		File archiveFile = new File ("/tmp/testArchive.zip");
 		File destination = new File ("/tmp/myDestination");
 		File tmpEntryExtract = new File ("/tmp/myExtractedEntry");
@@ -202,18 +210,18 @@ public class Example
 		CombineArchive ca = new CombineArchive (archiveFile);
 		
 		// read description of the archive itself
-		System.out.println ("found " + ca.getDescriptions ().size ()
+		ps.println ("found " + ca.getDescriptions ().size ()
 			+ " meta data entries describing the archive.");
 		
 		// iterate over all entries in the archive
 		for (ArchiveEntry entry : ca.getEntries ())
 		{
 			// display some information about the archive
-			System.out.println (">>> file name in archive: " + entry.getFileName ()
+			ps.println (">>> file name in archive: " + entry.getFileName ()
 				+ "  -- apparently of format: " + entry.getFormat ());
 			
 			// extract the file to `tmpEntryExtract`
-			System.out.println ("file can be read from: "
+			ps.println ("file can be read from: "
 				+ entry.extractFile (tmpEntryExtract).getAbsolutePath ());
 			
 			// if you just want to read it, you do not need to extract it
@@ -226,25 +234,25 @@ public class Example
 			// read the descriptions
 			for (MetaDataObject description : entry.getDescriptions ())
 			{
-				System.out.println ("+ found some meta data about "
-					+ description.getAbout ());
+				ps.println ("+ found some meta data about "
+						+ description.getAbout ());
 				if (description instanceof OmexMetaDataObject)
 				{
 					OmexDescription desc = ((OmexMetaDataObject) description)
 						.getOmexDescription ();
 					
 					// when was it created?
-					System.out.println ("file was created: " + desc.getCreated ());
+					ps.println ("file was created: " + desc.getCreated ());
 					
 					// who's created the archive?
 					VCard firstCreator = desc.getCreators ().get (0);
-					System.out.println ("file's first author: "
+					ps.println ("file's first author: "
 						+ firstCreator.getGivenName () + " "
 						+ firstCreator.getFamilyName ());
 				}
 				else
 				{
-					System.out.println ("found some meta data of type '"
+					ps.println ("found some meta data of type '"
 						+ description.getClass ().getName ()
 						+ "' that we do not respect in this small example.");
 				}
@@ -263,17 +271,39 @@ public class Example
 	}
 	
 	
+	
+	
 	/**
 	 * @param args
 	 * @throws Exception
 	 */
 	public static void main (String[] args) throws Exception
 	{
+		if (!PRINT)
+		{
+			File tmp = File.createTempFile ("CombineArchive", "temporary");
+			tmp.deleteOnExit ();
+			ps =  new PrintStream (new FileOutputStream (tmp));
+		}
+		
+		
+		
+		
 		// create an archive
 		createExample ();
 		
 		// read the archive
 		readExample ();
+		
+		
+		
+		
+		
+		
+		if (!PRINT)
+		{
+			ps.close ();
+		}
 	}
 	
 }

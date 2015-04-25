@@ -396,7 +396,8 @@ public class TestArchive
 		List<VCard> creators = new ArrayList<VCard> ();
 		creators.add (new VCard ("Scharm", "Martin",
 			"martin.scharm@uni-rostock.de", "University of Rostock"));
-		ae.addDescription (new OmexMetaDataObject (new OmexDescription (creators, new Date ())));
+		OmexMetaDataObject meta = new OmexMetaDataObject (new OmexDescription (creators, new Date ()));
+		ae.addDescription (meta);
 		ArchiveEntry ae2 = ca.replaceFile (testFiles.get (1), ae);
 		// make sure we still have the meta data
 		assertEquals ("lost some meta data while replacing file?", ae.getDescriptions ().size (), ae2.getDescriptions ().size ());
@@ -424,6 +425,11 @@ public class TestArchive
 		ae.setFormat (new URI ("http://identifiers.org/combine.specifications/sbml"));
 		assertEquals ("setting format failed", new URI ("http://identifiers.org/combine.specifications/sbml"), ae.getFormat ());
 		
+		assertTrue (ae.removeDescription (meta));
+		meta.setAbout (ae);
+		assertEquals ("setting about failed...", ae.getEntityPath (), meta.getAbout ());
+		meta.setAbout (ae2);
+		assertEquals ("setting about failed...", ae2.getEntityPath (), meta.getAbout ());
 		
 		try
 		{
@@ -499,6 +505,8 @@ public class TestArchive
 		metaElement.addContent ("some content");
 		metaParent.addContent (metaElement);
 		CellMLFile.addDescription ("someFragment", new DefaultMetaDataObject (metaParent));
+		
+		assertNull ("expected to not be able to interprete the meta xml", OmexMetaDataObject.tryToRead (metaParent));
 		
 		ca.pack ();
 		
@@ -1132,6 +1140,7 @@ public class TestArchive
 		Example e = new Example ();
 		try
 		{
+			Example.PRINT = false;
 			e.main (null);
 		}
 		catch (Exception e1)
