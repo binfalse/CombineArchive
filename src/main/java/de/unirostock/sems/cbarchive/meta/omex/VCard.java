@@ -240,6 +240,54 @@ public class VCard
 	
 	
 	/**
+	 * Sets the family name.
+	 * 
+	 * @param familyName
+	 *          the new family name
+	 */
+	public void setFamilyName (String familyName)
+	{
+		this.familyName = familyName;
+	}
+	
+	
+	/**
+	 * Sets the given name.
+	 * 
+	 * @param givenName
+	 *          the new given name
+	 */
+	public void setGivenName (String givenName)
+	{
+		this.givenName = givenName;
+	}
+	
+	
+	/**
+	 * Sets the email.
+	 * 
+	 * @param email
+	 *          the new email
+	 */
+	public void setEmail (String email)
+	{
+		this.email = email;
+	}
+	
+	
+	/**
+	 * Sets the organization.
+	 * 
+	 * @param organization
+	 *          the new organization
+	 */
+	public void setOrganization (String organization)
+	{
+		this.organization = organization;
+	}
+	
+	
+	/**
 	 * Export this VCard as a JSON object.
 	 * 
 	 * @return the object
