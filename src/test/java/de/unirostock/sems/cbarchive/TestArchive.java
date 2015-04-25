@@ -506,7 +506,13 @@ public class TestArchive
 		metaParent.addContent (metaElement);
 		CellMLFile.addDescription ("someFragment", new DefaultMetaDataObject (metaParent));
 		
+		Element root = new Element ("root");
+		SBMLFile.getDescriptions ().get (0).injectDescription (root);
+		Element date = root.getChildren ().get (root.getChildren ().size () - 1).getChildren ().get (0);
+		date.setText ("test");
+		System.out.println (Utils.prettyPrintDocument (new Document (root)));
 		assertNull ("expected to not be able to interprete the meta xml", OmexMetaDataObject.tryToRead (metaParent));
+		assertNull ("expected to not be able to interprete the meta xml", OmexMetaDataObject.tryToRead (root));
 		
 		ca.pack ();
 		
