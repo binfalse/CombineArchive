@@ -346,7 +346,11 @@ public class TestArchive
 		
 		List<ArchiveEntry> entries = new ArrayList<ArchiveEntry> ();
 		for (int i = 1; i < testFiles.size (); i++)
-			entries.add (ca.addEntry (testFiles.get (i), "/sub" + i + "/file" + i + ".ext", new URI ("http://identifiers.org/combine.specifications/sbml")));
+		{
+			ArchiveEntry ae = ca.addEntry (testFiles.get (i), "/sub" + i + "/file" + i + ".ext", new URI ("http://identifiers.org/combine.specifications/sbml"));
+			entries.add (ae);
+			assertEquals ("unexpected file name", "file" + i + ".ext", ae.getFileName ());
+		}
 		
 		assertEquals ("unexpected number of entries in archive after creation", testFiles.size () - 1, ca.getNumEntries ());
 		
@@ -403,6 +407,22 @@ public class TestArchive
 		byte [] b = Files.readAllBytes (tmp2.toPath ());
 		assertFalse ("files do not have changed...", Arrays.equals (a, b));
 		tmp1.delete (); tmp2.delete ();
+		
+		ae.extractFile (tmp2);
+		b = Files.readAllBytes (tmp2.toPath ());
+		assertFalse ("files do not have changed...", Arrays.equals (a, b));
+		tmp2.delete ();
+		
+		assertEquals ("entry returned wrong archive", ca, ae.getArchive ());
+		
+		tmp2 = ae.getFile ();
+		b = Files.readAllBytes (tmp2.toPath ());
+		assertFalse ("files do not have changed...", Arrays.equals (a, b));
+		tmp2.delete ();
+		
+		
+		ae.setFormat (new URI ("http://identifiers.org/combine.specifications/sbml"));
+		assertEquals ("setting format failed", new URI ("http://identifiers.org/combine.specifications/sbml"), ae.getFormat ());
 		
 		
 		try
