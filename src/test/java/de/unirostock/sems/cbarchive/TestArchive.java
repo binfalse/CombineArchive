@@ -1111,6 +1111,37 @@ public class TestArchive
 	}
 	
 	
+	/**
+	 * Test example.
+	 * @throws IOException 
+	 */
+	@Test
+	public void testExample () throws IOException
+	{
+		File dir = new File ("/tmp/base/path/subdir");
+		dir.mkdirs ();
+		
+		File f = new File ("/tmp/base/path/file.sbml");
+		f.createNewFile ();
+		f.deleteOnExit ();
+		
+		f = new File ("/tmp/base/path/subdir/file.cellml");
+		f.createNewFile ();
+		f.deleteOnExit ();
+		
+		Example e = new Example ();
+		try
+		{
+			e.main (null);
+		}
+		catch (Exception e1)
+		{
+			LOGGER.error (e);
+			fail ("example failed");
+		}
+	}
+	
+	
 
 	/**
 	 * Test utils.
