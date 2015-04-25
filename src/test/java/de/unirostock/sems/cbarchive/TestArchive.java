@@ -151,26 +151,168 @@ public class TestArchive
 	 * @throws JDOMException 
 	 * @throws IOException 
 	 * @throws URISyntaxException 
+	 * @throws TransformerException 
 	 */
 	@Test
-	public void testAddAndRemove () throws IOException, JDOMException, ParseException, CombineArchiveException, URISyntaxException
+	public void testAdd () throws IOException, JDOMException, ParseException, CombineArchiveException, URISyntaxException, TransformerException
 	{
 		LOGGER.setMinLevel (LOGGER.ERROR);
 		testFiles.get (0).delete ();
+		
+		
+		List<VCard> creators = new ArrayList<VCard> ();
+		creators.add (new VCard ("Scharm", "Martin",
+			"martin.scharm@uni-rostock.de", "University of Rostock"));
+		OmexDescription omex = new OmexDescription (creators, new Date ());
+		
+		
 		CombineArchive ca = new CombineArchive (testFiles.get(0));
 
+		assertNotNull ("couldn't add entry", ca.addEntry (testFiles.get (1).getParentFile (), testFiles.get (1), new URI ("http://identifiers.org/combine.specifications/sbml")));
+		assertNotNull ("couldn't add entry", ca.addEntry (testFiles.get (1).getParentFile (), testFiles.get (1), new URI ("http://identifiers.org/combine.specifications/sbml"), true));
 		assertNotNull ("couldn't add entry", ca.addEntry (testFiles.get (1), "/sub" + 1 + "/file" + 1 + ".ext", new URI ("http://identifiers.org/combine.specifications/sbml")));
+		assertNotNull ("couldn't add entry", ca.addEntry (testFiles.get (1), "/sub" + 1 + "/file" + 1 + ".ext", new URI ("http://identifiers.org/combine.specifications/sbml"), true));
 		
+		// test unsupported locations
+		try
+		{
+			ca.addEntry (testFiles.get (1), CombineArchive.MANIFEST_LOCATION, new URI ("http://identifiers.org/combine.specifications/sbml"));
+			fail ("overwrote manifest");
+		}
+		catch (IllegalArgumentException e){}
+		try
+		{
+			ca.addEntry (testFiles.get (1), CombineArchive.METADATA_LOCATION, new URI ("http://identifiers.org/combine.specifications/sbml"));
+			fail ("overwrote meta");
+		}
+		catch (IllegalArgumentException e){}
+		try
+		{
+			ca.addEntry (testFiles.get (1), "/metadata-1.rdf", new URI ("http://identifiers.org/combine.specifications/sbml"));
+			fail ("overwrote meta");
+		}
+		catch (IllegalArgumentException e){}
+		try
+		{
+			ca.addEntry (testFiles.get (1), "/metadata-123.rdf", new URI ("http://identifiers.org/combine.specifications/sbml"));
+			fail ("overwrote meta");
+		}
+		catch (IllegalArgumentException e){}
 		
-		
+		// test unsupported features
+		try
+		{
+			assertNotNull ("couldn't add entry", ca.addEntry (testFiles.get (1).getParentFile (), new File (testFiles.get (1) + "doesnotexist"), new URI ("http://identifiers.org/combine.specifications/sbml")));
+			fail ("added nonexistent file?");
+		}
+		catch (IOException e)
+		{
+			// ok
+		}
+		try
+		{
+			assertNotNull ("couldn't add entry", ca.addEntry (testFiles.get (1).getParentFile (), new File (testFiles.get (1) + "doesnotexist"), new URI ("http://identifiers.org/combine.specifications/sbml"), true));
+			fail ("added nonexistent file?");
+		}
+		catch (IOException e)
+		{
+			// ok
+		}
+		try
+		{
+			assertNotNull ("couldn't add entry", ca.addEntry (testFiles.get (2), testFiles.get (1), new URI ("http://identifiers.org/combine.specifications/sbml")));
+			fail ("added file from non-parent dir?");
+		}
+		catch (IOException e)
+		{
+			// ok
+		}
+		try
+		{
+			assertNotNull ("couldn't add entry", ca.addEntry (testFiles.get (2), testFiles.get (1), new URI ("http://identifiers.org/combine.specifications/sbml"), true));
+			fail ("added file from non-parent dir?");
+		}
+		catch (IOException e)
+		{
+			// ok
+		}
 		
 		// test deprecated methods
 		assertNotNull ("couldn't add entry", ca.addEntry (testFiles.get (1), "/sub" + 1 + "/file" + 1 + ".ext", "http://identifiers.org/combine.specifications/sbml"));
 		assertNull ("could add entry with invalid uir?", ca.addEntry (testFiles.get (1), "/sub" + 1 + "/file" + 1 + ".ext", "s t u f f"));
 		
+		assertNotNull ("couldn't add entry", ca.addEntry (testFiles.get (1), "/sub" + 1 + "/file" + 1 + ".ext", "http://identifiers.org/combine.specifications/sbml", true));
+		assertNull ("could add entry with invalid uir?", ca.addEntry (testFiles.get (1), "/sub" + 1 + "/file" + 1 + ".ext", "s t u f f", false));
+
+
+		assertNotNull ("couldn't add entry", ca.addEntry (testFiles.get (1).getParentFile (), testFiles.get (1), "http://identifiers.org/combine.specifications/sbml"));
+		assertNotNull ("couldn't add entry", ca.addEntry (testFiles.get (1).getParentFile (), testFiles.get (1), "http://identifiers.org/combine.specifications/sbml", true));
+
+		assertNotNull ("couldn't add entry", ca.addEntry (testFiles.get (1).getParentFile (), testFiles.get (1), "http://identifiers.org/combine.specifications/sbml", omex));
+		assertNotNull ("couldn't add entry", ca.addEntry (testFiles.get (1).getParentFile (), testFiles.get (1), "http://identifiers.org/combine.specifications/sbml", omex, true));
+		
+		assertNull ("couldn't add entry", ca.addEntry (testFiles.get (1).getParentFile (), testFiles.get (1), "s t u f f", true));
+		assertNull ("couldn't add entry", ca.addEntry (testFiles.get (1).getParentFile (), testFiles.get (1), "s t u f f"));
+		try
+		{
+			assertNotNull ("couldn't add entry", ca.addEntry (testFiles.get (1).getParentFile (), new File (testFiles.get (1) + "doesnotexist"), "http://identifiers.org/combine.specifications/sbml", true));
+			fail ("added nonexistent file?");
+		}
+		catch (IOException e)
+		{
+			// ok
+		}
+		try
+		{
+			assertNotNull ("couldn't add entry", ca.addEntry (testFiles.get (2), testFiles.get (1), "http://identifiers.org/combine.specifications/sbml", true));
+			fail ("added file from non-parent dir?");
+		}
+		catch (IOException e)
+		{
+			// ok
+		}
+		try
+		{
+			assertNotNull ("couldn't add entry", ca.addEntry (testFiles.get (1).getParentFile (), new File (testFiles.get (1) + "doesnotexist"), "http://identifiers.org/combine.specifications/sbml", omex, true));
+			fail ("added nonexistent file?");
+		}
+		catch (IOException e)
+		{
+			// ok
+		}
+		try
+		{
+			assertNotNull ("couldn't add entry", ca.addEntry (testFiles.get (2), testFiles.get (1), "http://identifiers.org/combine.specifications/sbml", omex, true));
+			fail ("added file from non-parent dir?");
+		}
+		catch (IOException e)
+		{
+			// ok
+		}
+		try
+		{
+			assertNotNull ("couldn't add entry", ca.addEntry (testFiles.get (1).getParentFile (), new File (testFiles.get (1) + "doesnotexist"), "http://identifiers.org/combine.specifications/sbml", omex));
+			fail ("added nonexistent file?");
+		}
+		catch (IOException e)
+		{
+			// ok
+		}
+		try
+		{
+			assertNotNull ("couldn't add entry", ca.addEntry (testFiles.get (2), testFiles.get (1), "http://identifiers.org/combine.specifications/sbml", omex));
+			fail ("added file from non-parent dir?");
+		}
+		catch (IOException e)
+		{
+			// ok
+		}
 		
 		
 
+
+		ca.pack ();
+		ca.close ();
 		LOGGER.setMinLevel (LOGGER.WARN);
 	}
 	
@@ -188,6 +330,10 @@ public class TestArchive
 	@Test
 	public void someRandomTests () throws IOException, JDOMException, ParseException, CombineArchiveException, TransformerException, URISyntaxException
 	{
+		// test locations
+		assertEquals ("unexpected manifest path", "/manifest.xml", CombineArchive.MANIFEST_LOCATION);
+		assertEquals ("unexpected metadata path", "/metadata.rdf", CombineArchive.METADATA_LOCATION);
+		
 		// lets create the archive
 		testFiles.get (0).delete ();
 		CombineArchive ca = new CombineArchive (testFiles.get (0));
@@ -223,6 +369,7 @@ public class TestArchive
 		assertEquals ("unexpected number of entries in archive after resubmitting all files", testFiles.size () - 1, ca.getNumEntries ());
 		
 		assertTrue ("expected to have sbml entries", ca.hasEntriesWithFormat (new URI ("http://identifiers.org/combine.specifications/sbml")));
+		assertFalse ("expected to not have cell entries", ca.hasEntriesWithFormat (new URI ("http://identifiers.org/combine.specifications/cellml")));
 		assertTrue ("expected to have sbml entries", ca.HasEntriesWithFormat (new URI ("http://identifiers.org/combine.specifications/sbml")));
 		assertEquals ("expected different number of sbml entries", testFiles.size () - 1, ca.getNumEntriesWithFormat (new URI ("http://identifiers.org/combine.specifications/sbml")));
 		
