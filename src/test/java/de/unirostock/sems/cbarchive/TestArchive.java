@@ -28,6 +28,7 @@ import javax.xml.transform.TransformerException;
 import org.jdom2.Document;
 import org.jdom2.Element;
 import org.jdom2.JDOMException;
+import org.json.simple.JSONObject;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -703,5 +704,60 @@ public class TestArchive
 		String meta3 = Utils.prettyPrintDocument (new Document (mdo2.getXmlDescription ().clone ()));
 		assertFalse ("meta did not change!?", meta.equals (meta3));
 		assertTrue ("meta did change!?", meta2.equals (meta3));
+	}
+	
+	/**
+	 * @throws TransformerException 
+	 * @throws IOException 
+	 */
+	@Test
+	public void testVcard () throws IOException, TransformerException
+	{
+		VCard vc = new VCard ();
+		
+		assertTrue ("expected vcard to be empty", vc.isEmpty ());
+		Element el = new Element ("root");
+		vc.toXml (el);
+		assertEquals ("vcard shouldn't produce xml...", 0, el.getChildren ().size ());
+
+		vc.setGivenName ("");
+		assertTrue("expected vcard to be empty", vc.isEmpty ());
+		vc.setFamilyName ("");
+		assertTrue("expected vcard to be empty", vc.isEmpty ());
+		vc.setEmail ("");
+		assertTrue("expected vcard to be empty", vc.isEmpty ());
+		
+		vc.setFamilyName ("fam");
+		assertFalse("expected vcard to be non-empty", vc.isEmpty ());
+		el = new Element ("root");
+		vc.toXml (el);
+		assertEquals ("vcard should produce xml...", 1, el.getChildren ().size ());
+		
+		vc.setGivenName ("first");
+		assertFalse("expected vcard to be non-empty", vc.isEmpty ());
+		el = new Element ("root");
+		vc.toXml (el);
+		assertEquals ("vcard should produce xml...", 1, el.getChildren ().size ());
+		
+		vc.setEmail ("m@il");
+		assertFalse("expected vcard to be non-empty", vc.isEmpty ());
+		el = new Element ("root");
+		vc.toXml (el);
+		assertEquals ("vcard should produce xml...", 1, el.getChildren ().size ());
+		
+		
+		vc.setOrganization ("uni");
+		assertFalse("expected vcard to be non-empty", vc.isEmpty ());
+		el = new Element ("root");
+		vc.toXml (el);
+		assertEquals ("vcard should produce xml...", 1, el.getChildren ().size ());
+		
+		assertEquals ("expected different family name", "fam", vc.getFamilyName ());
+		assertEquals ("expected different given name", "first", vc.getGivenName ());
+		assertEquals ("expected different mail address", "m@il", vc.getEmail ());
+		assertEquals ("expected different organization", "uni", vc.getOrganization ());
+		
+		Object json = vc.toJsonObject ();
+		assertTrue ("expected a json object", json instanceof JSONObject);
 	}
 }
