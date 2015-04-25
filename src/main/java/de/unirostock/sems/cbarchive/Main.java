@@ -32,6 +32,8 @@
  */
 package de.unirostock.sems.cbarchive;
 
+import de.binfalse.bflog.LOGGER;
+
 /**
  * @author Martin Scharm
  * 
@@ -44,8 +46,8 @@ public class Main
 	 */
 	public static void main (String[] args)
 	{
-		System.out.println ("to be developed...");
-		System.exit (2);
+		LOGGER.warn ("to be developed...");
+		return;
 	}
 	
 }

@@ -1101,6 +1101,21 @@ public class TestArchive
 	 * Test utils.
 	 */
 	@Test
+	public void testMain ()
+	{
+		LOGGER.setMinLevel (LOGGER.ERROR);
+		Main.main (null);
+		Main m = new Main ();
+		Utils u = new Utils ();
+		LOGGER.setMinLevel (LOGGER.WARN);
+	}
+	
+	
+
+	/**
+	 * Test utils.
+	 */
+	@Test
 	public void testUtils ()
 	{
 		try
