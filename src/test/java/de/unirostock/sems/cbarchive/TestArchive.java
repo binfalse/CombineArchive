@@ -656,6 +656,53 @@ public class TestArchive
 	 * Test broken archive.
 	 */
 	@Test
+	public void testBrokenArchive2 ()
+	{
+		LOGGER.setLogToStdErr (false);
+		
+		File [] broken = new File [] {
+			new File ("test/paper-repressilator-brokenmanifest.omex"),
+			new File ("test/paper-repressilator-mod-manifest.omex"),
+			new File ("test/paper-repressilator-mod-manifest-2.omex"),
+			new File ("test/paper-repressilator-mod-manifest-3.omex")
+		};
+		
+		for (File f : broken)
+		{
+			try
+			{
+				CombineArchive ca = new CombineArchive (f, true);
+				assertTrue ("expected to see an error if archive manifest is broken", ca.hasErrors ());
+				ca.close ();
+			}
+			catch (Exception e)
+			{
+				e.printStackTrace ();
+				fail ("unexpected error occured");
+			}
+
+			try
+			{
+				CombineArchive ca = new CombineArchive (f);
+				fail ("expected to not be able to continue");
+				ca.close ();
+			}
+			catch (Exception e)
+			{
+				// ok
+			}
+		}
+		
+		
+		
+		LOGGER.setLogToStdErr (true);
+		
+	}
+
+	/**
+	 * Test broken archive.
+	 */
+	@Test
 	public void testBrokenArchive ()
 	{
 		try

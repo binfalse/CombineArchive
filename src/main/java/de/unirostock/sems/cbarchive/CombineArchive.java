@@ -1161,6 +1161,16 @@ public class CombineArchive
 					}
 				}
 			}
+			else
+			{
+				LOGGER.error ("didn't find format for entry", i);
+				errors.add ("didn't find format for entry" + i);
+				if (!continueOnError)
+					throw new IOException ("didn't find format for entry"
+						+ i);
+				continue;
+			}
+			
 			attr = content.getAttribute ("master");
 			if (attr != null)
 				master = attr.getValue ();
