@@ -320,8 +320,7 @@ public class CombineArchive
 		
 		if (entry != null)
 		{
-			if (mainEntries == entry)
-				mainEntries = null;
+			mainEntries.remove (entry);
 			Files.delete (entry.getPath ());
 			return true;
 		}
@@ -341,8 +340,7 @@ public class CombineArchive
 	{
 		if (entries.remove (entry.getFilePath ()) != null)
 		{
-			if (mainEntries == entry)
-				mainEntries = null;
+			mainEntries.remove (entry);
 			Files.delete (entry.getPath ());
 			return true;
 		}
@@ -848,9 +846,26 @@ public class CombineArchive
 	 * @return true, if there is at least one entry in this archive having this
 	 *         format
 	 */
-	public boolean HasEntriesWithFormat (URI format)
+	public boolean hasEntriesWithFormat (URI format)
 	{
 		return getEntriesWithFormat (format).size () > 0;
+	}
+	
+	
+	/**
+	 * Checks whether there are entries with a certain format.
+	 * 
+	 * @param format
+	 *          the format URI of interest, see <a href="https://sems.uni-rostock.de/trac/combine-ext/wiki/CombineFormatizer">CombineFormatizer</a>
+	 * @return true, if there is at least one entry in this archive having this
+	 *         format
+	 * @deprecated as of version 0.9.5.2, replaced by
+	 *             {@link #hasEntriesWithFormat(URI)}
+	 */
+	@Deprecated
+	public boolean HasEntriesWithFormat (URI format)
+	{
+		return hasEntriesWithFormat (format);
 	}
 	
 	

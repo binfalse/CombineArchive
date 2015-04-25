@@ -21,6 +21,7 @@ import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 
 import javax.xml.transform.TransformerException;
@@ -144,6 +145,37 @@ public class TestArchive
 	
 	
 	/**
+	 * Test add and remove.
+	 * @throws CombineArchiveException 
+	 * @throws ParseException 
+	 * @throws JDOMException 
+	 * @throws IOException 
+	 * @throws URISyntaxException 
+	 */
+	@Test
+	public void testAddAndRemove () throws IOException, JDOMException, ParseException, CombineArchiveException, URISyntaxException
+	{
+		LOGGER.setMinLevel (LOGGER.ERROR);
+		testFiles.get (0).delete ();
+		CombineArchive ca = new CombineArchive (testFiles.get(0));
+
+		assertNotNull ("couldn't add entry", ca.addEntry (testFiles.get (1), "/sub" + 1 + "/file" + 1 + ".ext", new URI ("http://identifiers.org/combine.specifications/sbml")));
+		
+		
+		
+		
+		// test deprecated methods
+		assertNotNull ("couldn't add entry", ca.addEntry (testFiles.get (1), "/sub" + 1 + "/file" + 1 + ".ext", "http://identifiers.org/combine.specifications/sbml"));
+		assertNull ("could add entry with invalid uir?", ca.addEntry (testFiles.get (1), "/sub" + 1 + "/file" + 1 + ".ext", "s t u f f"));
+		
+		
+		
+
+		LOGGER.setMinLevel (LOGGER.WARN);
+	}
+	
+	
+	/**
 	 * Test local files by URI -> file:/path/to/file.
 	 *
 	 * @throws IOException Signals that an I/O exception has occurred.
@@ -159,6 +191,12 @@ public class TestArchive
 		// lets create the archive
 		testFiles.get (0).delete ();
 		CombineArchive ca = new CombineArchive (testFiles.get (0));
+		assertEquals ("archive path is expected to be '.'", ".", ca.getEntityPath ());
+
+		assertFalse ("expected to not have sbml entries", ca.hasEntriesWithFormat (new URI ("http://identifiers.org/combine.specifications/sbml")));
+		assertFalse ("expected to not have sbml entries", ca.HasEntriesWithFormat (new URI ("http://identifiers.org/combine.specifications/sbml")));
+		assertEquals ("expected different number of sbml entries", 0, ca.getNumEntriesWithFormat (new URI ("http://identifiers.org/combine.specifications/sbml")));
+		assertNull ("expected no main entry", ca.getMainEntry ());
 		
 		List<ArchiveEntry> entries = new ArrayList<ArchiveEntry> ();
 		for (int i = 1; i < testFiles.size (); i++)
@@ -183,6 +221,10 @@ public class TestArchive
 		for (int i = 1; i < testFiles.size (); i++)
 			entries.add (ca.addEntry (testFiles.get (i), "/sub" + i + "/file" + i + ".ext", new URI ("http://identifiers.org/combine.specifications/sbml")));
 		assertEquals ("unexpected number of entries in archive after resubmitting all files", testFiles.size () - 1, ca.getNumEntries ());
+		
+		assertTrue ("expected to have sbml entries", ca.hasEntriesWithFormat (new URI ("http://identifiers.org/combine.specifications/sbml")));
+		assertTrue ("expected to have sbml entries", ca.HasEntriesWithFormat (new URI ("http://identifiers.org/combine.specifications/sbml")));
+		assertEquals ("expected different number of sbml entries", testFiles.size () - 1, ca.getNumEntriesWithFormat (new URI ("http://identifiers.org/combine.specifications/sbml")));
 		
 		// we should still be able to add known file under a different name
 		for (int i = 1; i < testFiles.size (); i++)
@@ -216,14 +258,31 @@ public class TestArchive
 		tmp1.delete (); tmp2.delete ();
 		
 		
+		try
+		{
+			tmp1.mkdirs ();
+			tmp1.deleteOnExit ();
+			// test directories
+			ca.extract (ae.getPath (), tmp1);
+			tmp1.delete ();
+		}
+		catch (IOException e)
+		{
+			fail ("directories should be ok!?");
+		}
+		
+		
 		// and lets remove top-level entries
 		assertTrue ("unable to remove /file3.ext", ca.removeEntry ("/file3.ext"));
 		assertTrue ("unable to remove file2.ext", ca.removeEntry ("/file2.ext"));
 		assertTrue ("unable to remove ./file3.ext", ca.removeEntry ("./file1.ext"));
 		assertEquals ("unexpected number of entries in archive after deleting number 3 top-level files", 2 * (testFiles.size () - 1) - 3, ca.getNumEntries ());
 		
+		assertTrue ("expected to get an iterator", ca.getEnumerator () instanceof Iterator);
+		
 		ca.pack ();
 		ca.close ();
+		tmp1.delete ();
 	}
 	
 	/**
@@ -370,7 +429,37 @@ public class TestArchive
 			e.addDescription (new OmexMetaDataObject (new OmexDescription (creators, new Date ())));
 		
 		assertEquals ("unexpected number of entries in archive after creation", testFiles.size () - 1, ca.getNumEntries ());
+
+		int nMain = ca.getMainEntries ().size ();
+		ArchiveEntry ae = ca.getMainEntries ().get (0);
+		ca.removeMainEntry (ae);
+		assertEquals ("unexpected number of main entries", --nMain, ca.getMainEntries ().size ());
 		
+		ae = ca.getMainEntries ().get (0);
+		try
+		{
+			assertTrue ("couldn't remove entry", ca.removeEntry (ae));
+			assertFalse ("double-removed entry?", ca.removeEntry (ae));
+		}
+		catch (IOException e)
+		{
+			LOGGER.error (e, "error removing an entry");
+			fail ("couldn't remove entry");
+		}
+		assertEquals ("unexpected number of main entries", --nMain, ca.getMainEntries ().size ());
+		
+		ae = ca.getMainEntries ().get (0);
+		try
+		{
+			assertTrue ("couldn't remove entry", ca.removeEntry (ae.getEntityPath ()));
+			assertFalse ("double-removed entry?", ca.removeEntry (ae.getEntityPath ()));
+		}
+		catch (IOException e)
+		{
+			LOGGER.error (e, "error removing an entry");
+			fail ("couldn't remove entry");
+		}
+		assertEquals ("unexpected number of main entries", --nMain, ca.getMainEntries ().size ());
 		
 		
 		try
@@ -440,6 +529,10 @@ public class TestArchive
 			for (String s : errors)
 				System.out.println (s);*/
 			assertEquals ("expected to see exactly 2 errors.", 2, ca.getErrors ().size ());
+			
+			ca.clearErrors ();
+			assertFalse ("expected to see no more errors", ca.hasErrors ());
+			
 			ca.close ();
 		}
 		catch (Exception e)
@@ -510,6 +603,8 @@ public class TestArchive
 			e.addDescription (new OmexMetaDataObject (new OmexDescription (creators, new Date ())));
 		
 		assertEquals ("unexpected number of entries in archive after creation", testFiles.size () - 1, ca.getNumEntries ());
+		
+		ca.setMainEntry (ca.getEntry ("/sub3/file3.ext"));
 		
 		try
 		{
@@ -597,6 +692,8 @@ public class TestArchive
 		assertNull ("mhpf. this file shouldn't be there anymore.", ca.getEntry ("/sub4/file4.ext"));
 		
 		entry = ca.getEntry ("/sub1/file3.ext");
+		// is it still the main entry?
+		assertTrue (ca.getMainEntries ().contains (entry));
 		assertNotNull ("moving failed", entry);
 		meta = entry.getDescriptions ();
 		assertEquals ("unexpected number of meta for /sub1/file3.ext", 1, meta.size ());
@@ -609,6 +706,17 @@ public class TestArchive
 		assertEquals ("unexpected number of meta for /sub4-2/file4.ext", 1, meta.size ());
 		for (MetaDataObject m : meta)
 			assertEquals ("meta of /sub1/file3.ext is not for /sub4-2/file4.ext", "/sub4-2/file4.ext", m.getAbout ());
+
+		// moving non-existent..
+		try
+		{
+			ca.moveEntry ("/stuff.noext", "/somehwere.ext");
+			fail ("moved non-existent entry!?");
+		}
+		catch (IOException e)
+		{
+			// ok...
+		}
 		
 
 		try
