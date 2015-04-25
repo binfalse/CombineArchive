@@ -1074,4 +1074,58 @@ public class TestArchive
 		Object json = vc.toJsonObject ();
 		assertTrue ("expected a json object", json instanceof JSONObject);
 	}
+	
+	
+
+	/**
+	 * Test utils.
+	 */
+	@Test
+	public void testUtils ()
+	{
+		try
+		{
+			Utils.SimpleOutputStream sos = new Utils.SimpleOutputStream ();
+			sos.write ('c');
+			assertEquals ("unexpected string", "c", sos.toString ());
+			sos.reset ();
+			assertEquals ("unexpected string", "", sos.toString ());
+		}
+		catch (IOException e)
+		{
+			LOGGER.error (e);
+			fail ("sos tests failed");
+		}
+
+		assertEquals ("extension detector wrong", "sbml", Utils.getExtension ("file.sbml"));
+		assertEquals ("extension detector wrong", "sbml", Utils.getExtension ("file.somehting.sbml"));
+		assertNull ("extension detector wrong", Utils.getExtension ("filesbml"));
+		
+		try
+		{
+			File f = File.createTempFile ("combinearchive", "test");
+			try
+			{
+				Utils.delete (f);
+			}
+			catch (IOException e)
+			{
+				fail ("couldn't delete file");
+			}
+			try
+			{
+				Utils.delete (f);
+				fail ("deleted non-existing file?");
+			}
+			catch (IOException e)
+			{
+			}
+		}
+		catch (IOException e)
+		{
+			LOGGER.error (e);
+		}
+		LOGGER.setMinLevel (LOGGER.WARN);
+	}
+	
 }
