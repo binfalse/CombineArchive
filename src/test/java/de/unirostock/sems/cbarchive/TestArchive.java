@@ -447,7 +447,15 @@ public class TestArchive
 		{
 			fail ("directories should be ok!?");
 		}
-		
+
+		try
+		{
+			ca.extract (Paths.get ("\\/:"), tmp1);
+			fail ("extracted nonexisting?");
+		}
+		catch (IOException e)
+		{
+		}
 		
 		// and lets remove top-level entries
 		assertTrue ("unable to remove /file3.ext", ca.removeEntry ("/file3.ext"));
@@ -768,6 +776,17 @@ public class TestArchive
 			assertFalse ("expected to see no more errors", ca.hasErrors ());
 			
 			ca.close ();
+
+			try
+			{
+				ca = new CombineArchive (new File ("test/broken-archive-by-felix.omex"), false);
+				fail ("expected something to be thrown");
+			}
+			catch (Exception e)
+			{
+				//ok
+			}
+			
 		}
 		catch (Exception e)
 		{
