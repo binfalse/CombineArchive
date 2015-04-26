@@ -241,6 +241,9 @@ public class MetaDataFile
 	private static boolean addMetaToEntry (MetaDataHolder entity,
 		Element subtree, String fragmentIdentifier)
 	{
+		if (entity == null)
+			return false;
+		
 		MetaDataObject object = null;
 		
 		// is that omex?

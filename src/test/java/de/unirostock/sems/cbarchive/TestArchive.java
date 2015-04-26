@@ -17,10 +17,12 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 
@@ -36,6 +38,7 @@ import org.junit.Test;
 
 import de.binfalse.bflog.LOGGER;
 import de.unirostock.sems.cbarchive.meta.DefaultMetaDataObject;
+import de.unirostock.sems.cbarchive.meta.MetaDataFile;
 import de.unirostock.sems.cbarchive.meta.MetaDataObject;
 import de.unirostock.sems.cbarchive.meta.OmexMetaDataObject;
 import de.unirostock.sems.cbarchive.meta.omex.VCard;
@@ -510,7 +513,7 @@ public class TestArchive
 		SBMLFile.getDescriptions ().get (0).injectDescription (root);
 		Element date = root.getChildren ().get (root.getChildren ().size () - 1).getChildren ().get (0);
 		date.setText ("test");
-		System.out.println (Utils.prettyPrintDocument (new Document (root)));
+		//System.out.println (Utils.prettyPrintDocument (new Document (root)));
 		assertNull ("expected to not be able to interprete the meta xml", OmexMetaDataObject.tryToRead (metaParent));
 		assertNull ("expected to not be able to interprete the meta xml", OmexMetaDataObject.tryToRead (root));
 		
@@ -696,6 +699,8 @@ public class TestArchive
 		
 		File [] broken = new File [] {
 			new File ("test/paper-repressilator-brokenmanifest.omex"),
+			new File ("test/paper-repressilator-mod-meta.omex"),
+			new File ("test/paper-repressilator-mod-meta-2.omex"),
 			new File ("test/paper-repressilator-mod-manifest.omex"),
 			new File ("test/paper-repressilator-mod-manifest-2.omex"),
 			new File ("test/paper-repressilator-mod-manifest-3.omex")
@@ -836,7 +841,7 @@ public class TestArchive
 		
 		try
 		{
-			ca.pack ();
+			ca.pack (true);
 			ca.close ();
 		}
 		catch (IOException | TransformerException e)
@@ -1154,6 +1159,104 @@ public class TestArchive
 			LOGGER.error (e);
 			fail ("example failed");
 		}
+	}
+	
+	
+	/**
+	 * Test meta file.
+	 */
+	@Test
+	public void testMetaFile ()
+	{
+		LOGGER.setLogToStdErr (false);
+		List<String> errors = new ArrayList<String> ();
+		
+
+		String [] broken = new String [] {
+			"/tmp/null",
+			"test/metadata.rdf",
+			"test/metadata-1.rdf",
+			"test/metadata-2.rdf",
+			//"test/metadata-3.rdf",
+			"test/metadata-4.rdf"
+		};
+		
+		for (String f : broken)
+		{
+			errors = new ArrayList<String> ();
+			try
+			{
+				MetaDataFile.readFile (Paths.get (f), new HashMap<String, ArchiveEntry> (), null, false, errors);
+				fail ("expected to see an exception for " + f);
+			}
+			catch (ParseException | JDOMException | IOException
+				| CombineArchiveException e)
+			{
+				// ok
+			}
+			try
+			{
+				MetaDataFile.readFile (Paths.get (f), new HashMap<String, ArchiveEntry> (), null, true, errors);
+				assertFalse ("expected to see some errors", errors.isEmpty ());
+			}
+			catch (ParseException | JDOMException | IOException
+				| CombineArchiveException e)
+			{
+				fail ("do not want to get here.. for " + f);
+			}
+		}
+		
+		
+		/*try
+		{
+			MetaDataFile.readFile (Paths.get ("/tmp/null"), null, null, false, errors);
+			assertFalse ("expected to see some errors", errors.isEmpty ());
+		}
+		catch (ParseException | JDOMException | IOException
+			| CombineArchiveException e)
+		{
+			// ok
+		}
+		try
+		{
+			MetaDataFile.readFile (Paths.get ("/tmp/null"), null, null, true, errors);
+			assertFalse ("expected to see some errors", errors.isEmpty ());
+		}
+		catch (ParseException | JDOMException | IOException
+			| CombineArchiveException e)
+		{
+			fail ("do not want to get here..");
+		}
+		
+		
+		try
+		{
+			// Document doc = Utils.readXmlDocument (Paths.get ("test/metadata.rdf"));
+			MetaDataFile.readFile (Paths.get ("test/metadata.rdf"), new HashMap<String, ArchiveEntry> (), null, true, errors);
+		}
+		catch (JDOMException | IOException | ParseException | CombineArchiveException e)
+		{
+			fail ("error handling meta data");
+		}
+		try
+		{
+			// Document doc = Utils.readXmlDocument (Paths.get ("test/metadata.rdf"));
+			MetaDataFile.readFile (Paths.get ("test/metadata.rdf"), new HashMap<String, ArchiveEntry> (), null, false, errors);
+			fail ("error handling meta data");
+		}
+		catch (JDOMException | IOException | ParseException | CombineArchiveException e)
+		{
+			// ok
+		}*/
+		
+		
+		new MetaDataFile ();
+		
+		
+		
+
+		LOGGER.setLogToStdErr (true);
+		LOGGER.setMinLevel (LOGGER.WARN);
 	}
 	
 	
