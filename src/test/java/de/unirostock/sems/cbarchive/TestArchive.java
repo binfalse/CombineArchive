@@ -167,7 +167,8 @@ public class TestArchive
 		creators.add (new VCard ("Scharm", "Martin",
 			"martin.scharm@uni-rostock.de", "University of Rostock"));
 		OmexDescription omex = new OmexDescription (creators, new Date ());
-		
+		omex.setDescription ("some description");
+		assertEquals ("expected different description", "some description", omex.getDescription ());
 		
 		CombineArchive ca = new CombineArchive (testFiles.get(0));
 
@@ -1070,7 +1071,7 @@ public class TestArchive
 		
 		assertTrue ("expected vcard to be empty", vc.isEmpty ());
 		Element el = new Element ("root");
-		vc.toXml (el);
+		
 		assertEquals ("vcard shouldn't produce xml...", 0, el.getChildren ().size ());
 
 		vc.setGivenName ("");
@@ -1079,6 +1080,10 @@ public class TestArchive
 		assertTrue("expected vcard to be empty", vc.isEmpty ());
 		vc.setEmail ("");
 		assertTrue("expected vcard to be empty", vc.isEmpty ());
+		vc.toXml (el);
+		VCard vc2 = new VCard (el);
+		assertTrue("expected vcard to be empty", vc2.isEmpty ());
+		
 		
 		vc.setFamilyName ("fam");
 		assertFalse("expected vcard to be non-empty", vc.isEmpty ());
@@ -1206,55 +1211,129 @@ public class TestArchive
 			}
 		}
 		
-		
-		/*try
-		{
-			MetaDataFile.readFile (Paths.get ("/tmp/null"), null, null, false, errors);
-			assertFalse ("expected to see some errors", errors.isEmpty ());
-		}
-		catch (ParseException | JDOMException | IOException
-			| CombineArchiveException e)
-		{
-			// ok
-		}
-		try
-		{
-			MetaDataFile.readFile (Paths.get ("/tmp/null"), null, null, true, errors);
-			assertFalse ("expected to see some errors", errors.isEmpty ());
-		}
-		catch (ParseException | JDOMException | IOException
-			| CombineArchiveException e)
-		{
-			fail ("do not want to get here..");
-		}
-		
-		
-		try
-		{
-			// Document doc = Utils.readXmlDocument (Paths.get ("test/metadata.rdf"));
-			MetaDataFile.readFile (Paths.get ("test/metadata.rdf"), new HashMap<String, ArchiveEntry> (), null, true, errors);
-		}
-		catch (JDOMException | IOException | ParseException | CombineArchiveException e)
-		{
-			fail ("error handling meta data");
-		}
-		try
-		{
-			// Document doc = Utils.readXmlDocument (Paths.get ("test/metadata.rdf"));
-			MetaDataFile.readFile (Paths.get ("test/metadata.rdf"), new HashMap<String, ArchiveEntry> (), null, false, errors);
-			fail ("error handling meta data");
-		}
-		catch (JDOMException | IOException | ParseException | CombineArchiveException e)
-		{
-			// ok
-		}*/
-		
-		
 		new MetaDataFile ();
 		
+		LOGGER.setLogToStdErr (true);
+		LOGGER.setMinLevel (LOGGER.WARN);
+	}
+	
+	
+
+	/**
+	 * 
+	 */
+	@Test
+	public void testOmexDescription ()
+	{
+
+		List<VCard> creators = new ArrayList<VCard> ();
+		VCard vc = new VCard ("Scharm", "Martin",
+			"martin.scharm@uni-rostock.de", "University of Rostock");
+		VCard vc2 = new VCard ("Waltemath", "Dagmar",
+			"dagmar.waltemath@uni-rostock.de", "University of Rostock");
+		creators.add (vc);
+		creators.add (vc2);
+
+		Element el = new Element ("root");
 		
+		
+		OmexDescription omex = new OmexDescription ();
+		assertFalse ("expected empty omex", omex.isEmpty ());
+		omex.toXML (el);
+		assertEquals ("omex should produce xml...", 2, el.getChildren ().size ());
+		
+		omex = new OmexDescription (creators, new Date ());
+		assertFalse ("expected non-empty omex", omex.isEmpty ());
+		omex.setDescription ("some description");
+		assertEquals ("expected different description", "some description", omex.getDescription ());
+		omex.toXML (el);
+		assertEquals ("omex should produce xml...", 7, el.getChildren ().size ());
+		omex.setDescription ("");
+		assertEquals ("expected different description", "", omex.getDescription ());
+		assertEquals ("expected 2 creators", 2, omex.getCreators ().size ());
+		assertFalse ("expected some jsonobject", omex.toJsonDescription ().isEmpty ());
+		assertFalse ("expected non-empty omex", omex.isEmpty ());
+		omex.toXML (el);
+		assertEquals ("omex should produce xml...", 11, el.getChildren ().size ());
+
+		omex = new OmexDescription ();
+		assertFalse ("expected empty omex", omex.isEmpty ());
+		assertNull ("expected different description", omex.getDescription ());
+		omex.setDescription ("some description");
+		assertEquals ("expected different description", "some description", omex.getDescription ());
+		assertEquals ("expected 0 creators", 0, omex.getCreators ().size ());
+		assertFalse ("expected some jsonobject", omex.toJsonDescription ().isEmpty ());
+		assertFalse ("expected non-empty omex", omex.isEmpty ());
 		
 
+		omex = new OmexDescription (vc, new Date ());
+		omex.setDescription ("some description");
+		assertEquals ("expected different description", "some description", omex.getDescription ());
+		assertEquals ("expected 1 creator", 1, omex.getCreators ().size ());
+		assertFalse ("expected non-empty omex", omex.isEmpty ());
+		
+		List<Date> mods = new ArrayList<Date> ();
+		mods.add (new Date ());
+		omex = new OmexDescription (creators, mods, new Date ());
+		assertEquals ("expected some modification date", 1, omex.getModified ().size ());
+		assertFalse ("expected some jsonobject", omex.toJsonDescription ().isEmpty ());
+		assertFalse ("expected non-empty omex", omex.isEmpty ());
+
+		mods.add (new Date ());
+		omex = new OmexDescription (creators, mods);
+		assertEquals ("expected some modification date", 2, omex.getModified ().size ());
+		assertFalse ("expected some jsonobject", omex.toJsonDescription ().isEmpty ());
+		assertFalse ("expected non-empty omex", omex.isEmpty ());
+
+
+		VCard vc3 = new VCard ();
+		creators.add (vc3);
+		
+		mods.add (new Date ());
+		omex = new OmexDescription (creators, mods, new Date (), "some description");
+		assertEquals ("expected different description", "some description", omex.getDescription ());
+		assertEquals ("expected some modification date", 3, omex.getModified ().size ());
+		assertFalse ("expected some jsonobject", omex.toJsonDescription ().isEmpty ());
+		assertFalse ("expected non-empty omex", omex.isEmpty ());
+		
+		omex = omex.clone ();
+		assertEquals ("expected different description", "some description", omex.getDescription ());
+		assertEquals ("expected some modification date", 3, omex.getModified ().size ());
+		assertFalse ("expected some jsonobject", omex.toJsonDescription ().isEmpty ());
+		assertFalse ("expected non-empty omex", omex.isEmpty ());
+		
+		mods.add (new Date ());
+		omex = new OmexDescription (creators, new Date (), "some description");
+		assertEquals ("expected different description", "some description", omex.getDescription ());
+		assertEquals ("expected no modification date", 0, omex.getModified ().size ());
+		assertFalse ("expected some jsonobject", omex.toJsonDescription ().isEmpty ());
+		assertFalse ("expected non-empty omex", omex.isEmpty ());
+		
+		mods.add (new Date ());
+		omex = new OmexDescription (vc3, new Date (), "some description");
+		assertEquals ("expected different description", "some description", omex.getDescription ());
+		assertEquals ("expected no modification date", 0, omex.getModified ().size ());
+		assertFalse ("expected some jsonobject", omex.toJsonDescription ().isEmpty ());
+		assertFalse ("expected non-empty omex", omex.isEmpty ());
+		
+		mods.add (new Date ());
+		omex = new OmexDescription ("some description");
+		assertEquals ("expected different description", "some description", omex.getDescription ());
+		assertEquals ("expected no modification date", 0, omex.getModified ().size ());
+		assertFalse ("expected some jsonobject", omex.toJsonDescription ().isEmpty ());
+		assertFalse ("expected non-empty omex", omex.isEmpty ());
+		
+		mods.add (new Date ());
+		omex = new OmexDescription (creators, mods, "some description");
+		assertEquals ("expected different description", "some description", omex.getDescription ());
+		assertEquals ("expected no modification date", 7, omex.getModified ().size ());
+		assertFalse ("expected some jsonobject", omex.toJsonDescription ().isEmpty ());
+		assertFalse ("expected non-empty omex", omex.isEmpty ());
+		
+		
+		
+		
+		
 		LOGGER.setLogToStdErr (true);
 		LOGGER.setMinLevel (LOGGER.WARN);
 	}
