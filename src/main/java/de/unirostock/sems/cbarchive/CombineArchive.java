@@ -134,6 +134,7 @@ public class CombineArchive
 		Map<String, String> zip_properties = new HashMap<String, String> ();
 		zip_properties.put ("create", "true");
 		zip_properties.put ("encoding", "UTF-8");
+		boolean existingArchive = zipFile.exists ();
 		zipfs = FileSystems.newFileSystem (
 			URI.create ("jar:" + zipFile.toURI ()), zip_properties);
 		
@@ -143,7 +144,9 @@ public class CombineArchive
 		Path mani = zipfs.getPath (MANIFEST_LOCATION).normalize ();
 		if (Files.isRegularFile (mani))
 			parseManifest (mani, false);
-
+		else if (existingArchive)
+			throw new CombineArchiveException ("this is no combine archive");
+		
 		cleanUp ();
 	}
 	
@@ -181,6 +184,7 @@ public class CombineArchive
 		Map<String, String> zip_properties = new HashMap<String, String> ();
 		zip_properties.put ("create", "true");
 		zip_properties.put ("encoding", "UTF-8");
+		boolean existingArchive = zipFile.exists ();
 		try
 		{
 			zipfs = FileSystems.newFileSystem (
@@ -201,6 +205,14 @@ public class CombineArchive
 		Path mani = zipfs.getPath (MANIFEST_LOCATION).normalize ();
 		if (Files.isRegularFile (mani))
 			parseManifest (mani, continueOnError);
+		else if (existingArchive)
+		{
+			LOGGER.error ("this is not a combine archive");
+			errors.add ("this is not a combine archive");
+		
+			if (!continueOnError)
+				throw new CombineArchiveException ("this is no combine archive");
+		}
 	}
 	
 	
