@@ -965,6 +965,8 @@ public class TestArchive
 		assertEquals ("unexpected number of meta for /sub1/file3.ext", 1, meta.size ());
 		for (MetaDataObject m : meta)
 			assertEquals ("meta of /sub1/file3.ext is not for /sub1/file3.ext", "/sub1/file3.ext", m.getAbout ());
+
+		assertEquals ("expected different zip file location", testFiles.get (0), ca.getZipLocation ());
 		
 		entry = ca.getEntry ("/sub4-2/file4.ext");
 		assertNotNull ("moving failed", entry);
@@ -1078,6 +1080,7 @@ public class TestArchive
 		String meta3 = Utils.prettyPrintDocument (new Document (mdo2.getXmlDescription ().clone ()));
 		assertFalse ("meta did not change!?", meta.equals (meta3));
 		assertTrue ("meta did change!?", meta2.equals (meta3));
+		assertEquals ("expected different zip file location", testFiles.get (0), ca.getZipLocation ());
 	}
 	
 	
@@ -1389,6 +1392,7 @@ public class TestArchive
 			assertTrue ("new file has size > 0", f.length () > 0);
 			ca = new CombineArchive (f);
 			assertFalse ("didn't expect errors", ca.hasErrors ());
+			assertEquals ("expected different zip file location", f, ca.getZipLocation ());
 			ca.pack ();
 			ca.close ();
 			f.delete ();
@@ -1421,6 +1425,7 @@ public class TestArchive
 		try
 		{
 			CombineArchive ca = new CombineArchive (f, true);
+			assertEquals ("expected different zip file location", f, ca.getZipLocation ());
 			assertTrue ("expected to see some errors", ca.hasErrors ());
 			assertEquals ("expected to see one error", 1, ca.getErrors ().size ());
 			assertEquals ("expected to see no file", 0, ca.getEntries ().size ());

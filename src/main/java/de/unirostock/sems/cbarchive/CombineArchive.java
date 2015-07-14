@@ -106,6 +106,8 @@ public class CombineArchive
 	
 	private List<String> errors;
 	
+	private File zipFileLocation;
+	
 	private static final String MIME_REGEX = "[a-zA-Z0-9+.-]+/[a-zA-Z0-9+.-]+";
 	private static final String PURL_PREFIX = "http://purl.org/NET/mediatypes/";
 	
@@ -184,6 +186,7 @@ public class CombineArchive
 			if (zipFile.length () == 0)
 				zipFile.delete ();
 		}
+		zipFileLocation = zipFile;
 		
 		errors = new ArrayList<String> ();
 		mainEntries = new ArrayList<ArchiveEntry> ();
@@ -225,6 +228,17 @@ public class CombineArchive
 		}
 		
 		cleanUp ();
+	}
+	
+	
+	/**
+	 * Gets the location of the underlying zip file.
+	 *
+	 * @return the zipfile location
+	 */
+	public File getZipLocation ()
+	{
+		return zipFileLocation;
 	}
 	
 	
