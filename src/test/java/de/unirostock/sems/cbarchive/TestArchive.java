@@ -1371,7 +1371,7 @@ public class TestArchive
 	}
 	
 	/**
-	 * Test utils.
+	 * Test new empty file.
 	 */
 	@Test
 	public void testNewArchive ()
@@ -1391,11 +1391,48 @@ public class TestArchive
 			assertFalse ("didn't expect errors", ca.hasErrors ());
 			ca.pack ();
 			ca.close ();
+			f.delete ();
 		}
 		catch (Exception e)
 		{
 			fail ("test failed unexpectedly");
 		}
+	}
+	
+	/**
+	 * Test invalid archive.
+	 */
+	@Test
+	public void testInvalidArchive ()
+	{
+		File f = new File ("test/invalid-ca.zip");
+		assertTrue ("did not find invalid ca", f.exists ());
+		try
+		{
+			new CombineArchive (f);
+			fail ("expected an error");
+		}
+		catch (IOException | JDOMException | ParseException
+			| CombineArchiveException e)
+		{
+			// good
+		}
+		
+		try
+		{
+			CombineArchive ca = new CombineArchive (f, true);
+			assertTrue ("expected to see some errors", ca.hasErrors ());
+			assertEquals ("expected to see one error", 1, ca.getErrors ().size ());
+			assertEquals ("expected to see no file", 0, ca.getEntries ().size ());
+			ca.close ();
+		}
+		catch (IOException | JDOMException | ParseException
+			| CombineArchiveException e)
+		{
+			fail ("did not expect an exception");
+		}
+		
+		
 	}
 	
 	

@@ -218,7 +218,10 @@ public class CombineArchive
 			errors.add ("this is not a combine archive");
 		
 			if (!continueOnError)
+			{
+				zipfs.close ();
 				throw new CombineArchiveException ("this is no combine archive");
+			}
 		}
 		
 		cleanUp ();
