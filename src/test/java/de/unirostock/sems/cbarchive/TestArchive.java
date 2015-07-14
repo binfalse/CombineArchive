@@ -612,6 +612,19 @@ public class TestArchive
 		assertEquals ("expected 4 master files", 4, ca.getMainEntries ().size ());
 		assertNotNull ("main entries not backwards compatible", ca.getMainEntry ());
 		
+		int c1 = 0, c2 = 0;
+		for (ArchiveEntry entry : ca.getEntries ())
+		{
+			if (entry.isMainEntry ())
+				c1++;
+			if (ca.getMainEntries ().contains (entry))
+				c2++;
+		}
+		assertEquals ("expected 4 master files", c1, c2);
+		assertEquals ("expected 4 master files", 4, c1);
+		
+		
+		
 		List<VCard> creators = new ArrayList<VCard> ();
 		creators.add (new VCard ("Scharm", "Martin",
 			"martin.scharm@uni-rostock.de", "University of Rostock"));

@@ -109,6 +109,17 @@ public class ArchiveEntry
 	
 	
 	/**
+	 * Checks if is main entry.
+	 *
+	 * @return true, if is main entry
+	 */
+	public boolean isMainEntry ()
+	{
+		return archive.getMainEntries ().contains (this);
+	}
+	
+	
+	/**
 	 * Gets the corresponding file.
 	 * 
 	 * @return the file
