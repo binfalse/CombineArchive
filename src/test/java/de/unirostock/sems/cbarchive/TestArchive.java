@@ -1370,6 +1370,34 @@ public class TestArchive
 		LOGGER.setMinLevel (LOGGER.WARN);
 	}
 	
+	/**
+	 * Test utils.
+	 */
+	@Test
+	public void testNewArchive ()
+	{
+		try
+		{
+			File f = File.createTempFile ("catest", "testnewfile");
+			assertTrue ("new file expected to exist", f.exists ());
+			assertTrue ("new file has size 0", f.length () == 0);
+			CombineArchive ca = new CombineArchive (f);
+			assertFalse ("didn't expect errors", ca.hasErrors ());
+			ca.pack ();
+			ca.close ();
+			assertTrue ("new file expected to exist", f.exists ());
+			assertTrue ("new file has size > 0", f.length () > 0);
+			ca = new CombineArchive (f);
+			assertFalse ("didn't expect errors", ca.hasErrors ());
+			ca.pack ();
+			ca.close ();
+		}
+		catch (Exception e)
+		{
+			fail ("test failed unexpectedly");
+		}
+	}
+	
 	
 
 	/**

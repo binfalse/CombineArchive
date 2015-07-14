@@ -113,6 +113,8 @@ public class CombineArchive
 	/**
 	 * Instantiates a new empty combine archive.
 	 * 
+	 * This is basically the same as calling <code>new CombineArchive (zipFile, false)</code>
+	 * 
 	 * @param zipFile
 	 *          the archive to read, will be created if non-existent
 	 * 
@@ -128,26 +130,7 @@ public class CombineArchive
 			ParseException,
 			CombineArchiveException
 	{
-		errors = new ArrayList<String> ();
-		mainEntries = new ArrayList<ArchiveEntry> ();
-		entries = new HashMap<String, ArchiveEntry> ();
-		Map<String, String> zip_properties = new HashMap<String, String> ();
-		zip_properties.put ("create", "true");
-		zip_properties.put ("encoding", "UTF-8");
-		boolean existingArchive = zipFile.exists ();
-		zipfs = FileSystems.newFileSystem (
-			URI.create ("jar:" + zipFile.toURI ()), zip_properties);
-		
-		metaDataFiles = new ArrayList<Path> ();
-		
-		// read manifest
-		Path mani = zipfs.getPath (MANIFEST_LOCATION).normalize ();
-		if (Files.isRegularFile (mani))
-			parseManifest (mani, false);
-		else if (existingArchive)
-			throw new CombineArchiveException ("this is no combine archive");
-		
-		cleanUp ();
+		init (zipFile, false);
 	}
 	
 	
@@ -178,6 +161,30 @@ public class CombineArchive
 		ParseException,
 		CombineArchiveException
 	{
+		init (zipFile, continueOnError);
+	}
+	
+	/**
+	 * Initialize the combine archive.
+	 *
+	 * @param zipFile the the archive to read, will be created if non-existent
+	 * @param continueOnError
+	 * 					ignore errors and continue (as far as possible)
+	 * @throws IOException 
+	 *           if we cannot create a temporary directory
+	 * @throws CombineArchiveException 
+	 * @throws ParseException 
+	 * @throws JDOMException 
+	 */
+	private void init (File zipFile, boolean continueOnError) throws IOException, JDOMException, ParseException, CombineArchiveException
+	{
+		if (zipFile.exists ())
+		{
+			// if the file was just created (doesn't contain anything) we can simpy delete it..
+			if (zipFile.length () == 0)
+				zipFile.delete ();
+		}
+		
 		errors = new ArrayList<String> ();
 		mainEntries = new ArrayList<ArchiveEntry> ();
 		entries = new HashMap<String, ArchiveEntry> ();
@@ -213,6 +220,8 @@ public class CombineArchive
 			if (!continueOnError)
 				throw new CombineArchiveException ("this is no combine archive");
 		}
+		
+		cleanUp ();
 	}
 	
 	
