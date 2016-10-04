@@ -53,7 +53,7 @@
 			<uniqueVersion>false</uniqueVersion>
 			<id>sems-maven-repository</id>
 			<name>SEMS Maven Release Repository</name>
-			<url>scp://sems.uni-rostock.de:/home/stuff/web/mvn/snapshots/</url>
+			<url>scpexe://mvn.sems.uni-rostock.de:/home/stuff/web/mvn/snapshots/</url>
 			<layout>default</layout>
 		</snapshotRepository>
 
@@ -61,18 +61,18 @@
 			<uniqueVersion>false</uniqueVersion>
 			<id>sems-maven-repository</id>
 			<name>Enterprise Systems Maven Repository</name>
-			<url>scp://sems.uni-rostock.de:/home/stuff/web/mvn/releases/</url>
+			<url>scpexe://mvn.sems.uni-rostock.de:/home/stuff/web/mvn/releases/</url>
 			<layout>default</layout>
 		</repository>
 	</distributionManagement>
 	<build>
 		<extensions>
-			<!-- enables ssh/scp support for maven deployment -->
-			<extension>
-				<groupId>org.apache.maven.wagon</groupId>
-				<artifactId>wagon-ssh</artifactId>
-				<version>1.0-beta-7</version>
-			</extension>
+            <!-- enables ssh/scp support for maven deployment -->
+            <extension>
+                <groupId>org.apache.maven.wagon</groupId>
+                <artifactId>wagon-ssh-external</artifactId>
+                <version>2.10</version>
+            </extension>
 		</extensions>
 		<plugins>
 			<plugin>
@@ -147,6 +147,9 @@
 								<goals>
 									<goal>jar</goal>
 								</goals>
+								<configuration>
+									<additionalparam>-Xdoclint:none</additionalparam>
+								</configuration>
 							</execution>
 						</executions>
 					</plugin>
