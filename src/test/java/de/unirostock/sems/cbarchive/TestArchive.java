@@ -683,6 +683,28 @@ public class TestArchive
 	}
 
 	/**
+	 * Test meta of meta -> can we have meta data of the meta data file?
+	 */
+	@Test
+	public void testMetaOfMeta ()
+	{
+		try
+		{
+			LOGGER.setLogToStdErr (false);
+			CombineArchive ca = new CombineArchive (new File ("test/showcase-w-meta-of-meta.omex"), false);
+			
+			ca.close ();
+		}
+		catch (Exception e)
+		{
+			e.printStackTrace ();
+			fail ("unexpected error occured");
+		}
+		LOGGER.setLogToStdErr (true);
+		
+	}
+
+	/**
 	 * Test paper example.
 	 */
 	@Test
