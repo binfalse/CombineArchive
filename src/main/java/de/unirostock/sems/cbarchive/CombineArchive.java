@@ -246,6 +246,7 @@ public class CombineArchive
 	 * Gets the the first main entry of this archive, if defined. As of RC2 of the spec there may be more than one main entry, so you should use {@link #getMainEntries()} instead.
 	 * 
 	 * @return the first main entry, or <code>null</code> if there is no main entry
+	 * @see ArchiveEntry
 	 * @deprecated as of version 0.8.2, replaced by
 	 *             {@link #getMainEntries()}
 	 */
@@ -409,8 +410,8 @@ public class CombineArchive
 	 * @param toInsert
 	 *          the new file to insert
 	 * @param oldEntry
-	 *          the old entry whose file should be replaces
-	 * @return the new entry.
+	 *          the old entry whose file should be replaced
+	 * @return the new entry
 	 * @throws IOException
 	 */
 	public ArchiveEntry replaceFile (File toInsert, ArchiveEntry oldEntry) throws IOException
