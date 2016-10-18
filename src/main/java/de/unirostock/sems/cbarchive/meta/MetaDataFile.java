@@ -280,6 +280,9 @@ public class MetaDataFile
 	 * <p>
 	 * This method will create one meta data file per entry. Meta data files will
 	 * be named <code>baseDir/metadata(-[-0-9a-f]+)?.rdf</code>. See
+	 * {@link #writeFile(File,HashMap,CombineArchive)} if you want to
+	 * store all meta data in a single file.
+	 * </p>
 	 * 
 	 * @param baseDir
 	 *          the base directory to store the files
@@ -292,10 +295,6 @@ public class MetaDataFile
 	 *           Signals that an I/O exception has occurred.
 	 * @throws TransformerException
 	 *           the transformer exception
-	 *           {@link #writeFile(File,HashMap,CombineArchive)} if you want to
-	 *           store all meta data in a
-	 *           single file.
-	 *           </p>
 	 */
 	public static List<File> writeFiles (File baseDir,
 		HashMap<String, ArchiveEntry> entries, CombineArchive archive)
