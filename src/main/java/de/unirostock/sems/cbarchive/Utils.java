@@ -71,38 +71,34 @@ public class Utils
 	
 	/** The RDF namespace. */
 	public static final Namespace					rdfNS					= Namespace
-																												.getNamespace ("rdf",
-																													"http://www.w3.org/1999/02/22-rdf-syntax-ns#");
+		.getNamespace ("rdf", "http://www.w3.org/1999/02/22-rdf-syntax-ns#");
 	
 	/** The DC namespace. */
 	public static final Namespace					dcNS					= Namespace
-																												.getNamespace (
-																													"dcterms",
-																													"http://purl.org/dc/terms/");
+		.getNamespace ("dcterms", "http://purl.org/dc/terms/");
 	
 	/** The vcard namespace. */
 	public static final Namespace					vcNS					= Namespace
-																												.getNamespace ("vCard",
-																													"http://www.w3.org/2006/vcard/ns#");
+		.getNamespace ("vCard", "http://www.w3.org/2006/vcard/ns#");
 	
 	/** The OMEX spec namespace. */
 	public static final Namespace					omexSpecNs		= Namespace
-																												.getNamespace ("http://identifiers.org/combine.specifications/omex");
+		.getNamespace ("http://identifiers.org/combine.specifications/omex");
 	
 	/** The OMEX namespace. */
-	public static final Namespace					omexNs				= Namespace
-																												.getNamespace ("http://identifiers.org/combine.specifications/omex-manifest");
+	public static final Namespace					omexNs				= Namespace.getNamespace (
+		"http://identifiers.org/combine.specifications/omex-manifest");
 	
 	/** The date formater. */
 	public static final SimpleDateFormat	dateFormater	= new SimpleDateFormat (
-																												"yyyy'-'MM'-'dd'T'HH':'mm':'ss'Z'");
+		"yyyy'-'MM'-'dd'T'HH':'mm':'ss'Z'");
 	
 	/** The default buffer size. */
 	public final static int								BUFFER_SIZE		= 8 * 1024;
 	
 	/** The newline character. */
 	public final static String						NEWLINE				= System
-																												.getProperty ("line.separator");
+		.getProperty ("line.separator");
 	
 	/** The COPY_OPTION used to copy/move files. */
 	public static final CopyOption[]			COPY_OPTION		= new CopyOption[] {
@@ -125,8 +121,8 @@ public class Utils
 			IOException
 	{
 		SAXBuilder builder = new SAXBuilder ();
-		return (Document) builder.build (Files.newInputStream (fileToRead,
-			StandardOpenOption.READ));
+		return (Document) builder
+			.build (Files.newInputStream (fileToRead, StandardOpenOption.READ));
 	}
 	
 	/**
@@ -137,7 +133,7 @@ public class Utils
 	{
 		
 		/** The string. */
-		private StringBuilder	string	= new StringBuilder ();
+		private StringBuilder string = new StringBuilder ();
 		
 		
 		/*
@@ -184,8 +180,8 @@ public class Utils
 	 *          the namespace
 	 * @return the elements by sharing this tag name
 	 */
-	public static List<Element> getElementsByTagName (Element parent,
-		String name, Namespace ns)
+	public static List<Element> getElementsByTagName (Element parent, String name,
+		Namespace ns)
 	{
 		List<Element> nodeList = new ArrayList<Element> ();
 		List<Element> togo = new ArrayList<Element> ();

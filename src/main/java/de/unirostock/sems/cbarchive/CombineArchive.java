@@ -99,23 +99,26 @@ public class CombineArchive
 	private FileSystem										zipfs;
 	
 	/** The main entry. */
-	private List<ArchiveEntry>									mainEntries;
+	private List<ArchiveEntry>						mainEntries;
 	
 	/** A list of files containing meta data. */
 	private List<Path>										metaDataFiles;
 	
-	private List<String> errors;
+	private MetaDataFile									metaData;
 	
-	private File zipFileLocation;
+	private List<String>									errors;
 	
-	private static final String MIME_REGEX = "[a-zA-Z0-9+.-]+/[a-zA-Z0-9+.-]+";
-	private static final String PURL_PREFIX = "http://purl.org/NET/mediatypes/";
+	private File													zipFileLocation;
+	
+	private static final String						MIME_REGEX				= "[a-zA-Z0-9+.-]+/[a-zA-Z0-9+.-]+";
+	private static final String						PURL_PREFIX				= "http://purl.org/NET/mediatypes/";
 	
 	
 	/**
 	 * Instantiates a new empty combine archive.
 	 * 
-	 * This is basically the same as calling <code>new CombineArchive (zipFile, false)</code>
+	 * This is basically the same as calling
+	 * <code>new CombineArchive (zipFile, false)</code>
 	 * 
 	 * @param zipFile
 	 *          the archive to read, will be created if non-existent
@@ -149,7 +152,7 @@ public class CombineArchive
 	 * @param zipFile
 	 *          the archive to read, will be created if non-existent
 	 * @param continueOnError
-	 * 					ignore errors and continue (as far as possible)
+	 *          ignore errors and continue (as far as possible)
 	 * 
 	 * @throws IOException
 	 *           if we cannot create a temporary directory
@@ -159,30 +162,37 @@ public class CombineArchive
 	 */
 	public CombineArchive (File zipFile, boolean continueOnError)
 		throws IOException,
-		JDOMException,
-		ParseException,
-		CombineArchiveException
+			JDOMException,
+			ParseException,
+			CombineArchiveException
 	{
 		init (zipFile, continueOnError);
 	}
 	
+	
 	/**
 	 * Initialize the combine archive.
 	 *
-	 * @param zipFile the the archive to read, will be created if non-existent
+	 * @param zipFile
+	 *          the the archive to read, will be created if non-existent
 	 * @param continueOnError
-	 * 					ignore errors and continue (as far as possible)
-	 * @throws IOException 
+	 *          ignore errors and continue (as far as possible)
+	 * @throws IOException
 	 *           if we cannot create a temporary directory
-	 * @throws CombineArchiveException 
-	 * @throws ParseException 
-	 * @throws JDOMException 
+	 * @throws CombineArchiveException
+	 * @throws ParseException
+	 * @throws JDOMException
 	 */
-	private void init (File zipFile, boolean continueOnError) throws IOException, JDOMException, ParseException, CombineArchiveException
+	private void init (File zipFile, boolean continueOnError)
+		throws IOException,
+			JDOMException,
+			ParseException,
+			CombineArchiveException
 	{
 		if (zipFile.exists ())
 		{
-			// if the file was just created (doesn't contain anything) we can simpy delete it..
+			// if the file was just created (doesn't contain anything) we can simpy
+			// delete it..
 			if (zipFile.length () == 0)
 				zipFile.delete ();
 		}
@@ -197,19 +207,22 @@ public class CombineArchive
 		boolean existingArchive = zipFile.exists ();
 		try
 		{
-			zipfs = FileSystems.newFileSystem (
-				URI.create ("jar:" + zipFile.toURI ()), zip_properties);
+			zipfs = FileSystems.newFileSystem (URI.create ("jar:" + zipFile.toURI ()),
+				zip_properties);
 		}
 		catch (IOException e)
 		{
-			LOGGER.error (e, "cannot read archive " + zipFile.toURI () + " (file system creation failed)");
-			errors.add ("cannot read archive " + zipFile.toURI () + " (file system creation failed)");
+			LOGGER.error (e, "cannot read archive " + zipFile.toURI ()
+				+ " (file system creation failed)");
+			errors.add ("cannot read archive " + zipFile.toURI ()
+				+ " (file system creation failed)");
 			if (!continueOnError)
 				throw e;
 			return;
 		}
 		
 		metaDataFiles = new ArrayList<Path> ();
+		metaData = new MetaDataFile ();
 		
 		// read manifest
 		Path mani = zipfs.getPath (MANIFEST_LOCATION).normalize ();
@@ -219,7 +232,7 @@ public class CombineArchive
 		{
 			LOGGER.error ("this is not a combine archive");
 			errors.add ("this is not a combine archive");
-		
+			
 			if (!continueOnError)
 			{
 				zipfs.close ();
@@ -243,9 +256,12 @@ public class CombineArchive
 	
 	
 	/**
-	 * Gets the the first main entry of this archive, if defined. As of RC2 of the spec there may be more than one main entry, so you should use {@link #getMainEntries()} instead.
+	 * Gets the the first main entry of this archive, if defined. As of RC2 of the
+	 * spec there may be more than one main entry, so you should use
+	 * {@link #getMainEntries()} instead.
 	 * 
-	 * @return the first main entry, or <code>null</code> if there is no main entry
+	 * @return the first main entry, or <code>null</code> if there is no main
+	 *         entry
 	 * @see ArchiveEntry
 	 * @deprecated as of version 0.8.2, replaced by
 	 *             {@link #getMainEntries()}
@@ -256,6 +272,7 @@ public class CombineArchive
 			return null;
 		return mainEntries.size () > 0 ? mainEntries.get (0) : null;
 	}
+	
 	
 	/**
 	 * Gets the main entries as defined in the archive.
@@ -269,7 +286,8 @@ public class CombineArchive
 	
 	
 	/**
-	 * Sets a main entry of the archive. Other main entries get replaced. Use {@link #addMainEntry(ArchiveEntry)} to add another main entry.
+	 * Sets a main entry of the archive. Other main entries get replaced. Use
+	 * {@link #addMainEntry(ArchiveEntry)} to add another main entry.
 	 * 
 	 * @param mainEntry
 	 *          the new main entry
@@ -280,10 +298,12 @@ public class CombineArchive
 		addMainEntry (mainEntry);
 	}
 	
+	
 	/**
 	 * Adds an entry to the list of main entries in this archive.
 	 *
-	 * @param mainEntry the main entry
+	 * @param mainEntry
+	 *          the main entry
 	 */
 	public void addMainEntry (ArchiveEntry mainEntry)
 	{
@@ -294,7 +314,8 @@ public class CombineArchive
 	/**
 	 * Removes an entry from the list of main entries.
 	 *
-	 * @param entry the entry to be removed
+	 * @param entry
+	 *          the entry to be removed
 	 */
 	public void removeMainEntry (ArchiveEntry entry)
 	{
@@ -316,7 +337,7 @@ public class CombineArchive
 	 */
 	private String prepareLocation (String location)
 	{
-		location = Utils.pathFixer(location);
+		location = Utils.pathFixer (location);
 		if (location.startsWith ("./"))
 			location = location.substring (1);
 		
@@ -414,13 +435,13 @@ public class CombineArchive
 	 * @return the new entry
 	 * @throws IOException
 	 */
-	public ArchiveEntry replaceFile (File toInsert, ArchiveEntry oldEntry) throws IOException
+	public ArchiveEntry replaceFile (File toInsert, ArchiveEntry oldEntry)
+		throws IOException
 	{
 		addEntry (toInsert, oldEntry.getFilePath (), oldEntry.getFormat (), false);
 		entries.put (oldEntry.getFilePath (), oldEntry);
 		return oldEntry;
 	}
-	
 	
 	
 	/**
@@ -439,7 +460,8 @@ public class CombineArchive
 	 * @param targetName
 	 *          the target name of the file in the archive
 	 * @param format
-	 *          the format URI, see <a href="https://sems.uni-rostock.de/trac/combine-ext/wiki/CombineFormatizer">CombineFormatizer</a>
+	 *          the format URI, see <a href=
+	 *          "https://sems.uni-rostock.de/trac/combine-ext/wiki/CombineFormatizer">CombineFormatizer</a>
 	 * @return the archive entry or null if adding failed
 	 * @throws IOException
 	 *           Signals that an I/O exception has occurred.
@@ -467,7 +489,8 @@ public class CombineArchive
 	 * @param targetName
 	 *          the target name of the file in the archive
 	 * @param format
-	 *          the format URI, see <a href="https://sems.uni-rostock.de/trac/combine-ext/wiki/CombineFormatizer">CombineFormatizer</a>
+	 *          the format URI, see <a href=
+	 *          "https://sems.uni-rostock.de/trac/combine-ext/wiki/CombineFormatizer">CombineFormatizer</a>
 	 * @return the archive entry or null if adding failed
 	 * @throws IOException
 	 *           Signals that an I/O exception has occurred.
@@ -509,25 +532,26 @@ public class CombineArchive
 	 * @param targetName
 	 *          the target name of the file in the archive
 	 * @param format
-	 *          the format URI, see <a href="https://sems.uni-rostock.de/trac/combine-ext/wiki/CombineFormatizer">CombineFormatizer</a>
+	 *          the format URI, see <a href=
+	 *          "https://sems.uni-rostock.de/trac/combine-ext/wiki/CombineFormatizer">CombineFormatizer</a>
 	 * @param mainEntry
 	 *          the main entry
 	 * @return the archive entry or null if adding failed
 	 * @throws IOException
 	 *           Signals that an I/O exception has occurred.
 	 */
-	public ArchiveEntry addEntry (File toInsert, String targetName,
-		URI format, boolean mainEntry) throws IOException
+	public ArchiveEntry addEntry (File toInsert, String targetName, URI format,
+		boolean mainEntry) throws IOException
 	{
 		targetName = prepareLocation (targetName);
 		
 		if (targetName.equals (MANIFEST_LOCATION))
-			throw new IllegalArgumentException ("it's not allowed to name a file "
-				+ MANIFEST_LOCATION);
+			throw new IllegalArgumentException (
+				"it's not allowed to name a file " + MANIFEST_LOCATION);
 		
 		if (targetName.equals (METADATA_LOCATION))
-			throw new IllegalArgumentException ("it's not allowed to name a file "
-				+ METADATA_LOCATION);
+			throw new IllegalArgumentException (
+				"it's not allowed to name a file " + METADATA_LOCATION);
 		
 		// we also do not allow files with names like metadata-[0-9]*.rdf
 		if (targetName.matches ("^/metadata-[0-9]*\\.rdf$"))
@@ -568,7 +592,8 @@ public class CombineArchive
 	 * @param targetName
 	 *          the target name of the file in the archive
 	 * @param format
-	 *          the format URI, see <a href="https://sems.uni-rostock.de/trac/combine-ext/wiki/CombineFormatizer">CombineFormatizer</a>
+	 *          the format URI, see <a href=
+	 *          "https://sems.uni-rostock.de/trac/combine-ext/wiki/CombineFormatizer">CombineFormatizer</a>
 	 * @param mainEntry
 	 *          the main entry
 	 * @return the archive entry or null if adding failed
@@ -577,8 +602,8 @@ public class CombineArchive
 	 * @deprecated as of version 0.9, replaced by
 	 *             {@link #addEntry(java.io.File,java.lang.String,java.net.URI,boolean)}
 	 */
-	public ArchiveEntry addEntry (File toInsert, String targetName,
-		String format, boolean mainEntry) throws IOException
+	public ArchiveEntry addEntry (File toInsert, String targetName, String format,
+		boolean mainEntry) throws IOException
 	{
 		URI formatUri = null;
 		try
@@ -611,7 +636,8 @@ public class CombineArchive
 	 * @param file
 	 *          the file
 	 * @param format
-	 *          the format URI, see <a href="https://sems.uni-rostock.de/trac/combine-ext/wiki/CombineFormatizer">CombineFormatizer</a>
+	 *          the format URI, see <a href=
+	 *          "https://sems.uni-rostock.de/trac/combine-ext/wiki/CombineFormatizer">CombineFormatizer</a>
 	 * @param mainEntry
 	 *          is this the main entry of the archive? (default:
 	 *          <code>false</code>)
@@ -628,8 +654,8 @@ public class CombineArchive
 		if (!file.getAbsolutePath ().contains (baseDir.getAbsolutePath ()))
 			throw new IOException ("file must be in basedir.");
 		
-		String localName = file.getAbsolutePath ().replace (
-			baseDir.getAbsolutePath (), "");
+		String localName = file.getAbsolutePath ()
+			.replace (baseDir.getAbsolutePath (), "");
 		
 		return addEntry (file, localName, format, mainEntry);
 	}
@@ -650,7 +676,8 @@ public class CombineArchive
 	 * @param file
 	 *          the file
 	 * @param format
-	 *          the format URI, see <a href="https://sems.uni-rostock.de/trac/combine-ext/wiki/CombineFormatizer">CombineFormatizer</a>
+	 *          the format URI, see <a href=
+	 *          "https://sems.uni-rostock.de/trac/combine-ext/wiki/CombineFormatizer">CombineFormatizer</a>
 	 * @param mainEntry
 	 *          is this the main entry of the archive? (default:
 	 *          <code>false</code>)
@@ -694,7 +721,8 @@ public class CombineArchive
 	 * @param file
 	 *          the file
 	 * @param format
-	 *          the format URI, see <a href="https://sems.uni-rostock.de/trac/combine-ext/wiki/CombineFormatizer">CombineFormatizer</a>
+	 *          the format URI, see <a href=
+	 *          "https://sems.uni-rostock.de/trac/combine-ext/wiki/CombineFormatizer">CombineFormatizer</a>
 	 * @return the archive entry or null if adding failed
 	 * @throws IOException
 	 *           Signals that an I/O exception has occurred.
@@ -708,8 +736,8 @@ public class CombineArchive
 		if (!file.getAbsolutePath ().contains (baseDir.getAbsolutePath ()))
 			throw new IOException ("file must be in basedir.");
 		
-		String localName = file.getAbsolutePath ().replace (
-			baseDir.getAbsolutePath (), "");
+		String localName = file.getAbsolutePath ()
+			.replace (baseDir.getAbsolutePath (), "");
 		
 		return addEntry (file, localName, format, false);
 	}
@@ -730,7 +758,8 @@ public class CombineArchive
 	 * @param file
 	 *          the file
 	 * @param format
-	 *          the format URI, see <a href="https://sems.uni-rostock.de/trac/combine-ext/wiki/CombineFormatizer">CombineFormatizer</a>
+	 *          the format URI, see <a href=
+	 *          "https://sems.uni-rostock.de/trac/combine-ext/wiki/CombineFormatizer">CombineFormatizer</a>
 	 * @return the archive entry or null if adding failed
 	 * @throws IOException
 	 *           Signals that an I/O exception has occurred.
@@ -771,7 +800,8 @@ public class CombineArchive
 	 * @param file
 	 *          the file
 	 * @param format
-	 *          the format URI, see <a href="https://sems.uni-rostock.de/trac/combine-ext/wiki/CombineFormatizer">CombineFormatizer</a>
+	 *          the format URI, see <a href=
+	 *          "https://sems.uni-rostock.de/trac/combine-ext/wiki/CombineFormatizer">CombineFormatizer</a>
 	 * @param description
 	 *          the description
 	 * @param mainEntry
@@ -793,8 +823,8 @@ public class CombineArchive
 		if (!file.getAbsolutePath ().contains (baseDir.getAbsolutePath ()))
 			throw new IOException ("file must be in basedir.");
 		
-		String localName = file.getAbsolutePath ().replace (
-			baseDir.getAbsolutePath (), "");
+		String localName = file.getAbsolutePath ()
+			.replace (baseDir.getAbsolutePath (), "");
 		
 		ArchiveEntry entry = addEntry (file, localName, format, mainEntry);
 		entry.addDescription (new OmexMetaDataObject (description));
@@ -817,7 +847,8 @@ public class CombineArchive
 	 * @param file
 	 *          the file
 	 * @param format
-	 *          the format URI, see <a href="https://sems.uni-rostock.de/trac/combine-ext/wiki/CombineFormatizer">CombineFormatizer</a>
+	 *          the format URI, see <a href=
+	 *          "https://sems.uni-rostock.de/trac/combine-ext/wiki/CombineFormatizer">CombineFormatizer</a>
 	 * @param description
 	 *          the description
 	 * @return the archive entry or null if adding failed
@@ -836,8 +867,8 @@ public class CombineArchive
 		if (!file.getAbsolutePath ().contains (baseDir.getAbsolutePath ()))
 			throw new IOException ("file must be in basedir.");
 		
-		String localName = file.getAbsolutePath ().replace (
-			baseDir.getAbsolutePath (), "");
+		String localName = file.getAbsolutePath ()
+			.replace (baseDir.getAbsolutePath (), "");
 		
 		ArchiveEntry entry = addEntry (file, localName, format, false);
 		entry.addDescription (new OmexMetaDataObject (description));
@@ -849,7 +880,8 @@ public class CombineArchive
 	 * Gets entries sharing a certain format.
 	 * 
 	 * @param format
-	 *          the format URI of interest, see <a href="https://sems.uni-rostock.de/trac/combine-ext/wiki/CombineFormatizer">CombineFormatizer</a>
+	 *          the format URI of interest, see <a href=
+	 *          "https://sems.uni-rostock.de/trac/combine-ext/wiki/CombineFormatizer">CombineFormatizer</a>
 	 * @return the entries with that format
 	 */
 	public List<ArchiveEntry> getEntriesWithFormat (URI format)
@@ -859,7 +891,7 @@ public class CombineArchive
 		for (ArchiveEntry e : entries.values ())
 			if (e.getFormat ().equals (format))
 				list.add (e);
-		
+			
 		return list;
 	}
 	
@@ -868,7 +900,8 @@ public class CombineArchive
 	 * Counts entries with a certain format.
 	 * 
 	 * @param format
-	 *          the format URI of interest, see <a href="https://sems.uni-rostock.de/trac/combine-ext/wiki/CombineFormatizer">CombineFormatizer</a>
+	 *          the format URI of interest, see <a href=
+	 *          "https://sems.uni-rostock.de/trac/combine-ext/wiki/CombineFormatizer">CombineFormatizer</a>
 	 * @return the number of entries with that format
 	 */
 	public int getNumEntriesWithFormat (URI format)
@@ -881,7 +914,8 @@ public class CombineArchive
 	 * Checks whether there are entries with a certain format.
 	 * 
 	 * @param format
-	 *          the format URI of interest, see <a href="https://sems.uni-rostock.de/trac/combine-ext/wiki/CombineFormatizer">CombineFormatizer</a>
+	 *          the format URI of interest, see <a href=
+	 *          "https://sems.uni-rostock.de/trac/combine-ext/wiki/CombineFormatizer">CombineFormatizer</a>
 	 * @return true, if there is at least one entry in this archive having this
 	 *         format
 	 */
@@ -895,7 +929,8 @@ public class CombineArchive
 	 * Checks whether there are entries with a certain format.
 	 * 
 	 * @param format
-	 *          the format URI of interest, see <a href="https://sems.uni-rostock.de/trac/combine-ext/wiki/CombineFormatizer">CombineFormatizer</a>
+	 *          the format URI of interest, see <a href=
+	 *          "https://sems.uni-rostock.de/trac/combine-ext/wiki/CombineFormatizer">CombineFormatizer</a>
 	 * @return true, if there is at least one entry in this archive having this
 	 *         format
 	 * @deprecated as of version 0.9.5.2, replaced by
@@ -954,12 +989,27 @@ public class CombineArchive
 	
 	
 	/**
+	 * Gets the meta data holder of the meta data.
+	 * 
+	 * This meta data holder will contain all the meta data for the meta data,
+	 * thus describing the meta data of the archive and its entries.
+	 *
+	 * @return the meta of meta
+	 */
+	public MetaDataHolder getMetaOfMeta ()
+	{
+		return metaData;
+	}
+	
+	
+	/**
 	 * Creates a manifest entry.
 	 * 
 	 * @param location
 	 *          the location of the entry
 	 * @param format
-	 *          the format of the entry, see <a href="https://sems.uni-rostock.de/trac/combine-ext/wiki/CombineFormatizer">CombineFormatizer</a>
+	 *          the format of the entry, see <a href=
+	 *          "https://sems.uni-rostock.de/trac/combine-ext/wiki/CombineFormatizer">CombineFormatizer</a>
 	 * @return the XML node
 	 */
 	private Element createManifestEntry (String location, URI format,
@@ -993,9 +1043,8 @@ public class CombineArchive
 		Document doc = new Document ();
 		Element root = new Element ("omexManifest", Utils.omexNs);
 		doc.addContent (root);
-		 
-		root.addContent (createManifestEntry (".",
-			Utils.getOmexSpecUri (), false));
+		
+		root.addContent (createManifestEntry (".", Utils.getOmexSpecUri (), false));
 		root.addContent (createManifestEntry ("." + MANIFEST_LOCATION,
 			Utils.getOmexManifestUri (), false));
 		
@@ -1007,8 +1056,9 @@ public class CombineArchive
 		
 		File baseDir = Files.createTempDirectory ("combineArchive").toFile ();
 		
-		List<File> descr = singleFile ? MetaDataFile.writeFile (baseDir, entries,
-			this) : MetaDataFile.writeFiles (baseDir, entries, this);
+		List<File> descr = singleFile
+			? MetaDataFile.writeFile (baseDir, entries, this, metaData)
+			: MetaDataFile.writeFiles (baseDir, entries, this, metaData);
 		for (File f : descr)
 		{
 			root.addContent (createManifestEntry (
@@ -1016,8 +1066,8 @@ public class CombineArchive
 				Utils.getOmexMetaDataUri (), false));
 			
 			// copy to zip
-			Path newMeta = zipfs.getPath (
-				f.getAbsolutePath ().replace (baseDir.getAbsolutePath (), ""))
+			Path newMeta = zipfs
+				.getPath (f.getAbsolutePath ().replace (baseDir.getAbsolutePath (), ""))
 				.normalize ();
 			Files.copy (f.toPath (), newMeta, Utils.COPY_OPTION);
 			metaDataFiles.add (newMeta);
@@ -1051,8 +1101,8 @@ public class CombineArchive
 		}
 		
 		// insert manifest into zip
-		Files.copy (manifestFile.toPath (), zipfs.getPath (MANIFEST_LOCATION)
-			.normalize (), Utils.COPY_OPTION);
+		Files.copy (manifestFile.toPath (),
+			zipfs.getPath (MANIFEST_LOCATION).normalize (), Utils.COPY_OPTION);
 		
 		manifestFile.delete ();
 	}
@@ -1110,7 +1160,7 @@ public class CombineArchive
 	 * @param manifest
 	 *          the manifest
 	 * @param continueOnError
-	 * 					ignore errors and continue
+	 *          ignore errors and continue
 	 * @throws IOException
 	 *           Signals that an I/O exception has occurred.
 	 * @throws JDOMException
@@ -1147,6 +1197,7 @@ public class CombineArchive
 			return;
 		}
 		metaDataFiles = new ArrayList<Path> ();
+		metaData = new MetaDataFile ();
 		List<Element> nl = Utils.getElementsByTagName (doc.getRootElement (),
 			"content", Utils.omexNs);
 		for (int i = 0; i < nl.size (); i++)
@@ -1166,7 +1217,8 @@ public class CombineArchive
 				try
 				{
 					if (!attr.getValue ().startsWith ("http"))
-						throw new URISyntaxException (attr.getValue (), "expected http uri");
+						throw new URISyntaxException (attr.getValue (),
+							"expected http uri");
 					format = new URI (attr.getValue ());
 				}
 				catch (URISyntaxException e)
@@ -1183,19 +1235,21 @@ public class CombineArchive
 						}
 						catch (URISyntaxException e1)
 						{
-							LOGGER.error ("couldn't convert mime ", mime, " to uri ", PURL_PREFIX, mime);
-							errors.add ("couldn't convert mime " + mime + " to uri " + PURL_PREFIX + mime);
+							LOGGER.error ("couldn't convert mime ", mime, " to uri ",
+								PURL_PREFIX, mime);
+							errors.add ("couldn't convert mime " + mime + " to uri "
+								+ PURL_PREFIX + mime);
 						}
 					}
 					if (!foundMime)
 					{
-						LOGGER.error ("archive seems to be corrupt. format ", attr.getValue (),
-							" not a valid URI.");
-						errors.add ("archive seems to be corrupt. format " + attr.getValue () +
-							" not a valid URI.");
+						LOGGER.error ("archive seems to be corrupt. format ",
+							attr.getValue (), " not a valid URI.");
+						errors.add ("archive seems to be corrupt. format "
+							+ attr.getValue () + " not a valid URI.");
 						if (!continueOnError)
-							throw new IOException ("archive seems to be corrupt. format " + attr.getValue () +
-								" not a valid URI.");
+							throw new IOException ("archive seems to be corrupt. format "
+								+ attr.getValue () + " not a valid URI.");
 						continue;
 					}
 				}
@@ -1205,8 +1259,7 @@ public class CombineArchive
 				LOGGER.error ("didn't find format for entry", i);
 				errors.add ("didn't find format for entry" + i);
 				if (!continueOnError)
-					throw new IOException ("didn't find format for entry"
-						+ i);
+					throw new IOException ("didn't find format for entry" + i);
 				continue;
 			}
 			
@@ -1219,33 +1272,35 @@ public class CombineArchive
 				LOGGER.error ("manifest invalid. unknown location of entry ", i);
 				errors.add ("manifest invalid. unknown location of entry " + i);
 				if (!continueOnError)
-					throw new IOException ("manifest invalid. unknown location of entry "
-						+ i);
+					throw new IOException (
+						"manifest invalid. unknown location of entry " + i);
 				continue;
 			}
 			
-			if (format.equals (Utils.getOmexSpecUri ()) || format.toString ().startsWith ((Utils.getOmexSpecUri ().toString () + ".version")))
+			if (format.equals (Utils.getOmexSpecUri ()) || format.toString ()
+				.startsWith ( (Utils.getOmexSpecUri ().toString () + ".version")))
 			{
 				// that's the archive itself -> skip
 				continue;
 			}
 			
-			if( !location.startsWith("/") )
+			if (!location.startsWith ("/"))
 			{
 				location = "/" + location;
 			}
-			location = prepareLocation(Paths.get (location).normalize ().toString ());
+			location = prepareLocation (
+				Paths.get (location).normalize ().toString ());
 			
 			Path locFile = zipfs.getPath (location).normalize ();
 			if (!Files.isRegularFile (locFile))
 			{
 				LOGGER.error ("archive seems to be corrupt. file ", locFile,
 					" not found.");
-				errors.add ("archive seems to be corrupt. file " + locFile
-					+ " not found.");
+				errors
+					.add ("archive seems to be corrupt. file " + locFile + " not found.");
 				if (!continueOnError)
-					throw new IOException ("archive seems to be corrupt. file " + locFile
-						+ " not found.");
+					throw new IOException (
+						"archive seems to be corrupt. file " + locFile + " not found.");
 				continue;
 			}
 			
@@ -1271,7 +1326,8 @@ public class CombineArchive
 		// parse all descriptions
 		for (Path f : metaDataFiles)
 		{
-			MetaDataFile.readFile (f, entries, this, continueOnError, errors);
+			MetaDataFile.readFile (f, entries, this, metaData, metaDataFiles,
+				continueOnError, errors);
 		}
 	}
 	
@@ -1302,7 +1358,8 @@ public class CombineArchive
 		Files.createDirectories (neuPath.getParent ());
 		Files.move (zipfs.getPath (alt).normalize (), neuPath,
 			StandardCopyOption.ATOMIC_MOVE);
-		ArchiveEntry newEntry = new ArchiveEntry (this, neuPath, entry.getFormat ());
+		ArchiveEntry newEntry = new ArchiveEntry (this, neuPath,
+			entry.getFormat ());
 		
 		entries.put (neu, newEntry);
 		if (wasMain)
@@ -1379,8 +1436,7 @@ public class CombineArchive
 	 * @param destination
 	 *          the to
 	 * @throws IOException
-	 * @throws Exception
-	 *           the exception
+	 *           the exception signalling IO issues
 	 */
 	private static void extract (Path zipPath, Path destination)
 		throws IOException
@@ -1398,8 +1454,8 @@ public class CombineArchive
 		}
 		else
 		{
-			Path fileOutZip = destination.resolve (
-				"./" + zipPath.normalize ().toString ()).normalize ();
+			Path fileOutZip = destination
+				.resolve ("./" + zipPath.normalize ().toString ()).normalize ();
 			Files.createDirectories (fileOutZip.getParent ());
 			Files.copy (zipPath, fileOutZip, Utils.COPY_OPTION);
 		}
@@ -1416,6 +1472,7 @@ public class CombineArchive
 		return errors;
 	}
 	
+	
 	/**
 	 * Checks for errors.
 	 *
@@ -1425,6 +1482,7 @@ public class CombineArchive
 	{
 		return errors.size () > 0;
 	}
+	
 	
 	/**
 	 * Clear all errors.
@@ -1441,16 +1499,18 @@ public class CombineArchive
 			cleanUp (p);
 	}
 	
+	
 	private void cleanUp (Path p)
 	{
 		if (Files.isDirectory (p))
 			try
 			{
-				try (DirectoryStream<Path> stream = Files.newDirectoryStream(p)) {
-			    for (Path file : stream)
-			    {
-			    	cleanUp (file);
-			    }
+				try (DirectoryStream<Path> stream = Files.newDirectoryStream (p))
+				{
+					for (Path file : stream)
+					{
+						cleanUp (file);
+					}
 				}
 				catch (Exception e)
 				{
@@ -1469,6 +1529,7 @@ public class CombineArchive
 			// TODO: find unused files.. and maybe warn?
 		}
 	}
+	
 	
 	/*
 	 * (non-Javadoc)

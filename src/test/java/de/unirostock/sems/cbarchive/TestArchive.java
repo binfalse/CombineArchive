@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -57,10 +58,12 @@ public class TestArchive
 	/** The test files. */
 	private List<File> testFiles = new ArrayList<File> ();
 	
+	
 	/**
 	 * create some test files.
 	 *
-	 * @throws IOException Signals that an I/O exception has occurred.
+	 * @throws IOException
+	 *           Signals that an I/O exception has occurred.
 	 */
 	@Before
 	public void initialize () throws IOException
@@ -70,13 +73,14 @@ public class TestArchive
 		{
 			File f = File.createTempFile ("combineArchive", "test" + i);
 			testFiles.add (f);
-			BufferedWriter bw = new BufferedWriter( new FileWriter (f));
+			BufferedWriter bw = new BufferedWriter (new FileWriter (f));
 			bw.write ("i:" + i);
 			bw.close ();
 		}
-		//LOGGER.setMinLevel (LOGGER.DEBUG);
+		// LOGGER.setMinLevel (LOGGER.DEBUG);
 		
 	}
+	
 	
 	/**
 	 * delete test files.
@@ -96,17 +100,22 @@ public class TestArchive
 	}
 	
 	
-	
 	/**
 	 * Test slashes/backslashes conversation on non-slash-based os'..
 	 * This test was actually written by the DDMoRe team.
 	 *
-	 * @throws IOException Signals that an I/O exception has occurred.
-	 * @throws URISyntaxException the uRI syntax exception
-	 * @throws JDOMException the jDOM exception
-	 * @throws ParseException the parse exception
-	 * @throws CombineArchiveException the combine archive exception
-	 * @throws TransformerException the transformer exception
+	 * @throws IOException
+	 *           Signals that an I/O exception has occurred.
+	 * @throws URISyntaxException
+	 *           the uRI syntax exception
+	 * @throws JDOMException
+	 *           the jDOM exception
+	 * @throws ParseException
+	 *           the parse exception
+	 * @throws CombineArchiveException
+	 *           the combine archive exception
+	 * @throws TransformerException
+	 *           the transformer exception
 	 */
 	@Test
 	public void shouldGetAndRemoveEntryFromExistingArchive ()
@@ -117,7 +126,7 @@ public class TestArchive
 			CombineArchiveException,
 			TransformerException
 	{
-	  // skip that check if our os uses slashes...
+		// skip that check if our os uses slashes...
 		if (File.separator.equals ("/"))
 			return;
 		
@@ -125,88 +134,125 @@ public class TestArchive
 		final String UNIX_FILE = "/sub1/file2.ext";
 		
 		testFiles.get (0).delete ();
-		CombineArchive ca = new CombineArchive (testFiles.get(0));
+		CombineArchive ca = new CombineArchive (testFiles.get (0));
 		
-		ca.addEntry (testFiles.get(0), WIN_FILE, new URI ("http://identifiers.org/combine.specifications/sbml"));
-		ca.addEntry (testFiles.get(1), UNIX_FILE, new URI ("http://identifiers.org/combine.specifications/sbml"));
+		ca.addEntry (testFiles.get (0), WIN_FILE,
+			new URI ("http://identifiers.org/combine.specifications/sbml"));
+		ca.addEntry (testFiles.get (1), UNIX_FILE,
+			new URI ("http://identifiers.org/combine.specifications/sbml"));
 		
-		assertEquals ("unexpected number of entries in archive after creation", 2, ca.getNumEntries ());
+		assertEquals ("unexpected number of entries in archive after creation", 2,
+			ca.getNumEntries ());
 		
 		ca.pack ();
 		ca.close ();
 		
-		CombineArchive readArchive = new CombineArchive (testFiles.get(0));
+		CombineArchive readArchive = new CombineArchive (testFiles.get (0));
 		String message = " ";
 		boolean isUnixFileRemoved = readArchive.removeEntry (UNIX_FILE);
-		message= (isUnixFileRemoved == false)? message+" Failed to remove file in Unix format : "+ UNIX_FILE+"\n":message;
+		message = (isUnixFileRemoved == false)
+			? message + " Failed to remove file in Unix format : " + UNIX_FILE + "\n"
+			: message;
 		boolean isWinFileRemoved = readArchive.removeEntry (WIN_FILE);
-		message= (isWinFileRemoved == false)? message+" Failed to remove file Windows format : "+ WIN_FILE+"\n":message;
+		message = (isWinFileRemoved == false)
+			? message + " Failed to remove file Windows format : " + WIN_FILE + "\n"
+			: message;
 		
-		readArchive.close();
+		readArchive.close ();
 		assertTrue (message, (isUnixFileRemoved && isWinFileRemoved));
 	}
 	
 	
 	/**
 	 * Test add and remove.
-	 * @throws CombineArchiveException 
-	 * @throws ParseException 
-	 * @throws JDOMException 
-	 * @throws IOException 
-	 * @throws URISyntaxException 
-	 * @throws TransformerException 
+	 * 
+	 * @throws CombineArchiveException
+	 * @throws ParseException
+	 * @throws JDOMException
+	 * @throws IOException
+	 * @throws URISyntaxException
+	 * @throws TransformerException
 	 */
 	@Test
-	public void testAdd () throws IOException, JDOMException, ParseException, CombineArchiveException, URISyntaxException, TransformerException
+	public void testAdd ()
+		throws IOException,
+			JDOMException,
+			ParseException,
+			CombineArchiveException,
+			URISyntaxException,
+			TransformerException
 	{
 		LOGGER.setMinLevel (LOGGER.ERROR);
 		testFiles.get (0).delete ();
 		
-		
 		List<VCard> creators = new ArrayList<VCard> ();
-		creators.add (new VCard ("Scharm", "Martin",
-			"martin.scharm@uni-rostock.de", "University of Rostock"));
+		creators.add (new VCard ("Scharm", "Martin", "martin.scharm@uni-rostock.de",
+			"University of Rostock"));
 		OmexDescription omex = new OmexDescription (creators, new Date ());
 		omex.setDescription ("some description");
-		assertEquals ("expected different description", "some description", omex.getDescription ());
+		assertEquals ("expected different description", "some description",
+			omex.getDescription ());
 		
-		CombineArchive ca = new CombineArchive (testFiles.get(0));
-
-		assertNotNull ("couldn't add entry", ca.addEntry (testFiles.get (1).getParentFile (), testFiles.get (1), new URI ("http://identifiers.org/combine.specifications/sbml")));
-		assertNotNull ("couldn't add entry", ca.addEntry (testFiles.get (1).getParentFile (), testFiles.get (1), new URI ("http://identifiers.org/combine.specifications/sbml"), true));
-		assertNotNull ("couldn't add entry", ca.addEntry (testFiles.get (1), "/sub" + 1 + "/file" + 1 + ".ext", new URI ("http://identifiers.org/combine.specifications/sbml")));
-		assertNotNull ("couldn't add entry", ca.addEntry (testFiles.get (1), "/sub" + 1 + "/file" + 1 + ".ext", new URI ("http://identifiers.org/combine.specifications/sbml"), true));
+		CombineArchive ca = new CombineArchive (testFiles.get (0));
+		
+		assertNotNull ("couldn't add entry",
+			ca.addEntry (testFiles.get (1).getParentFile (), testFiles.get (1),
+				new URI ("http://identifiers.org/combine.specifications/sbml")));
+		assertNotNull ("couldn't add entry",
+			ca.addEntry (testFiles.get (1).getParentFile (), testFiles.get (1),
+				new URI ("http://identifiers.org/combine.specifications/sbml"), true));
+		assertNotNull ("couldn't add entry",
+			ca.addEntry (testFiles.get (1), "/sub" + 1 + "/file" + 1 + ".ext",
+				new URI ("http://identifiers.org/combine.specifications/sbml")));
+		assertNotNull ("couldn't add entry",
+			ca.addEntry (testFiles.get (1), "/sub" + 1 + "/file" + 1 + ".ext",
+				new URI ("http://identifiers.org/combine.specifications/sbml"), true));
 		
 		// test unsupported locations
 		try
 		{
-			ca.addEntry (testFiles.get (1), CombineArchive.MANIFEST_LOCATION, new URI ("http://identifiers.org/combine.specifications/sbml"));
+			ca.addEntry (testFiles.get (1), CombineArchive.MANIFEST_LOCATION,
+				new URI ("http://identifiers.org/combine.specifications/sbml"));
 			fail ("overwrote manifest");
 		}
-		catch (IllegalArgumentException e){}
+		catch (IllegalArgumentException e)
+		{
+		}
 		try
 		{
-			ca.addEntry (testFiles.get (1), CombineArchive.METADATA_LOCATION, new URI ("http://identifiers.org/combine.specifications/sbml"));
+			ca.addEntry (testFiles.get (1), CombineArchive.METADATA_LOCATION,
+				new URI ("http://identifiers.org/combine.specifications/sbml"));
 			fail ("overwrote meta");
 		}
-		catch (IllegalArgumentException e){}
+		catch (IllegalArgumentException e)
+		{
+		}
 		try
 		{
-			ca.addEntry (testFiles.get (1), "/metadata-1.rdf", new URI ("http://identifiers.org/combine.specifications/sbml"));
+			ca.addEntry (testFiles.get (1), "/metadata-1.rdf",
+				new URI ("http://identifiers.org/combine.specifications/sbml"));
 			fail ("overwrote meta");
 		}
-		catch (IllegalArgumentException e){}
+		catch (IllegalArgumentException e)
+		{
+		}
 		try
 		{
-			ca.addEntry (testFiles.get (1), "/metadata-123.rdf", new URI ("http://identifiers.org/combine.specifications/sbml"));
+			ca.addEntry (testFiles.get (1), "/metadata-123.rdf",
+				new URI ("http://identifiers.org/combine.specifications/sbml"));
 			fail ("overwrote meta");
 		}
-		catch (IllegalArgumentException e){}
+		catch (IllegalArgumentException e)
+		{
+		}
 		
 		// test unsupported features
 		try
 		{
-			assertNotNull ("couldn't add entry", ca.addEntry (testFiles.get (1).getParentFile (), new File (testFiles.get (1) + "doesnotexist"), new URI ("http://identifiers.org/combine.specifications/sbml")));
+			assertNotNull ("couldn't add entry",
+				ca.addEntry (testFiles.get (1).getParentFile (),
+					new File (testFiles.get (1) + "doesnotexist"),
+					new URI ("http://identifiers.org/combine.specifications/sbml")));
 			fail ("added nonexistent file?");
 		}
 		catch (IOException e)
@@ -215,7 +261,11 @@ public class TestArchive
 		}
 		try
 		{
-			assertNotNull ("couldn't add entry", ca.addEntry (testFiles.get (1).getParentFile (), new File (testFiles.get (1) + "doesnotexist"), new URI ("http://identifiers.org/combine.specifications/sbml"), true));
+			assertNotNull ("couldn't add entry",
+				ca.addEntry (testFiles.get (1).getParentFile (),
+					new File (testFiles.get (1) + "doesnotexist"),
+					new URI ("http://identifiers.org/combine.specifications/sbml"),
+					true));
 			fail ("added nonexistent file?");
 		}
 		catch (IOException e)
@@ -224,7 +274,9 @@ public class TestArchive
 		}
 		try
 		{
-			assertNotNull ("couldn't add entry", ca.addEntry (testFiles.get (2), testFiles.get (1), new URI ("http://identifiers.org/combine.specifications/sbml")));
+			assertNotNull ("couldn't add entry",
+				ca.addEntry (testFiles.get (2), testFiles.get (1),
+					new URI ("http://identifiers.org/combine.specifications/sbml")));
 			fail ("added file from non-parent dir?");
 		}
 		catch (IOException e)
@@ -233,7 +285,10 @@ public class TestArchive
 		}
 		try
 		{
-			assertNotNull ("couldn't add entry", ca.addEntry (testFiles.get (2), testFiles.get (1), new URI ("http://identifiers.org/combine.specifications/sbml"), true));
+			assertNotNull ("couldn't add entry",
+				ca.addEntry (testFiles.get (2), testFiles.get (1),
+					new URI ("http://identifiers.org/combine.specifications/sbml"),
+					true));
 			fail ("added file from non-parent dir?");
 		}
 		catch (IOException e)
@@ -242,24 +297,44 @@ public class TestArchive
 		}
 		
 		// test deprecated methods
-		assertNotNull ("couldn't add entry", ca.addEntry (testFiles.get (1), "/sub" + 1 + "/file" + 1 + ".ext", "http://identifiers.org/combine.specifications/sbml"));
-		assertNull ("could add entry with invalid uir?", ca.addEntry (testFiles.get (1), "/sub" + 1 + "/file" + 1 + ".ext", "s t u f f"));
+		assertNotNull ("couldn't add entry",
+			ca.addEntry (testFiles.get (1), "/sub" + 1 + "/file" + 1 + ".ext",
+				"http://identifiers.org/combine.specifications/sbml"));
+		assertNull ("could add entry with invalid uir?", ca.addEntry (
+			testFiles.get (1), "/sub" + 1 + "/file" + 1 + ".ext", "s t u f f"));
 		
-		assertNotNull ("couldn't add entry", ca.addEntry (testFiles.get (1), "/sub" + 1 + "/file" + 1 + ".ext", "http://identifiers.org/combine.specifications/sbml", true));
-		assertNull ("could add entry with invalid uir?", ca.addEntry (testFiles.get (1), "/sub" + 1 + "/file" + 1 + ".ext", "s t u f f", false));
-
-
-		assertNotNull ("couldn't add entry", ca.addEntry (testFiles.get (1).getParentFile (), testFiles.get (1), "http://identifiers.org/combine.specifications/sbml"));
-		assertNotNull ("couldn't add entry", ca.addEntry (testFiles.get (1).getParentFile (), testFiles.get (1), "http://identifiers.org/combine.specifications/sbml", true));
-
-		assertNotNull ("couldn't add entry", ca.addEntry (testFiles.get (1).getParentFile (), testFiles.get (1), "http://identifiers.org/combine.specifications/sbml", omex));
-		assertNotNull ("couldn't add entry", ca.addEntry (testFiles.get (1).getParentFile (), testFiles.get (1), "http://identifiers.org/combine.specifications/sbml", omex, true));
+		assertNotNull ("couldn't add entry",
+			ca.addEntry (testFiles.get (1), "/sub" + 1 + "/file" + 1 + ".ext",
+				"http://identifiers.org/combine.specifications/sbml", true));
+		assertNull ("could add entry with invalid uir?",
+			ca.addEntry (testFiles.get (1), "/sub" + 1 + "/file" + 1 + ".ext",
+				"s t u f f", false));
 		
-		assertNull ("couldn't add entry", ca.addEntry (testFiles.get (1).getParentFile (), testFiles.get (1), "s t u f f", true));
-		assertNull ("couldn't add entry", ca.addEntry (testFiles.get (1).getParentFile (), testFiles.get (1), "s t u f f"));
+		assertNotNull ("couldn't add entry",
+			ca.addEntry (testFiles.get (1).getParentFile (), testFiles.get (1),
+				"http://identifiers.org/combine.specifications/sbml"));
+		assertNotNull ("couldn't add entry",
+			ca.addEntry (testFiles.get (1).getParentFile (), testFiles.get (1),
+				"http://identifiers.org/combine.specifications/sbml", true));
+		
+		assertNotNull ("couldn't add entry",
+			ca.addEntry (testFiles.get (1).getParentFile (), testFiles.get (1),
+				"http://identifiers.org/combine.specifications/sbml", omex));
+		assertNotNull ("couldn't add entry",
+			ca.addEntry (testFiles.get (1).getParentFile (), testFiles.get (1),
+				"http://identifiers.org/combine.specifications/sbml", omex, true));
+		
+		assertNull ("couldn't add entry",
+			ca.addEntry (testFiles.get (1).getParentFile (), testFiles.get (1),
+				"s t u f f", true));
+		assertNull ("couldn't add entry", ca.addEntry (
+			testFiles.get (1).getParentFile (), testFiles.get (1), "s t u f f"));
 		try
 		{
-			assertNotNull ("couldn't add entry", ca.addEntry (testFiles.get (1).getParentFile (), new File (testFiles.get (1) + "doesnotexist"), "http://identifiers.org/combine.specifications/sbml", true));
+			assertNotNull ("couldn't add entry",
+				ca.addEntry (testFiles.get (1).getParentFile (),
+					new File (testFiles.get (1) + "doesnotexist"),
+					"http://identifiers.org/combine.specifications/sbml", true));
 			fail ("added nonexistent file?");
 		}
 		catch (IOException e)
@@ -268,7 +343,9 @@ public class TestArchive
 		}
 		try
 		{
-			assertNotNull ("couldn't add entry", ca.addEntry (testFiles.get (2), testFiles.get (1), "http://identifiers.org/combine.specifications/sbml", true));
+			assertNotNull ("couldn't add entry",
+				ca.addEntry (testFiles.get (2), testFiles.get (1),
+					"http://identifiers.org/combine.specifications/sbml", true));
 			fail ("added file from non-parent dir?");
 		}
 		catch (IOException e)
@@ -277,7 +354,10 @@ public class TestArchive
 		}
 		try
 		{
-			assertNotNull ("couldn't add entry", ca.addEntry (testFiles.get (1).getParentFile (), new File (testFiles.get (1) + "doesnotexist"), "http://identifiers.org/combine.specifications/sbml", omex, true));
+			assertNotNull ("couldn't add entry",
+				ca.addEntry (testFiles.get (1).getParentFile (),
+					new File (testFiles.get (1) + "doesnotexist"),
+					"http://identifiers.org/combine.specifications/sbml", omex, true));
 			fail ("added nonexistent file?");
 		}
 		catch (IOException e)
@@ -286,7 +366,9 @@ public class TestArchive
 		}
 		try
 		{
-			assertNotNull ("couldn't add entry", ca.addEntry (testFiles.get (2), testFiles.get (1), "http://identifiers.org/combine.specifications/sbml", omex, true));
+			assertNotNull ("couldn't add entry",
+				ca.addEntry (testFiles.get (2), testFiles.get (1),
+					"http://identifiers.org/combine.specifications/sbml", omex, true));
 			fail ("added file from non-parent dir?");
 		}
 		catch (IOException e)
@@ -295,7 +377,10 @@ public class TestArchive
 		}
 		try
 		{
-			assertNotNull ("couldn't add entry", ca.addEntry (testFiles.get (1).getParentFile (), new File (testFiles.get (1) + "doesnotexist"), "http://identifiers.org/combine.specifications/sbml", omex));
+			assertNotNull ("couldn't add entry",
+				ca.addEntry (testFiles.get (1).getParentFile (),
+					new File (testFiles.get (1) + "doesnotexist"),
+					"http://identifiers.org/combine.specifications/sbml", omex));
 			fail ("added nonexistent file?");
 		}
 		catch (IOException e)
@@ -304,7 +389,9 @@ public class TestArchive
 		}
 		try
 		{
-			assertNotNull ("couldn't add entry", ca.addEntry (testFiles.get (2), testFiles.get (1), "http://identifiers.org/combine.specifications/sbml", omex));
+			assertNotNull ("couldn't add entry",
+				ca.addEntry (testFiles.get (2), testFiles.get (1),
+					"http://identifiers.org/combine.specifications/sbml", omex));
 			fail ("added file from non-parent dir?");
 		}
 		catch (IOException e)
@@ -312,9 +399,6 @@ public class TestArchive
 			// ok
 		}
 		
-		
-
-
 		ca.pack ();
 		ca.close ();
 		LOGGER.setMinLevel (LOGGER.WARN);
@@ -324,94 +408,148 @@ public class TestArchive
 	/**
 	 * Test local files by URI -> file:/path/to/file.
 	 *
-	 * @throws IOException Signals that an I/O exception has occurred.
-	 * @throws JDOMException the jDOM exception
-	 * @throws ParseException the parse exception
-	 * @throws CombineArchiveException the combine archive exception
-	 * @throws TransformerException the transformer exception
-	 * @throws URISyntaxException the uRI syntax exception
+	 * @throws IOException
+	 *           Signals that an I/O exception has occurred.
+	 * @throws JDOMException
+	 *           the jDOM exception
+	 * @throws ParseException
+	 *           the parse exception
+	 * @throws CombineArchiveException
+	 *           the combine archive exception
+	 * @throws TransformerException
+	 *           the transformer exception
+	 * @throws URISyntaxException
+	 *           the uRI syntax exception
 	 */
 	@Test
-	public void someRandomTests () throws IOException, JDOMException, ParseException, CombineArchiveException, TransformerException, URISyntaxException
+	public void someRandomTests ()
+		throws IOException,
+			JDOMException,
+			ParseException,
+			CombineArchiveException,
+			TransformerException,
+			URISyntaxException
 	{
 		// test locations
-		assertEquals ("unexpected manifest path", "/manifest.xml", CombineArchive.MANIFEST_LOCATION);
-		assertEquals ("unexpected metadata path", "/metadata.rdf", CombineArchive.METADATA_LOCATION);
+		assertEquals ("unexpected manifest path", "/manifest.xml",
+			CombineArchive.MANIFEST_LOCATION);
+		assertEquals ("unexpected metadata path", "/metadata.rdf",
+			CombineArchive.METADATA_LOCATION);
 		
 		// lets create the archive
 		testFiles.get (0).delete ();
 		CombineArchive ca = new CombineArchive (testFiles.get (0));
-		assertEquals ("archive path is expected to be '.'", ".", ca.getEntityPath ());
-
-		assertFalse ("expected to not have sbml entries", ca.hasEntriesWithFormat (new URI ("http://identifiers.org/combine.specifications/sbml")));
-		assertFalse ("expected to not have sbml entries", ca.HasEntriesWithFormat (new URI ("http://identifiers.org/combine.specifications/sbml")));
-		assertEquals ("expected different number of sbml entries", 0, ca.getNumEntriesWithFormat (new URI ("http://identifiers.org/combine.specifications/sbml")));
+		assertEquals ("archive path is expected to be '.'", ".",
+			ca.getEntityPath ());
+		
+		assertFalse ("expected to not have sbml entries", ca.hasEntriesWithFormat (
+			new URI ("http://identifiers.org/combine.specifications/sbml")));
+		assertFalse ("expected to not have sbml entries", ca.HasEntriesWithFormat (
+			new URI ("http://identifiers.org/combine.specifications/sbml")));
+		assertEquals ("expected different number of sbml entries", 0,
+			ca.getNumEntriesWithFormat (
+				new URI ("http://identifiers.org/combine.specifications/sbml")));
 		assertNull ("expected no main entry", ca.getMainEntry ());
 		
 		List<ArchiveEntry> entries = new ArrayList<ArchiveEntry> ();
 		for (int i = 1; i < testFiles.size (); i++)
 		{
-			ArchiveEntry ae = ca.addEntry (testFiles.get (i), "/sub" + i + "/file" + i + ".ext", new URI ("http://identifiers.org/combine.specifications/sbml"));
+			ArchiveEntry ae = ca.addEntry (testFiles.get (i),
+				"/sub" + i + "/file" + i + ".ext",
+				new URI ("http://identifiers.org/combine.specifications/sbml"));
 			entries.add (ae);
-			assertEquals ("unexpected file name", "file" + i + ".ext", ae.getFileName ());
+			assertEquals ("unexpected file name", "file" + i + ".ext",
+				ae.getFileName ());
 		}
 		
-		assertEquals ("unexpected number of entries in archive after creation", testFiles.size () - 1, ca.getNumEntries ());
+		assertEquals ("unexpected number of entries in archive after creation",
+			testFiles.size () - 1, ca.getNumEntries ());
 		
 		// lets remove some entries
-		assertTrue ("unable to remove /sub3/file3.ext", ca.removeEntry ("/sub3/file3.ext"));
-		assertEquals ("unexpected number of entries in archive after deleting number 3", testFiles.size () - 2, ca.getNumEntries ());
-		assertFalse ("removed an entry that doesn't exist!? /sub3/file3.ext was deleted before.", ca.removeEntry ("/sub3/file3.ext"));
-		assertFalse ("removed an entry that doesn't exist!? /sub2/file4.ext", ca.removeEntry ("/sub2/file4.ext"));
+		assertTrue ("unable to remove /sub3/file3.ext",
+			ca.removeEntry ("/sub3/file3.ext"));
+		assertEquals (
+			"unexpected number of entries in archive after deleting number 3",
+			testFiles.size () - 2, ca.getNumEntries ());
+		assertFalse (
+			"removed an entry that doesn't exist!? /sub3/file3.ext was deleted before.",
+			ca.removeEntry ("/sub3/file3.ext"));
+		assertFalse ("removed an entry that doesn't exist!? /sub2/file4.ext",
+			ca.removeEntry ("/sub2/file4.ext"));
 		
-		assertTrue ("unable to remove ./sub4/file4.ext", ca.removeEntry ("./sub4/file4.ext"));
-		assertEquals ("unexpected number of entries in archive after deleting number 4", testFiles.size () - 3, ca.getNumEntries ());
-
+		assertTrue ("unable to remove ./sub4/file4.ext",
+			ca.removeEntry ("./sub4/file4.ext"));
+		assertEquals (
+			"unexpected number of entries in archive after deleting number 4",
+			testFiles.size () - 3, ca.getNumEntries ());
+		
 		ca.removeEntry (entries.get (0));
-		assertEquals ("unexpected number of entries in archive after deleting the first inserted entry", testFiles.size () - 4, ca.getNumEntries ());
+		assertEquals (
+			"unexpected number of entries in archive after deleting the first inserted entry",
+			testFiles.size () - 4, ca.getNumEntries ());
 		
 		// lets re-add all and make sure we do not have doubles..
 		entries = new ArrayList<ArchiveEntry> ();
 		for (int i = 1; i < testFiles.size (); i++)
-			entries.add (ca.addEntry (testFiles.get (i), "/sub" + i + "/file" + i + ".ext", new URI ("http://identifiers.org/combine.specifications/sbml")));
-		assertEquals ("unexpected number of entries in archive after resubmitting all files", testFiles.size () - 1, ca.getNumEntries ());
+			entries
+				.add (ca.addEntry (testFiles.get (i), "/sub" + i + "/file" + i + ".ext",
+					new URI ("http://identifiers.org/combine.specifications/sbml")));
+		assertEquals (
+			"unexpected number of entries in archive after resubmitting all files",
+			testFiles.size () - 1, ca.getNumEntries ());
 		
-		assertTrue ("expected to have sbml entries", ca.hasEntriesWithFormat (new URI ("http://identifiers.org/combine.specifications/sbml")));
-		assertFalse ("expected to not have cell entries", ca.hasEntriesWithFormat (new URI ("http://identifiers.org/combine.specifications/cellml")));
-		assertTrue ("expected to have sbml entries", ca.HasEntriesWithFormat (new URI ("http://identifiers.org/combine.specifications/sbml")));
-		assertEquals ("expected different number of sbml entries", testFiles.size () - 1, ca.getNumEntriesWithFormat (new URI ("http://identifiers.org/combine.specifications/sbml")));
+		assertTrue ("expected to have sbml entries", ca.hasEntriesWithFormat (
+			new URI ("http://identifiers.org/combine.specifications/sbml")));
+		assertFalse ("expected to not have cell entries", ca.hasEntriesWithFormat (
+			new URI ("http://identifiers.org/combine.specifications/cellml")));
+		assertTrue ("expected to have sbml entries", ca.HasEntriesWithFormat (
+			new URI ("http://identifiers.org/combine.specifications/sbml")));
+		assertEquals ("expected different number of sbml entries",
+			testFiles.size () - 1, ca.getNumEntriesWithFormat (
+				new URI ("http://identifiers.org/combine.specifications/sbml")));
 		
 		// we should still be able to add known file under a different name
 		for (int i = 1; i < testFiles.size (); i++)
-			entries.add (ca.addEntry (testFiles.get (i), "./file" + i + ".ext", new URI ("http://identifiers.org/combine.specifications/sbml")));
-		assertEquals ("unexpected number of entries in archive after adding all files under different names", 2 * (testFiles.size () - 1), ca.getNumEntries ());
+			entries.add (ca.addEntry (testFiles.get (i), "./file" + i + ".ext",
+				new URI ("http://identifiers.org/combine.specifications/sbml")));
+		assertEquals (
+			"unexpected number of entries in archive after adding all files under different names",
+			2 * (testFiles.size () - 1), ca.getNumEntries ());
 		
 		// and this should overwrite our last commit
 		for (int i = 1; i < testFiles.size (); i++)
-			entries.add (ca.addEntry (testFiles.get (i), "file" + i + ".ext", new URI ("http://identifiers.org/combine.specifications/sbml")));
-		assertEquals ("unexpected number of entries in archive after submitting last commit with same path", 2 * (testFiles.size () - 1), ca.getNumEntries ());
+			entries.add (ca.addEntry (testFiles.get (i), "file" + i + ".ext",
+				new URI ("http://identifiers.org/combine.specifications/sbml")));
+		assertEquals (
+			"unexpected number of entries in archive after submitting last commit with same path",
+			2 * (testFiles.size () - 1), ca.getNumEntries ());
 		
 		// test replacing a file
 		File tmp1 = File.createTempFile ("combineArchiveTestFile", "tmp");
 		File tmp2 = File.createTempFile ("combineArchiveTestFile", "tmp");
-		tmp1.deleteOnExit (); tmp2.deleteOnExit ();
+		tmp1.deleteOnExit ();
+		tmp2.deleteOnExit ();
 		ArchiveEntry ae = entries.get (entries.size () - 1);
 		ca.extract (ae.getPath (), tmp1);
 		List<VCard> creators = new ArrayList<VCard> ();
-		creators.add (new VCard ("Scharm", "Martin",
-			"martin.scharm@uni-rostock.de", "University of Rostock"));
-		OmexMetaDataObject meta = new OmexMetaDataObject (new OmexDescription (creators, new Date ()));
+		creators.add (new VCard ("Scharm", "Martin", "martin.scharm@uni-rostock.de",
+			"University of Rostock"));
+		OmexMetaDataObject meta = new OmexMetaDataObject (
+			new OmexDescription (creators, new Date ()));
 		ae.addDescription (meta);
 		ArchiveEntry ae2 = ca.replaceFile (testFiles.get (1), ae);
 		// make sure we still have the meta data
-		assertEquals ("lost some meta data while replacing file?", ae.getDescriptions ().size (), ae2.getDescriptions ().size ());
-		assertEquals ("lost some meta data while replacing file?", 1, ae2.getDescriptions ().size ());
+		assertEquals ("lost some meta data while replacing file?",
+			ae.getDescriptions ().size (), ae2.getDescriptions ().size ());
+		assertEquals ("lost some meta data while replacing file?", 1,
+			ae2.getDescriptions ().size ());
 		ca.extract (ae.getPath (), tmp2);
 		// make sure the files differ
-		byte [] a = Files.readAllBytes (tmp1.toPath ());
-		byte [] b = Files.readAllBytes (tmp2.toPath ());
+		byte[] a = Files.readAllBytes (tmp1.toPath ());
+		byte[] b = Files.readAllBytes (tmp2.toPath ());
 		assertFalse ("files do not have changed...", Arrays.equals (a, b));
-		tmp1.delete (); tmp2.delete ();
+		tmp1.delete ();
+		tmp2.delete ();
 		
 		ae.extractFile (tmp2);
 		b = Files.readAllBytes (tmp2.toPath ());
@@ -425,15 +563,19 @@ public class TestArchive
 		assertFalse ("files do not have changed...", Arrays.equals (a, b));
 		tmp2.delete ();
 		
-		
-		ae.setFormat (new URI ("http://identifiers.org/combine.specifications/sbml"));
-		assertEquals ("setting format failed", new URI ("http://identifiers.org/combine.specifications/sbml"), ae.getFormat ());
+		ae.setFormat (
+			new URI ("http://identifiers.org/combine.specifications/sbml"));
+		assertEquals ("setting format failed",
+			new URI ("http://identifiers.org/combine.specifications/sbml"),
+			ae.getFormat ());
 		
 		assertTrue (ae.removeDescription (meta));
 		meta.setAbout (ae);
-		assertEquals ("setting about failed...", ae.getEntityPath (), meta.getAbout ());
+		assertEquals ("setting about failed...", ae.getEntityPath (),
+			meta.getAbout ());
 		meta.setAbout (ae2);
-		assertEquals ("setting about failed...", ae2.getEntityPath (), meta.getAbout ());
+		assertEquals ("setting about failed...", ae2.getEntityPath (),
+			meta.getAbout ());
 		
 		try
 		{
@@ -447,7 +589,7 @@ public class TestArchive
 		{
 			fail ("directories should be ok!?");
 		}
-
+		
 		try
 		{
 			ca.extract (Paths.get ("\\/:"), tmp1);
@@ -461,70 +603,89 @@ public class TestArchive
 		assertTrue ("unable to remove /file3.ext", ca.removeEntry ("/file3.ext"));
 		assertTrue ("unable to remove file2.ext", ca.removeEntry ("/file2.ext"));
 		assertTrue ("unable to remove ./file3.ext", ca.removeEntry ("./file1.ext"));
-		assertEquals ("unexpected number of entries in archive after deleting number 3 top-level files", 2 * (testFiles.size () - 1) - 3, ca.getNumEntries ());
+		assertEquals (
+			"unexpected number of entries in archive after deleting number 3 top-level files",
+			2 * (testFiles.size () - 1) - 3, ca.getNumEntries ());
 		
-		assertTrue ("expected to get an iterator", ca.getEnumerator () instanceof Iterator);
+		assertTrue ("expected to get an iterator",
+			ca.getEnumerator () instanceof Iterator);
 		
 		ca.pack ();
 		ca.close ();
 		tmp1.delete ();
 	}
 	
+	
 	/**
 	 * Test add whole meta file.
 	 *
-	 * @throws IOException Signals that an I/O exception has occurred.
-	 * @throws JDOMException the jDOM exception
-	 * @throws ParseException the parse exception
-	 * @throws CombineArchiveException the combine archive exception
-	 * @throws TransformerException the transformer exception
-	 * @throws URISyntaxException the uRI syntax exception
+	 * @throws IOException
+	 *           Signals that an I/O exception has occurred.
+	 * @throws JDOMException
+	 *           the jDOM exception
+	 * @throws ParseException
+	 *           the parse exception
+	 * @throws CombineArchiveException
+	 *           the combine archive exception
+	 * @throws TransformerException
+	 *           the transformer exception
+	 * @throws URISyntaxException
+	 *           the uRI syntax exception
 	 */
 	@Test
-	public void testAddWholeMetaFile () throws IOException, JDOMException, ParseException, CombineArchiveException, TransformerException, URISyntaxException
+	public void testAddWholeMetaFile ()
+		throws IOException,
+			JDOMException,
+			ParseException,
+			CombineArchiveException,
+			TransformerException,
+			URISyntaxException
 	{
 		// this is basically the Example.java
 		
 		// lets create the archive
 		testFiles.get (0).delete ();
 		CombineArchive ca = new CombineArchive (testFiles.get (0));
-
+		
 		List<VCard> creators = new ArrayList<VCard> ();
-		creators.add (new VCard ("Scharm", "Martin",
-			"martin.scharm@uni-rostock.de", "University of Rostock"));
+		creators.add (new VCard ("Scharm", "Martin", "martin.scharm@uni-rostock.de",
+			"University of Rostock"));
 		creators.add (new VCard ("Waltemath", "Dagmar",
 			"dagmar.waltemath@uni-rostock.de", "University of Rostock"));
 		
-
-		ArchiveEntry SBMLFile = ca.addEntry (
-			new File ("test/base/path"),
+		ArchiveEntry SBMLFile = ca.addEntry (new File ("test/base/path"),
 			new File ("test/base/path/file.sbml"),
 			new URI ("http://identifiers.org/combine.specifications/sbml"));
 		
-		SBMLFile.addDescription (new OmexMetaDataObject (new OmexDescription (creators, new Date ())));
-
+		SBMLFile.addDescription (
+			new OmexMetaDataObject (new OmexDescription (creators, new Date ())));
+		
 		ArchiveEntry CellMLFile = ca.addEntry (
-			new File ("test/base/path/subdir/file.cellml"),
-			"/subdir/file.cellml",
+			new File ("test/base/path/subdir/file.cellml"), "/subdir/file.cellml",
 			new URI ("http://identifiers.org/combine.specifications/cellml.1.0"),
 			true);
 		
-		CellMLFile.addDescription (new OmexMetaDataObject (new OmexDescription (creators, new Date ())));
+		CellMLFile.addDescription (
+			new OmexMetaDataObject (new OmexDescription (creators, new Date ())));
 		
 		Element metaParent = new Element ("stuff");
 		Element metaElement = new Element ("myMetaElement");
 		metaElement.setAttribute ("someAttribute", "someValue");
 		metaElement.addContent ("some content");
 		metaParent.addContent (metaElement);
-		CellMLFile.addDescription ("someFragment", new DefaultMetaDataObject (metaParent));
+		CellMLFile.addDescription ("someFragment",
+			new DefaultMetaDataObject (metaParent));
 		
 		Element root = new Element ("root");
 		SBMLFile.getDescriptions ().get (0).injectDescription (root);
-		Element date = root.getChildren ().get (root.getChildren ().size () - 1).getChildren ().get (0);
+		Element date = root.getChildren ().get (root.getChildren ().size () - 1)
+			.getChildren ().get (0);
 		date.setText ("test");
-		//System.out.println (Utils.prettyPrintDocument (new Document (root)));
-		assertNull ("expected to not be able to interprete the meta xml", OmexMetaDataObject.tryToRead (metaParent));
-		assertNull ("expected to not be able to interprete the meta xml", OmexMetaDataObject.tryToRead (root));
+		// System.out.println (Utils.prettyPrintDocument (new Document (root)));
+		assertNull ("expected to not be able to interprete the meta xml",
+			OmexMetaDataObject.tryToRead (metaParent));
+		assertNull ("expected to not be able to interprete the meta xml",
+			OmexMetaDataObject.tryToRead (root));
 		
 		ca.pack ();
 		
@@ -536,14 +697,19 @@ public class TestArchive
 		ca.extractTo (testFiles.get (1));
 		
 		int prevDescriptions = CellMLFile.getDescriptions ().size ();
-		int toAdd = prevDescriptions + SBMLFile.getDescriptions ().size ();
-		CellMLFile.addAllDescriptions (new File (testFiles.get (1) + "/metadata.rdf"));
-		assertEquals ("expected so see a different number of descriptions after adding all descriptions from a file", prevDescriptions + toAdd, CellMLFile.getDescriptions ().size ());
+		int toAdd = SBMLFile.getDescriptions ().size ();
+		CellMLFile
+			.addAllDescriptions (new File (testFiles.get (1) + "/metadata.rdf"));
+		assertEquals (
+			"expected so see a different number of descriptions after adding all descriptions from a file (prev: "
+				+ prevDescriptions + " -- toAdd: " + toAdd + ")",
+			prevDescriptions + toAdd - 1/* one descr equals.. */,
+			CellMLFile.getDescriptions ().size ());
 		
-
 		ca.close ();
 		
 	}
+	
 	
 	/**
 	 * Test main entries.
@@ -569,8 +735,6 @@ public class TestArchive
 		}
 		testFiles.get (0).delete ();
 		
-		
-		
 		CombineArchive ca = null;
 		try
 		{
@@ -583,8 +747,6 @@ public class TestArchive
 			fail ("couldn't read archive");
 		}
 		
-
-		
 		List<ArchiveEntry> entries = new ArrayList<ArchiveEntry> ();
 		for (int i = 1; i < testFiles.size (); i++)
 		{
@@ -592,20 +754,25 @@ public class TestArchive
 			{
 				if (i % 2 == 0)
 				{
-					ArchiveEntry ae = ca.addEntry (testFiles.get (i), "/sub" + i + "/file" + i + ".ext", new URI ("http://identifiers.org/combine.specifications/sbml"));
+					ArchiveEntry ae = ca.addEntry (testFiles.get (i),
+						"/sub" + i + "/file" + i + ".ext",
+						new URI ("http://identifiers.org/combine.specifications/sbml"));
 					entries.add (ae);
 					if (i == 2)
 						ca.addMainEntry (ae);
 				}
 				else
 				{
-					entries.add (ca.addEntry (testFiles.get (i), "/sub" + i + "/file" + i + ".ext", new URI ("http://identifiers.org/combine.specifications/sbml"), true));
+					entries.add (
+						ca.addEntry (testFiles.get (i), "/sub" + i + "/file" + i + ".ext",
+							new URI ("http://identifiers.org/combine.specifications/sbml"),
+							true));
 				}
 			}
 			catch (IOException | URISyntaxException e)
 			{
 				LOGGER.error (e, "couldn't add entry ", i, " to archive");
-				fail ("couldn't add entry "+ i + " to archive");
+				fail ("couldn't add entry " + i + " to archive");
 			}
 		}
 		
@@ -623,23 +790,24 @@ public class TestArchive
 		assertEquals ("expected 4 master files", c1, c2);
 		assertEquals ("expected 4 master files", 4, c1);
 		
-		
-		
 		List<VCard> creators = new ArrayList<VCard> ();
-		creators.add (new VCard ("Scharm", "Martin",
-			"martin.scharm@uni-rostock.de", "University of Rostock"));
+		creators.add (new VCard ("Scharm", "Martin", "martin.scharm@uni-rostock.de",
+			"University of Rostock"));
 		creators.add (new VCard ("Waltemath", "Dagmar",
 			"dagmar.waltemath@uni-rostock.de", "University of Rostock"));
 		
 		for (ArchiveEntry e : entries)
-			e.addDescription (new OmexMetaDataObject (new OmexDescription (creators, new Date ())));
+			e.addDescription (
+				new OmexMetaDataObject (new OmexDescription (creators, new Date ())));
 		
-		assertEquals ("unexpected number of entries in archive after creation", testFiles.size () - 1, ca.getNumEntries ());
-
+		assertEquals ("unexpected number of entries in archive after creation",
+			testFiles.size () - 1, ca.getNumEntries ());
+		
 		int nMain = ca.getMainEntries ().size ();
 		ArchiveEntry ae = ca.getMainEntries ().get (0);
 		ca.removeMainEntry (ae);
-		assertEquals ("unexpected number of main entries", --nMain, ca.getMainEntries ().size ());
+		assertEquals ("unexpected number of main entries", --nMain,
+			ca.getMainEntries ().size ());
 		
 		ae = ca.getMainEntries ().get (0);
 		try
@@ -652,21 +820,24 @@ public class TestArchive
 			LOGGER.error (e, "error removing an entry");
 			fail ("couldn't remove entry");
 		}
-		assertEquals ("unexpected number of main entries", --nMain, ca.getMainEntries ().size ());
+		assertEquals ("unexpected number of main entries", --nMain,
+			ca.getMainEntries ().size ());
 		
 		ae = ca.getMainEntries ().get (0);
 		try
 		{
-			assertTrue ("couldn't remove entry", ca.removeEntry (ae.getEntityPath ()));
-			assertFalse ("double-removed entry?", ca.removeEntry (ae.getEntityPath ()));
+			assertTrue ("couldn't remove entry",
+				ca.removeEntry (ae.getEntityPath ()));
+			assertFalse ("double-removed entry?",
+				ca.removeEntry (ae.getEntityPath ()));
 		}
 		catch (IOException e)
 		{
 			LOGGER.error (e, "error removing an entry");
 			fail ("couldn't remove entry");
 		}
-		assertEquals ("unexpected number of main entries", --nMain, ca.getMainEntries ().size ());
-		
+		assertEquals ("unexpected number of main entries", --nMain,
+			ca.getMainEntries ().size ());
 		
 		try
 		{
@@ -679,9 +850,80 @@ public class TestArchive
 			fail ("couldn't pack/close archive");
 		}
 		
+	}
+	
+	
+	/**
+	 * Test meta of meta -> can we have meta data of the meta data file?
+	 */
+	@Test
+	public void testMetaOfMeta ()
+	{
+		try
+		{
+			LOGGER.setLogToStdErr (false);
+			
+			File theCopy = testFiles.get (0);
+			Files.copy (new File ("test/showcase-w-meta-of-meta.omex").toPath (),
+				theCopy.toPath (), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+			
+			CombineArchive ca = new CombineArchive (theCopy, false);
+			int numDescrCa = ca.getDescriptions ().size ();
+			int numDescrMeta = ca.getMetaOfMeta ().getDescriptions ().size ();
+			int numDescrAllEntries = 0;
+			for (ArchiveEntry ae : ca.getEntries ())
+				numDescrAllEntries += ae.getDescriptions ().size ();
+			
+			// write to mutliple files
+			ca.pack (true);
+			ca.close ();
+			
+			// check the new archive
+			ca = new CombineArchive (theCopy, false);
+			int numDescrAllEntriesTmp = 0;
+			for (ArchiveEntry ae : ca.getEntries ())
+				numDescrAllEntriesTmp += ae.getDescriptions ().size ();
+			assertEquals (
+				"expected same number of descriptions for the archive before and after writing to mutltiple meta files",
+				numDescrCa, ca.getDescriptions ().size ());
+			assertEquals (
+				"expected same number of descriptions for the archive's meta data before and after writing to mutltiple meta files",
+				numDescrMeta, ca.getMetaOfMeta ().getDescriptions ().size ());
+			assertEquals (
+				"expected same number of descriptions for the archive's entries before and after writing to mutltiple meta files",
+				numDescrAllEntries, numDescrAllEntriesTmp);
+			
+			// write to single file
+			ca.pack (false);
+			ca.close ();
+			
+			// check the new archive
+			ca = new CombineArchive (theCopy, false);
+			numDescrAllEntriesTmp = 0;
+			for (ArchiveEntry ae : ca.getEntries ())
+				numDescrAllEntriesTmp += ae.getDescriptions ().size ();
+			assertEquals (
+				"expected same number of descriptions for the archive before and after writing to single meta file",
+				numDescrCa, ca.getDescriptions ().size ());
+			assertEquals (
+				"expected same number of descriptions for the archive's meta data before and after writing to single meta file",
+				numDescrMeta, ca.getMetaOfMeta ().getDescriptions ().size ());
+			assertEquals (
+				"expected same number of descriptions for the archive's entries before and after writing to single meta file",
+				numDescrAllEntries, numDescrAllEntriesTmp);
+			
+			ca.close ();
+		}
+		catch (Exception e)
+		{
+			e.printStackTrace ();
+			fail ("unexpected error occured");
+		}
+		LOGGER.setLogToStdErr (true);
 		
 	}
-
+	
+	
 	/**
 	 * Test paper example.
 	 */
@@ -691,16 +933,19 @@ public class TestArchive
 		try
 		{
 			LOGGER.setLogToStdErr (false);
-			CombineArchive ca = new CombineArchive (new File ("test/paper-repressilator.omex"), true);
+			CombineArchive ca = new CombineArchive (
+				new File ("test/paper-repressilator.omex"), true);
 			assertFalse ("did not expected to see some errors", ca.hasErrors ());
-			assertEquals ("expected to nevertheless find some entries", 2, ca.getEntries ().size ());
+			assertEquals ("expected to nevertheless find some entries", 2,
+				ca.getEntries ().size ());
 			int meta = 0;
 			for (ArchiveEntry entry : ca.getEntries ())
 			{
 				meta += entry.getDescriptions ().size ();
 			}
 			assertEquals ("expected to see exactly 0 descriptions.", 0, meta);
-			assertEquals ("expected to see exactly 1 description for the archive.", 1, ca.getDescriptions ().size ());
+			assertEquals ("expected to see exactly 1 description for the archive.", 1,
+				ca.getDescriptions ().size ());
 			ca.close ();
 		}
 		catch (Exception e)
@@ -710,7 +955,8 @@ public class TestArchive
 		}
 		LOGGER.setLogToStdErr (true);
 	}
-
+	
+	
 	/**
 	 * Test broken archive.
 	 */
@@ -719,21 +965,21 @@ public class TestArchive
 	{
 		LOGGER.setLogToStdErr (false);
 		
-		File [] broken = new File [] {
+		File[] broken = new File[] {
 			new File ("test/paper-repressilator-brokenmanifest.omex"),
 			new File ("test/paper-repressilator-mod-meta.omex"),
 			new File ("test/paper-repressilator-mod-meta-2.omex"),
 			new File ("test/paper-repressilator-mod-manifest.omex"),
 			new File ("test/paper-repressilator-mod-manifest-2.omex"),
-			new File ("test/paper-repressilator-mod-manifest-3.omex")
-		};
+			new File ("test/paper-repressilator-mod-manifest-3.omex") };
 		
 		for (File f : broken)
 		{
 			try
 			{
 				CombineArchive ca = new CombineArchive (f, true);
-				assertTrue ("expected to see an error if archive manifest is broken", ca.hasErrors ());
+				assertTrue ("expected to see an error if archive manifest is broken",
+					ca.hasErrors ());
 				ca.close ();
 			}
 			catch (Exception e)
@@ -741,7 +987,7 @@ public class TestArchive
 				e.printStackTrace ();
 				fail ("unexpected error occured");
 			}
-
+			
 			try
 			{
 				CombineArchive ca = new CombineArchive (f);
@@ -754,12 +1000,11 @@ public class TestArchive
 			}
 		}
 		
-		
-		
 		LOGGER.setLogToStdErr (true);
 		
 	}
-
+	
+	
 	/**
 	 * Test broken archive.
 	 */
@@ -769,35 +1014,44 @@ public class TestArchive
 		try
 		{
 			LOGGER.setLogToStdErr (false);
-			CombineArchive ca = new CombineArchive (new File ("test/broken-archive-by-felix.omex"), true);
+			CombineArchive ca = new CombineArchive (
+				new File ("test/broken-archive-by-felix.omex"), true);
 			assertTrue ("expected to see some errors", ca.hasErrors ());
-			assertEquals ("expected to nevertheless find some entries", 2, ca.getEntries ().size ());
+			assertEquals ("expected to nevertheless find some entries", 2,
+				ca.getEntries ().size ());
 			int meta = 0;
 			for (ArchiveEntry entry : ca.getEntries ())
 			{
 				meta += entry.getDescriptions ().size ();
-				/*for (MetaDataObject mo : entry.getDescriptions ())
-					System.out.println (entry.getEntityPath () + " -> " + mo.getAbout ());*/
+				/*
+				 * for (MetaDataObject mo : entry.getDescriptions ())
+				 * System.out.println (entry.getEntityPath () + " -> " + mo.getAbout
+				 * ());
+				 */
 			}
 			assertEquals ("expected to see exactly 2 descriptions.", 2, meta);
-			/*List<String> errors = ca.getErrors ();
-			for (String s : errors)
-				System.out.println (s);*/
-			assertEquals ("expected to see exactly 2 errors.", 2, ca.getErrors ().size ());
+			/*
+			 * List<String> errors = ca.getErrors ();
+			 * for (String s : errors)
+			 * System.out.println (s);
+			 */
+			assertEquals ("expected to see exactly 2 errors.", 2,
+				ca.getErrors ().size ());
 			
 			ca.clearErrors ();
 			assertFalse ("expected to see no more errors", ca.hasErrors ());
 			
 			ca.close ();
-
+			
 			try
 			{
-				ca = new CombineArchive (new File ("test/broken-archive-by-felix.omex"), false);
+				ca = new CombineArchive (new File ("test/broken-archive-by-felix.omex"),
+					false);
 				fail ("expected something to be thrown");
 			}
 			catch (Exception e)
 			{
-				//ok
+				// ok
 			}
 			
 		}
@@ -808,6 +1062,7 @@ public class TestArchive
 		}
 		LOGGER.setLogToStdErr (true);
 	}
+	
 	
 	/**
 	 * Test move.
@@ -850,25 +1105,29 @@ public class TestArchive
 		{
 			try
 			{
-				entries.add (ca.addEntry (testFiles.get (i), "/sub" + i + "/file" + i + ".ext", new URI ("http://identifiers.org/combine.specifications/sbml")));
+				entries.add (
+					ca.addEntry (testFiles.get (i), "/sub" + i + "/file" + i + ".ext",
+						new URI ("http://identifiers.org/combine.specifications/sbml")));
 			}
 			catch (IOException | URISyntaxException e)
 			{
 				LOGGER.error (e, "couldn't add entry ", i, " to archive");
-				fail ("couldn't add entry "+ i + " to archive");
+				fail ("couldn't add entry " + i + " to archive");
 			}
 		}
 		
 		List<VCard> creators = new ArrayList<VCard> ();
-		creators.add (new VCard ("Scharm", "Martin",
-			"martin.scharm@uni-rostock.de", "University of Rostock"));
+		creators.add (new VCard ("Scharm", "Martin", "martin.scharm@uni-rostock.de",
+			"University of Rostock"));
 		creators.add (new VCard ("Waltemath", "Dagmar",
 			"dagmar.waltemath@uni-rostock.de", "University of Rostock"));
 		
 		for (ArchiveEntry e : entries)
-			e.addDescription (new OmexMetaDataObject (new OmexDescription (creators, new Date ())));
+			e.addDescription (
+				new OmexMetaDataObject (new OmexDescription (creators, new Date ())));
 		
-		assertEquals ("unexpected number of entries in archive after creation", testFiles.size () - 1, ca.getNumEntries ());
+		assertEquals ("unexpected number of entries in archive after creation",
+			testFiles.size () - 1, ca.getNumEntries ());
 		
 		ca.setMainEntry (ca.getEntry ("/sub3/file3.ext"));
 		
@@ -883,7 +1142,6 @@ public class TestArchive
 			fail ("couldn't pack/close archive");
 		}
 		
-		
 		// test the move
 		try
 		{
@@ -897,9 +1155,10 @@ public class TestArchive
 		}
 		
 		ArchiveEntry entry = ca.getEntry ("/sub3/file3.ext");
-		assertEquals ("unexpected number of meta for /sub3/file3.ext", 1, entry.getDescriptions ().size ());
-		assertEquals ("meta of /sub3/file3.ext is not for /sub3/file3.ext", "/sub3/file3.ext", entry.getDescriptions ().get (0).getAbout ());
-		
+		assertEquals ("unexpected number of meta for /sub3/file3.ext", 1,
+			entry.getDescriptions ().size ());
+		assertEquals ("meta of /sub3/file3.ext is not for /sub3/file3.ext",
+			"/sub3/file3.ext", entry.getDescriptions ().get (0).getAbout ());
 		
 		try
 		{
@@ -912,25 +1171,29 @@ public class TestArchive
 			fail ("couldn't move entry");
 		}
 		
-		
-		assertNull ("mhpf. this file shouldn't be there anymore.", ca.getEntry ("/sub3/file3.ext"));
-		assertNull ("mhpf. this file shouldn't be there anymore.", ca.getEntry ("/sub4/file4.ext"));
+		assertNull ("mhpf. this file shouldn't be there anymore.",
+			ca.getEntry ("/sub3/file3.ext"));
+		assertNull ("mhpf. this file shouldn't be there anymore.",
+			ca.getEntry ("/sub4/file4.ext"));
 		
 		entry = ca.getEntry ("/sub1/file3.ext");
 		assertNotNull ("moving failed", entry);
 		List<MetaDataObject> meta = entry.getDescriptions ();
-		assertEquals ("unexpected number of meta for /sub1/file3.ext", 1, meta.size ());
+		assertEquals ("unexpected number of meta for /sub1/file3.ext", 1,
+			meta.size ());
 		for (MetaDataObject m : meta)
-			assertEquals ("meta of /sub1/file3.ext is not for /sub1/file3.ext", "/sub1/file3.ext", m.getAbout ());
+			assertEquals ("meta of /sub1/file3.ext is not for /sub1/file3.ext",
+				"/sub1/file3.ext", m.getAbout ());
 		
 		entry = ca.getEntry ("/sub4-2/file4.ext");
 		assertNotNull ("moving failed", entry);
 		meta = entry.getDescriptions ();
-		assertEquals ("unexpected number of meta for /sub4-2/file4.ext", 1, meta.size ());
+		assertEquals ("unexpected number of meta for /sub4-2/file4.ext", 1,
+			meta.size ());
 		for (MetaDataObject m : meta)
-			assertEquals ("meta of /sub1/file3.ext is not for /sub4-2/file4.ext", "/sub4-2/file4.ext", m.getAbout ());
+			assertEquals ("meta of /sub1/file3.ext is not for /sub4-2/file4.ext",
+				"/sub4-2/file4.ext", m.getAbout ());
 		
-
 		try
 		{
 			ca.pack ();
@@ -954,27 +1217,34 @@ public class TestArchive
 			fail ("couldn't read archive");
 		}
 		
-		assertNull ("mhpf. this file shouldn't be there anymore.", ca.getEntry ("/sub3/file3.ext"));
-		assertNull ("mhpf. this file shouldn't be there anymore.", ca.getEntry ("/sub4/file4.ext"));
+		assertNull ("mhpf. this file shouldn't be there anymore.",
+			ca.getEntry ("/sub3/file3.ext"));
+		assertNull ("mhpf. this file shouldn't be there anymore.",
+			ca.getEntry ("/sub4/file4.ext"));
 		
 		entry = ca.getEntry ("/sub1/file3.ext");
 		// is it still the main entry?
 		assertTrue (ca.getMainEntries ().contains (entry));
 		assertNotNull ("moving failed", entry);
 		meta = entry.getDescriptions ();
-		assertEquals ("unexpected number of meta for /sub1/file3.ext", 1, meta.size ());
+		assertEquals ("unexpected number of meta for /sub1/file3.ext", 1,
+			meta.size ());
 		for (MetaDataObject m : meta)
-			assertEquals ("meta of /sub1/file3.ext is not for /sub1/file3.ext", "/sub1/file3.ext", m.getAbout ());
-
-		assertEquals ("expected different zip file location", testFiles.get (0), ca.getZipLocation ());
+			assertEquals ("meta of /sub1/file3.ext is not for /sub1/file3.ext",
+				"/sub1/file3.ext", m.getAbout ());
+		
+		assertEquals ("expected different zip file location", testFiles.get (0),
+			ca.getZipLocation ());
 		
 		entry = ca.getEntry ("/sub4-2/file4.ext");
 		assertNotNull ("moving failed", entry);
 		meta = entry.getDescriptions ();
-		assertEquals ("unexpected number of meta for /sub4-2/file4.ext", 1, meta.size ());
+		assertEquals ("unexpected number of meta for /sub4-2/file4.ext", 1,
+			meta.size ());
 		for (MetaDataObject m : meta)
-			assertEquals ("meta of /sub1/file3.ext is not for /sub4-2/file4.ext", "/sub4-2/file4.ext", m.getAbout ());
-
+			assertEquals ("meta of /sub1/file3.ext is not for /sub4-2/file4.ext",
+				"/sub4-2/file4.ext", m.getAbout ());
+		
 		// moving non-existent..
 		try
 		{
@@ -986,7 +1256,6 @@ public class TestArchive
 			// ok...
 		}
 		
-
 		try
 		{
 			ca.pack ();
@@ -999,15 +1268,22 @@ public class TestArchive
 		}
 	}
 	
+	
 	/**
 	 * Test modify meta.
 	 *
-	 * @throws IOException Signals that an I/O exception has occurred.
-	 * @throws URISyntaxException the uRI syntax exception
-	 * @throws TransformerException the transformer exception
+	 * @throws IOException
+	 *           Signals that an I/O exception has occurred.
+	 * @throws URISyntaxException
+	 *           the uRI syntax exception
+	 * @throws TransformerException
+	 *           the transformer exception
 	 */
 	@Test
-	public void testModifyMeta () throws IOException, URISyntaxException, TransformerException
+	public void testModifyMeta ()
+		throws IOException,
+			URISyntaxException,
+			TransformerException
 	{
 		// lets create the archive
 		for (int i = 0; i < 6; i++)
@@ -1027,8 +1303,6 @@ public class TestArchive
 		}
 		testFiles.get (0).delete ();
 		
-		
-		
 		CombineArchive ca = null;
 		try
 		{
@@ -1040,10 +1314,8 @@ public class TestArchive
 			LOGGER.error (e, "couldn't read archive");
 			fail ("couldn't read archive");
 		}
-
-		ArchiveEntry SBMLFile = ca.addEntry (
-			testFiles.get (1),
-			"/somefile",
+		
+		ArchiveEntry SBMLFile = ca.addEntry (testFiles.get (1), "/somefile",
 			new URI ("http://identifiers.org/combine.specifications/sbml"));
 		
 		Element metaParent = new Element ("stuff");
@@ -1051,14 +1323,16 @@ public class TestArchive
 		metaElement.setAttribute ("someAttribute", "someValue");
 		metaElement.addContent ("some content");
 		metaParent.addContent (metaElement);
-		SBMLFile.addDescription ("someFragment", new DefaultMetaDataObject (metaParent));
-
+		SBMLFile.addDescription ("someFragment",
+			new DefaultMetaDataObject (metaParent));
+		
 		ca.pack ();
 		
 		MetaDataObject mdo = SBMLFile.getDescriptions ().get (0);
 		assertNotNull ("expected to find some meta data", mdo);
 		
-		String meta = Utils.prettyPrintDocument (new Document (mdo.getXmlDescription ().clone ()));
+		String meta = Utils
+			.prettyPrintDocument (new Document (mdo.getXmlDescription ().clone ()));
 		
 		metaParent = new Element ("stuff");
 		metaElement = new Element ("myMetaElement");
@@ -1069,22 +1343,23 @@ public class TestArchive
 		
 		// make sure we have the new meta
 		MetaDataObject mdo2 = SBMLFile.getDescriptions ().get (0);
-		String meta2 = Utils.prettyPrintDocument (new Document (mdo2.getXmlDescription ().clone ()));
+		String meta2 = Utils
+			.prettyPrintDocument (new Document (mdo2.getXmlDescription ().clone ()));
 		assertFalse ("meta did not change!?", meta.equals (meta2));
 		
-
 		ca.pack ();
 		
 		ArchiveEntry SBMLFile2 = ca.getEntry ("/somefile");
 		mdo2 = SBMLFile2.getDescriptions ().get (0);
-		String meta3 = Utils.prettyPrintDocument (new Document (mdo2.getXmlDescription ().clone ()));
+		String meta3 = Utils
+			.prettyPrintDocument (new Document (mdo2.getXmlDescription ().clone ()));
 		assertFalse ("meta did not change!?", meta.equals (meta3));
 		assertTrue ("meta did change!?", meta2.equals (meta3));
-		assertEquals ("expected different zip file location", testFiles.get (0), ca.getZipLocation ());
+		assertEquals ("expected different zip file location", testFiles.get (0),
+			ca.getZipLocation ());
 	}
 	
 	
-
 	/**
 	 * Test exceptions.
 	 */
@@ -1092,12 +1367,14 @@ public class TestArchive
 	public void testExceptions ()
 	{
 		Exception e = new CombineArchiveException ("some exception");
-		assertEquals ("expected different message", "some exception", e.getMessage ());
+		assertEquals ("expected different message", "some exception",
+			e.getMessage ());
 	}
 	
+	
 	/**
-	 * @throws TransformerException 
-	 * @throws IOException 
+	 * @throws TransformerException
+	 * @throws IOException
 	 */
 	@Test
 	public void testVcard () throws IOException, TransformerException
@@ -1107,40 +1384,39 @@ public class TestArchive
 		assertTrue ("expected vcard to be empty", vc.isEmpty ());
 		Element el = new Element ("root");
 		
-		assertEquals ("vcard shouldn't produce xml...", 0, el.getChildren ().size ());
-
+		assertEquals ("vcard shouldn't produce xml...", 0,
+			el.getChildren ().size ());
+		
 		vc.setGivenName ("");
-		assertTrue("expected vcard to be empty", vc.isEmpty ());
+		assertTrue ("expected vcard to be empty", vc.isEmpty ());
 		vc.setFamilyName ("");
-		assertTrue("expected vcard to be empty", vc.isEmpty ());
+		assertTrue ("expected vcard to be empty", vc.isEmpty ());
 		vc.setEmail ("");
-		assertTrue("expected vcard to be empty", vc.isEmpty ());
+		assertTrue ("expected vcard to be empty", vc.isEmpty ());
 		vc.toXml (el);
 		VCard vc2 = new VCard (el);
-		assertTrue("expected vcard to be empty", vc2.isEmpty ());
-		
+		assertTrue ("expected vcard to be empty", vc2.isEmpty ());
 		
 		vc.setFamilyName ("fam");
-		assertFalse("expected vcard to be non-empty", vc.isEmpty ());
+		assertFalse ("expected vcard to be non-empty", vc.isEmpty ());
 		el = new Element ("root");
 		vc.toXml (el);
 		assertEquals ("vcard should produce xml...", 1, el.getChildren ().size ());
 		
 		vc.setGivenName ("first");
-		assertFalse("expected vcard to be non-empty", vc.isEmpty ());
+		assertFalse ("expected vcard to be non-empty", vc.isEmpty ());
 		el = new Element ("root");
 		vc.toXml (el);
 		assertEquals ("vcard should produce xml...", 1, el.getChildren ().size ());
 		
 		vc.setEmail ("m@il");
-		assertFalse("expected vcard to be non-empty", vc.isEmpty ());
+		assertFalse ("expected vcard to be non-empty", vc.isEmpty ());
 		el = new Element ("root");
 		vc.toXml (el);
 		assertEquals ("vcard should produce xml...", 1, el.getChildren ().size ());
 		
-		
 		vc.setOrganization ("uni");
-		assertFalse("expected vcard to be non-empty", vc.isEmpty ());
+		assertFalse ("expected vcard to be non-empty", vc.isEmpty ());
 		el = new Element ("root");
 		vc.toXml (el);
 		assertEquals ("vcard should produce xml...", 1, el.getChildren ().size ());
@@ -1148,14 +1424,14 @@ public class TestArchive
 		assertEquals ("expected different family name", "fam", vc.getFamilyName ());
 		assertEquals ("expected different given name", "first", vc.getGivenName ());
 		assertEquals ("expected different mail address", "m@il", vc.getEmail ());
-		assertEquals ("expected different organization", "uni", vc.getOrganization ());
+		assertEquals ("expected different organization", "uni",
+			vc.getOrganization ());
 		
 		Object json = vc.toJsonObject ();
 		assertTrue ("expected a json object", json instanceof JSONObject);
 	}
 	
 	
-
 	/**
 	 * Test utils.
 	 */
@@ -1172,7 +1448,8 @@ public class TestArchive
 	
 	/**
 	 * Test example.
-	 * @throws IOException 
+	 * 
+	 * @throws IOException
 	 */
 	@Test
 	public void testExample () throws IOException
@@ -1211,22 +1488,19 @@ public class TestArchive
 		LOGGER.setLogToStdErr (false);
 		List<String> errors = new ArrayList<String> ();
 		
-
-		String [] broken = new String [] {
-			"/tmp/null",
-			"test/metadata.rdf",
-			"test/metadata-1.rdf",
-			"test/metadata-2.rdf",
-			//"test/metadata-3.rdf",
-			"test/metadata-4.rdf"
-		};
+		String[] broken = new String[] { "/tmp/null", "test/metadata.rdf",
+			"test/metadata-1.rdf", "test/metadata-2.rdf",
+			// "test/metadata-3.rdf",
+			"test/metadata-4.rdf" };
 		
 		for (String f : broken)
 		{
 			errors = new ArrayList<String> ();
 			try
 			{
-				MetaDataFile.readFile (Paths.get (f), new HashMap<String, ArchiveEntry> (), null, false, errors);
+				MetaDataFile.readFile (Paths.get (f),
+					new HashMap<String, ArchiveEntry> (), null, new MetaDataFile (),
+					new ArrayList<Path> (), false, errors);
 				fail ("expected to see an exception for " + f);
 			}
 			catch (ParseException | JDOMException | IOException
@@ -1236,7 +1510,9 @@ public class TestArchive
 			}
 			try
 			{
-				MetaDataFile.readFile (Paths.get (f), new HashMap<String, ArchiveEntry> (), null, true, errors);
+				MetaDataFile.readFile (Paths.get (f),
+					new HashMap<String, ArchiveEntry> (), null, new MetaDataFile (),
+					new ArrayList<Path> (), true, errors);
 				assertFalse ("expected to see some errors", errors.isEmpty ());
 			}
 			catch (ParseException | JDOMException | IOException
@@ -1253,24 +1529,74 @@ public class TestArchive
 	}
 	
 	
-
+	/**
+	 * Test meta obj equals.
+	 */
+	@Test
+	public void testMetaObjectEquals ()
+	{
+		try
+		{
+			LOGGER.setLogToStdErr (false);
+			CombineArchive ca = new CombineArchive (
+				new File ("test/showcase-w-meta-of-meta.omex"), false);
+			
+			Iterator<ArchiveEntry> it = ca.getEntries ().iterator ();
+			MetaDataObject meta1 = it.next ().getDescriptions ().get (0);
+			MetaDataObject meta2 = it.next ().getDescriptions ().get (0);
+			
+			assertFalse ("expected two meta data objects to be different",
+				meta1.equals (meta2));
+			assertTrue ("expected the same meta data (1) objects to be equal",
+				meta1.equals (meta1));
+			assertTrue ("expected the same meta data (2) objects to be equal",
+				meta2.equals (meta2));
+			assertFalse ("expected a string to be different to a meta data object",
+				meta1.equals (new String ()));
+			
+			MetaDataObject meta3 = meta1.clone ();
+			assertTrue ("expected the same meta data (1-3) objects to be equal",
+				meta1.equals (meta3));
+			assertTrue ("expected the same meta data (3) objects to be equal",
+				meta3.equals (meta3));
+			
+			meta3.setAbout (null);
+			assertTrue (
+				"expected meta data (1-3) objects with different paths to be equal under equalsPathNoMatter",
+				meta1.equalsPathNoMatter (meta3));
+			
+			meta3.setAbout (null, "something");
+			assertFalse (
+				"expected meta data (1-3) objects with different fragmet identifies to be non-equal under equalsPathNoMatter",
+				meta1.equalsPathNoMatter (meta3));
+			
+			ca.close ();
+		}
+		catch (Exception e)
+		{
+			e.printStackTrace ();
+			fail ("unexpected error occured");
+		}
+		LOGGER.setLogToStdErr (true);
+	}
+	
+	
 	/**
 	 * 
 	 */
 	@Test
 	public void testOmexDescription ()
 	{
-
+		
 		List<VCard> creators = new ArrayList<VCard> ();
-		VCard vc = new VCard ("Scharm", "Martin",
-			"martin.scharm@uni-rostock.de", "University of Rostock");
+		VCard vc = new VCard ("Scharm", "Martin", "martin.scharm@uni-rostock.de",
+			"University of Rostock");
 		VCard vc2 = new VCard ("Waltemath", "Dagmar",
 			"dagmar.waltemath@uni-rostock.de", "University of Rostock");
 		creators.add (vc);
 		creators.add (vc2);
-
-		Element el = new Element ("root");
 		
+		Element el = new Element ("root");
 		
 		OmexDescription omex = new OmexDescription ();
 		assertFalse ("expected empty omex", omex.isEmpty ());
@@ -1280,98 +1606,121 @@ public class TestArchive
 		omex = new OmexDescription (creators, new Date ());
 		assertFalse ("expected non-empty omex", omex.isEmpty ());
 		omex.setDescription ("some description");
-		assertEquals ("expected different description", "some description", omex.getDescription ());
+		assertEquals ("expected different description", "some description",
+			omex.getDescription ());
 		omex.toXML (el);
 		assertEquals ("omex should produce xml...", 7, el.getChildren ().size ());
 		omex.setDescription ("");
 		assertEquals ("expected different description", "", omex.getDescription ());
 		assertEquals ("expected 2 creators", 2, omex.getCreators ().size ());
-		assertFalse ("expected some jsonobject", omex.toJsonDescription ().isEmpty ());
+		assertFalse ("expected some jsonobject",
+			omex.toJsonDescription ().isEmpty ());
 		assertFalse ("expected non-empty omex", omex.isEmpty ());
 		omex.toXML (el);
 		assertEquals ("omex should produce xml...", 11, el.getChildren ().size ());
-
+		
 		omex = new OmexDescription ();
 		assertFalse ("expected empty omex", omex.isEmpty ());
 		assertNull ("expected different description", omex.getDescription ());
 		omex.setDescription ("some description");
-		assertEquals ("expected different description", "some description", omex.getDescription ());
+		assertEquals ("expected different description", "some description",
+			omex.getDescription ());
 		assertEquals ("expected 0 creators", 0, omex.getCreators ().size ());
-		assertFalse ("expected some jsonobject", omex.toJsonDescription ().isEmpty ());
+		assertFalse ("expected some jsonobject",
+			omex.toJsonDescription ().isEmpty ());
 		assertFalse ("expected non-empty omex", omex.isEmpty ());
 		
-
 		omex = new OmexDescription (vc, new Date ());
 		omex.setDescription ("some description");
-		assertEquals ("expected different description", "some description", omex.getDescription ());
+		assertEquals ("expected different description", "some description",
+			omex.getDescription ());
 		assertEquals ("expected 1 creator", 1, omex.getCreators ().size ());
 		assertFalse ("expected non-empty omex", omex.isEmpty ());
 		
 		List<Date> mods = new ArrayList<Date> ();
 		mods.add (new Date ());
 		omex = new OmexDescription (creators, mods, new Date ());
-		assertEquals ("expected some modification date", 1, omex.getModified ().size ());
-		assertFalse ("expected some jsonobject", omex.toJsonDescription ().isEmpty ());
+		assertEquals ("expected some modification date", 1,
+			omex.getModified ().size ());
+		assertFalse ("expected some jsonobject",
+			omex.toJsonDescription ().isEmpty ());
 		assertFalse ("expected non-empty omex", omex.isEmpty ());
-
+		
 		mods.add (new Date ());
 		omex = new OmexDescription (creators, mods);
-		assertEquals ("expected some modification date", 2, omex.getModified ().size ());
-		assertFalse ("expected some jsonobject", omex.toJsonDescription ().isEmpty ());
+		assertEquals ("expected some modification date", 2,
+			omex.getModified ().size ());
+		assertFalse ("expected some jsonobject",
+			omex.toJsonDescription ().isEmpty ());
 		assertFalse ("expected non-empty omex", omex.isEmpty ());
-
-
+		
 		VCard vc3 = new VCard ();
 		creators.add (vc3);
 		
 		mods.add (new Date ());
-		omex = new OmexDescription (creators, mods, new Date (), "some description");
-		assertEquals ("expected different description", "some description", omex.getDescription ());
-		assertEquals ("expected some modification date", 3, omex.getModified ().size ());
-		assertFalse ("expected some jsonobject", omex.toJsonDescription ().isEmpty ());
+		omex = new OmexDescription (creators, mods, new Date (),
+			"some description");
+		assertEquals ("expected different description", "some description",
+			omex.getDescription ());
+		assertEquals ("expected some modification date", 3,
+			omex.getModified ().size ());
+		assertFalse ("expected some jsonobject",
+			omex.toJsonDescription ().isEmpty ());
 		assertFalse ("expected non-empty omex", omex.isEmpty ());
 		
 		omex = omex.clone ();
-		assertEquals ("expected different description", "some description", omex.getDescription ());
-		assertEquals ("expected some modification date", 3, omex.getModified ().size ());
-		assertFalse ("expected some jsonobject", omex.toJsonDescription ().isEmpty ());
+		assertEquals ("expected different description", "some description",
+			omex.getDescription ());
+		assertEquals ("expected some modification date", 3,
+			omex.getModified ().size ());
+		assertFalse ("expected some jsonobject",
+			omex.toJsonDescription ().isEmpty ());
 		assertFalse ("expected non-empty omex", omex.isEmpty ());
 		
 		mods.add (new Date ());
 		omex = new OmexDescription (creators, new Date (), "some description");
-		assertEquals ("expected different description", "some description", omex.getDescription ());
-		assertEquals ("expected no modification date", 0, omex.getModified ().size ());
-		assertFalse ("expected some jsonobject", omex.toJsonDescription ().isEmpty ());
+		assertEquals ("expected different description", "some description",
+			omex.getDescription ());
+		assertEquals ("expected no modification date", 0,
+			omex.getModified ().size ());
+		assertFalse ("expected some jsonobject",
+			omex.toJsonDescription ().isEmpty ());
 		assertFalse ("expected non-empty omex", omex.isEmpty ());
 		
 		mods.add (new Date ());
 		omex = new OmexDescription (vc3, new Date (), "some description");
-		assertEquals ("expected different description", "some description", omex.getDescription ());
-		assertEquals ("expected no modification date", 0, omex.getModified ().size ());
-		assertFalse ("expected some jsonobject", omex.toJsonDescription ().isEmpty ());
+		assertEquals ("expected different description", "some description",
+			omex.getDescription ());
+		assertEquals ("expected no modification date", 0,
+			omex.getModified ().size ());
+		assertFalse ("expected some jsonobject",
+			omex.toJsonDescription ().isEmpty ());
 		assertFalse ("expected non-empty omex", omex.isEmpty ());
 		
 		mods.add (new Date ());
 		omex = new OmexDescription ("some description");
-		assertEquals ("expected different description", "some description", omex.getDescription ());
-		assertEquals ("expected no modification date", 0, omex.getModified ().size ());
-		assertFalse ("expected some jsonobject", omex.toJsonDescription ().isEmpty ());
+		assertEquals ("expected different description", "some description",
+			omex.getDescription ());
+		assertEquals ("expected no modification date", 0,
+			omex.getModified ().size ());
+		assertFalse ("expected some jsonobject",
+			omex.toJsonDescription ().isEmpty ());
 		assertFalse ("expected non-empty omex", omex.isEmpty ());
 		
 		mods.add (new Date ());
 		omex = new OmexDescription (creators, mods, "some description");
-		assertEquals ("expected different description", "some description", omex.getDescription ());
-		assertEquals ("expected no modification date", 7, omex.getModified ().size ());
-		assertFalse ("expected some jsonobject", omex.toJsonDescription ().isEmpty ());
+		assertEquals ("expected different description", "some description",
+			omex.getDescription ());
+		assertEquals ("expected no modification date", 7,
+			omex.getModified ().size ());
+		assertFalse ("expected some jsonobject",
+			omex.toJsonDescription ().isEmpty ());
 		assertFalse ("expected non-empty omex", omex.isEmpty ());
-		
-		
-		
-		
 		
 		LOGGER.setLogToStdErr (true);
 		LOGGER.setMinLevel (LOGGER.WARN);
 	}
+	
 	
 	/**
 	 * Test new empty file.
@@ -1392,7 +1741,8 @@ public class TestArchive
 			assertTrue ("new file has size > 0", f.length () > 0);
 			ca = new CombineArchive (f);
 			assertFalse ("didn't expect errors", ca.hasErrors ());
-			assertEquals ("expected different zip file location", f, ca.getZipLocation ());
+			assertEquals ("expected different zip file location", f,
+				ca.getZipLocation ());
 			ca.pack ();
 			ca.close ();
 			f.delete ();
@@ -1402,6 +1752,7 @@ public class TestArchive
 			fail ("test failed unexpectedly");
 		}
 	}
+	
 	
 	/**
 	 * Test invalid archive.
@@ -1425,7 +1776,8 @@ public class TestArchive
 		try
 		{
 			CombineArchive ca = new CombineArchive (f, true);
-			assertEquals ("expected different zip file location", f, ca.getZipLocation ());
+			assertEquals ("expected different zip file location", f,
+				ca.getZipLocation ());
 			assertTrue ("expected to see some errors", ca.hasErrors ());
 			assertEquals ("expected to see one error", 1, ca.getErrors ().size ());
 			assertEquals ("expected to see no file", 0, ca.getEntries ().size ());
@@ -1437,11 +1789,9 @@ public class TestArchive
 			fail ("did not expect an exception");
 		}
 		
-		
 	}
 	
 	
-
 	/**
 	 * Test utils.
 	 */
@@ -1461,9 +1811,11 @@ public class TestArchive
 			LOGGER.error (e);
 			fail ("sos tests failed");
 		}
-
-		assertEquals ("extension detector wrong", "sbml", Utils.getExtension ("file.sbml"));
-		assertEquals ("extension detector wrong", "sbml", Utils.getExtension ("file.somehting.sbml"));
+		
+		assertEquals ("extension detector wrong", "sbml",
+			Utils.getExtension ("file.sbml"));
+		assertEquals ("extension detector wrong", "sbml",
+			Utils.getExtension ("file.somehting.sbml"));
 		assertNull ("extension detector wrong", Utils.getExtension ("filesbml"));
 		
 		try

@@ -85,4 +85,17 @@ public class DefaultMetaDataObject
 		return new DefaultMetaDataObject (element);
 	}
 	
+	
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see de.unirostock.sems.cbarchive.meta.MetaDataObject#clone()
+	 */
+	public MetaDataObject clone ()
+	{
+		MetaDataObject clone = new DefaultMetaDataObject (description.clone ());
+		clone.setAbout (about, fragmentIdentifier);
+		return clone;
+	}
+	
 }

@@ -50,7 +50,7 @@ public class OmexMetaDataObject
 {
 	
 	/** The description. */
-	protected OmexDescription	description;
+	protected OmexDescription description;
 	
 	
 	/**
@@ -146,6 +146,19 @@ public class OmexMetaDataObject
 			LOGGER.debug (e, "could not parse OMEX description");
 		}
 		return null;
+	}
+	
+	
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see de.unirostock.sems.cbarchive.meta.MetaDataObject#clone()
+	 */
+	public MetaDataObject clone ()
+	{
+		MetaDataObject clone = new OmexMetaDataObject (description.clone ());
+		clone.setAbout (about, fragmentIdentifier);
+		return clone;
 	}
 	
 }
