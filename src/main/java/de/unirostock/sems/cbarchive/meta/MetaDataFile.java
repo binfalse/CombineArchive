@@ -64,6 +64,7 @@ import de.unirostock.sems.cbarchive.Utils;
  * @author Martin Scharm
  */
 public class MetaDataFile
+	extends MetaDataHolder
 {
 	
 	/**
@@ -77,10 +78,14 @@ public class MetaDataFile
 	 *          the entries available in the corresponding archive
 	 * @param archive
 	 *          the archive which contains this file
-	 * @param continueOnError 
-	 * 					ignore errors and continue (as far as possible)
+	 * @param metaMetaHolder
+	 *          the meta data of meta data
+	 * @param metaDataFiles
+	 *          the meta data file to evaluate
+	 * @param continueOnError
+	 *          ignore errors and continue (as far as possible)
 	 * @param errors
-	 * 					the list of occurred errors
+	 *          the list of occurred errors
 	 * @throws ParseException
 	 *           the parse exception
 	 * @throws JDOMException
@@ -90,8 +95,9 @@ public class MetaDataFile
 	 * @throws CombineArchiveException
 	 *           the combine archive exception
 	 */
-	public static void readFile (Path file,
-		HashMap<String, ArchiveEntry> entries, CombineArchive archive, boolean continueOnError, List<String> errors)
+	public static void readFile (Path file, HashMap<String, ArchiveEntry> entries,
+		CombineArchive archive, MetaDataHolder metaMetaHolder,
+		List<Path> metaDataFiles, boolean continueOnError, List<String> errors)
 		throws ParseException,
 			JDOMException,
 			IOException,
@@ -127,10 +133,14 @@ public class MetaDataFile
 			String about = current.getAttributeValue ("about", Utils.rdfNS);
 			if (about == null)
 			{
-				LOGGER.error ("meta description " + i + " in " + file + " does not contain an `about` value. so we cannot assign it to an entity.");
-				errors.add ("meta description " + i + " in " + file + " does not contain an `about` value. so we cannot assign it to an entity.");
+				LOGGER.error ("meta description " + i + " in " + file
+					+ " does not contain an `about` value. so we cannot assign it to an entity.");
+				errors.add ("meta description " + i + " in " + file
+					+ " does not contain an `about` value. so we cannot assign it to an entity.");
 				if (!continueOnError)
-					throw new CombineArchiveException ("meta description " + i + " in " + file + " does not contain an `about` value. so we cannot assign it to an entity.");
+					throw new CombineArchiveException ("meta description " + i + " in "
+						+ file
+						+ " does not contain an `about` value. so we cannot assign it to an entity.");
 				continue;
 			}
 			
@@ -147,33 +157,53 @@ public class MetaDataFile
 			while (about.startsWith ("/"))
 				about = about.substring (1);
 			about = "/" + about;
-			ArchiveEntry currentEntry = null;
+			MetaDataHolder currentEntry = null;
 			String fragmentIdentifier = null;
 			
-			about = Utils.pathFixer(Paths.get (about).normalize ().toString ());
+			about = Utils.pathFixer (Paths.get (about).normalize ().toString ());
 			
 			// try to find the corresponding entry
 			for (ArchiveEntry entry : entries.values ())
 			{
-				if (about.startsWith (entry.getFilePath ()) &&
-					(about.length () == entry.getFilePath ().length ()
+				if (about.startsWith (entry.getFilePath ())
+					&& (about.length () == entry.getFilePath ().length ()
 						|| about.charAt (entry.getFilePath ().length ()) == '#'))
 				{
 					currentEntry = entry;
 					if (about.length () > entry.getFilePath ().length ()
 						&& about.charAt (entry.getFilePath ().length ()) == '#')
-						fragmentIdentifier = about.substring (entry.getFilePath ()
-							.length () - 1);
+						fragmentIdentifier = about
+							.substring (entry.getFilePath ().length () - 1);
 					break;
 				}
 			}
 			
 			if (currentEntry == null)
 			{
-				LOGGER.error ("found no entry for description ", i, " in ", file, " (about=", about, ").");
-				errors.add ("found no entry for description " + i + " in " + file + " (about=" + about + ").");
+				for (Path p : metaDataFiles)
+				{
+					String path = p.toString ();
+					if (about.startsWith (path) && (about.length () == path.length ()
+						|| about.charAt (path.length ()) == '#'))
+					{
+						currentEntry = metaMetaHolder;
+						if (about.length () > path.length ()
+							&& about.charAt (path.length ()) == '#')
+							fragmentIdentifier = about.substring (path.length () - 1);
+						break;
+					}
+				}
+			}
+			
+			if (currentEntry == null)
+			{
+				LOGGER.error ("found no entry for description ", i, " in ", file,
+					" (about=", about, ").");
+				errors.add ("found no entry for description " + i + " in " + file
+					+ " (about=" + about + ").");
 				if (!continueOnError)
-					throw new CombineArchiveException ("found no entry for description " + i + " in " + file + " (about=" + about + ").");
+					throw new CombineArchiveException ("found no entry for description "
+						+ i + " in " + file + " (about=" + about + ").");
 				continue;
 			}
 			
@@ -230,6 +260,8 @@ public class MetaDataFile
 	/**
 	 * Associates some meta data to a file.
 	 * 
+	 * This function won't associate the same meta data twice to the same object.
+	 * 
 	 * @param entity
 	 *          the entity that is described by <code>subtree</code>
 	 * @param subtree
@@ -238,8 +270,8 @@ public class MetaDataFile
 	 *          the fragment identifier
 	 * @return true, if successful
 	 */
-	private static boolean addMetaToEntry (MetaDataHolder entity,
-		Element subtree, String fragmentIdentifier)
+	private static boolean addMetaToEntry (MetaDataHolder entity, Element subtree,
+		String fragmentIdentifier)
 	{
 		if (entity == null)
 			return false;
@@ -263,6 +295,13 @@ public class MetaDataFile
 		
 		if (object != null)
 		{
+			object.setAbout (entity, fragmentIdentifier);
+			
+			// do not add the same meta twice...
+			for (MetaDataObject obj : entity.getDescriptions ())
+				if (object.equals (obj))
+					return true;
+				
 			entity.addDescription (fragmentIdentifier, object);
 		}
 		else
@@ -280,6 +319,10 @@ public class MetaDataFile
 	 * <p>
 	 * This method will create one meta data file per entry. Meta data files will
 	 * be named <code>baseDir/metadata(-[-0-9a-f]+)?.rdf</code>. See
+	 * {@link #writeFile(File,HashMap,CombineArchive,MetaDataHolder)} if you want
+	 * to
+	 * store all meta data in a single file.
+	 * </p>
 	 * 
 	 * @param baseDir
 	 *          the base directory to store the files
@@ -287,20 +330,17 @@ public class MetaDataFile
 	 *          the archive entries
 	 * @param archive
 	 *          the archive which will contain the files
+	 * @param metaMetaHolder
+	 *          the meta data of meta data
 	 * @return the list of files that were created
 	 * @throws IOException
 	 *           Signals that an I/O exception has occurred.
 	 * @throws TransformerException
 	 *           the transformer exception
-	 *           {@link #writeFile(File,HashMap,CombineArchive)} if you want to
-	 *           store all meta data in a
-	 *           single file.
-	 *           </p>
 	 */
 	public static List<File> writeFiles (File baseDir,
-		HashMap<String, ArchiveEntry> entries, CombineArchive archive)
-		throws IOException,
-			TransformerException
+		HashMap<String, ArchiveEntry> entries, CombineArchive archive,
+		MetaDataHolder metaMetaHolder) throws IOException, TransformerException
 	{
 		List<File> outputs = new ArrayList<File> ();
 		
@@ -314,6 +354,9 @@ public class MetaDataFile
 		rdf.addNamespaceDeclaration (Utils.vcNS);
 		
 		exportMetaData (archive, rdf);
+		
+		// meta of meta
+		exportMetaData (metaMetaHolder, rdf);
 		
 		try (BufferedWriter bw = new BufferedWriter (new FileWriter (output)))
 		{
@@ -364,7 +407,8 @@ public class MetaDataFile
 	 * This method will create one meta data file for all description. Thus, the
 	 * returned list of files will be of size one. The meta data file will be
 	 * named <code>baseDir/metadata(-[-0-9a-f]+)?.rdf</code>. See
-	 * {@link #writeFiles(File,HashMap,CombineArchive)} if you want to store the
+	 * {@link #writeFiles(File,HashMap,CombineArchive,MetaDataHolder)} if you want
+	 * to store the
 	 * meta data in a multiple files, one for each entry.
 	 * </p>
 	 * 
@@ -374,16 +418,19 @@ public class MetaDataFile
 	 *          the archive entries
 	 * @param archive
 	 *          the archive which will contain the files
-	 * @return the list of files that were created (should be always of size one)
+	 * @param metaMetaHolder
+	 *          the meta data of meta data
+	 * @return the list of files th
+	 *         the meta data of meta dataat were created (should be always of size
+	 *         one)
 	 * @throws IOException
 	 *           Signals that an I/O exception has occurred.
 	 * @throws TransformerException
 	 *           the transformer exception
 	 */
 	public static List<File> writeFile (File baseDir,
-		HashMap<String, ArchiveEntry> entries, CombineArchive archive)
-		throws IOException,
-			TransformerException
+		HashMap<String, ArchiveEntry> entries, CombineArchive archive,
+		MetaDataHolder metaMetaHolder) throws IOException, TransformerException
 	{
 		File output = getMetaOutputFile (baseDir);
 		
@@ -395,6 +442,9 @@ public class MetaDataFile
 		
 		// archive itself
 		exportMetaData (archive, rdf);
+		
+		// meta of meta
+		exportMetaData (metaMetaHolder, rdf);
 		
 		// all entries
 		for (ArchiveEntry e : entries.values ())
@@ -425,8 +475,8 @@ public class MetaDataFile
 	 */
 	private static File getMetaOutputFile (File baseDir)
 	{
-		File output = new File (baseDir.getAbsolutePath () + File.separator
-			+ "metadata.rdf");
+		File output = new File (
+			baseDir.getAbsolutePath () + File.separator + "metadata.rdf");
 		int it = 0;
 		while (output.exists ())
 			output = new File (baseDir.getAbsolutePath () + File.separator
@@ -453,5 +503,12 @@ public class MetaDataFile
 			rdf.addContent (Description);
 			meta.injectDescription (Description);
 		}
+	}
+	
+	
+	@Override
+	public String getEntityPath ()
+	{
+		return "/metadata.rdf";
 	}
 }

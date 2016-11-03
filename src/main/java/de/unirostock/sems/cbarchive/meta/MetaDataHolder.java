@@ -46,7 +46,7 @@ public abstract class MetaDataHolder
 {
 	
 	/** The descriptions about the entity. */
-	protected List<MetaDataObject>	descriptions;
+	protected List<MetaDataObject> descriptions;
 	
 	
 	/**
@@ -107,6 +107,12 @@ public abstract class MetaDataHolder
 		MetaDataObject description)
 	{
 		description.setAbout (this, fragmentIdentifier);
+		
+		// we do not need to store meta data twice...
+		for (MetaDataObject descr : descriptions)
+			if (description.equals (descr))
+				return;
+			
 		this.descriptions.add (description);
 	}
 	

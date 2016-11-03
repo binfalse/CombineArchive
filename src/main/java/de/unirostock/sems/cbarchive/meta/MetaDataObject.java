@@ -32,7 +32,15 @@
  */
 package de.unirostock.sems.cbarchive.meta;
 
+import java.io.IOException;
+
+import javax.xml.transform.TransformerException;
+
+import org.jdom2.Document;
 import org.jdom2.Element;
+
+import de.binfalse.bflog.LOGGER;
+import de.unirostock.sems.cbarchive.Utils;
 
 
 
@@ -128,4 +136,68 @@ public abstract class MetaDataObject
 	{
 		return description;
 	}
+	
+	
+	/**
+	 * Checks if two meta data objects are equal, but it neglects the paths to the
+	 * meta data holder.
+	 * 
+	 * Thus, it just checks the fragment identifier and the actual meta data
+	 *
+	 * @param otherMeta
+	 *          the other meta data object
+	 * @return true, if both objects are equal w/o respect to the path
+	 */
+	public boolean equalsPathNoMatter (MetaDataObject otherMeta)
+	{
+		if (otherMeta == null)
+			return false;
+		
+		if ( (fragmentIdentifier == null && otherMeta.fragmentIdentifier == null)
+			|| (fragmentIdentifier != null && otherMeta.fragmentIdentifier != null
+				&& fragmentIdentifier.equals (otherMeta.fragmentIdentifier)))
+		{
+			try
+			{
+				String one = Utils
+					.prettyPrintDocument (new Document (description.clone ()));
+				String two = Utils
+					.prettyPrintDocument (new Document (description.clone ()));
+				return one.equals (two);
+			}
+			catch (IOException | TransformerException e)
+			{
+				e.printStackTrace ();
+				LOGGER.error (e, "cannot convert jdom element tree to string");
+			}
+		}
+		return false;
+	}
+	
+	
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see java.lang.Object#equals(java.lang.Object)
+	 */
+	@Override
+	public boolean equals (Object obj)
+	{
+		if (obj == null || !MetaDataObject.class.isAssignableFrom (obj.getClass ()))
+			return false;
+		
+		MetaDataObject otherMeta = (MetaDataObject) obj;
+		
+		if (about == otherMeta.about && equalsPathNoMatter (otherMeta))
+			return true;
+		return false;
+	}
+	
+	
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see java.lang.Object#clone()
+	 */
+	abstract public MetaDataObject clone ();
 }
