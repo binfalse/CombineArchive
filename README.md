@@ -1,4 +1,4 @@
-CombineArchive
+CombineArchive library
 ==============
 
 A Java library created in the scope of [SEMS][1] at the [Univerity of Rostock][2] to read/write/create/manipulate/... CombineArchives. To learn more about CombineArchives visit [co.mbine.org][3].
