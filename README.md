@@ -1,12 +1,13 @@
 CombineArchive library
 ==============
 
-A Java library created in the scope of [SEMS][1] at the [Univerity of Rostock][2] to read/write/create/manipulate/... CombineArchives. To learn more about CombineArchives visit [co.mbine.org][3].
+A Java library created in the scope of [SEMS][1] at the [Univerity of Rostock][2] to read/write/create/manipulate/... CombineArchives. To learn more about CombineArchives visit [co.mbine.org][3] and [combinearchive.org](https://combinearchive.org).
 
 Usage
 ----
 
 Find some snippets of how to use this library at [our website][4].
+An example is also shipped with the code at [src/main/java/de/unirostock/sems/cbarchive/Example.java](src/main/java/de/unirostock/sems/cbarchive/Example.java)
 
 Binaries
 ----
@@ -17,11 +18,7 @@ Latest binaries of the library are regularly pushed to our archive repostitory a
 
 Dev
 ----
-The library is mainly developed at [sems.uni-rostock.de/trac/combinearchive][7], code is available from our repository server:
-
-    git clone git://sems.uni-rostock.de/combinearchive
-
-In order to ease collaborations the project is also available at [GitHub][6]:
+The library is mainly developed at [GitHub][6]:
 
     git clone https://github.com/binfalse/CombineArchive
     
