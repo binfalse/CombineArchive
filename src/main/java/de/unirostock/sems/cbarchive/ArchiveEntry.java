@@ -90,6 +90,7 @@ public class ArchiveEntry
 	 *          the target to write this item to.
 	 * @return the file (=<code>target</code>)
 	 * @throws IOException
+	 *           Signals that an I/O exception has occurred.
 	 */
 	public File extractFile (File target) throws IOException
 	{
@@ -124,6 +125,7 @@ public class ArchiveEntry
 	 * 
 	 * @return the file
 	 * @throws IOException
+	 *           Signals that an I/O exception has occurred.
 	 * 
 	 * @deprecated as of version 0.6, replaced by {@link #extractFile (File target)}
 	 */
@@ -214,13 +216,15 @@ public class ArchiveEntry
 	
 	/**
 	 * Add all descriptions in
-	 * <code>metaDataFile<code> (assuming all are about this entry).
+	 * <code>metaDataFile</code> (assuming all are about this entry).
 	 * 
 	 * @param metaDataFile
 	 *          the file containing the meta data
 	 * @return number of entries added, or -1 in case of an error
 	 * @throws IOException
+	 *           Signals that an I/O exception has occurred.
 	 * @throws JDOMException
+	 *           Signals problems with the jDOM parser
 	 */
 	public int addAllDescriptions (File metaDataFile)
 		throws JDOMException,

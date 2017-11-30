@@ -126,8 +126,11 @@ public class CombineArchive
 	 * @throws IOException
 	 *           if we cannot create a temporary directory
 	 * @throws CombineArchiveException
+	 * 					Signals problems with the Combine Archive concept
 	 * @throws ParseException
+	 * 					Signals problems with the parser
 	 * @throws JDOMException
+	 *           Signals problems with the jDOM parser
 	 */
 	public CombineArchive (File zipFile)
 		throws IOException,
@@ -157,8 +160,11 @@ public class CombineArchive
 	 * @throws IOException
 	 *           if we cannot create a temporary directory
 	 * @throws CombineArchiveException
+	 * 					Signals problems with the Combine Archive concept
 	 * @throws ParseException
+	 * 					Signals problems with the parser
 	 * @throws JDOMException
+	 *           Signals problems with the jDOM parser
 	 */
 	public CombineArchive (File zipFile, boolean continueOnError)
 		throws IOException,
@@ -180,8 +186,11 @@ public class CombineArchive
 	 * @throws IOException
 	 *           if we cannot create a temporary directory
 	 * @throws CombineArchiveException
+	 * 					Signals problems with the Combine Archive concept
 	 * @throws ParseException
+	 * 					Signals problems with the parser
 	 * @throws JDOMException
+	 *           Signals problems with the jDOM parser
 	 */
 	private void init (File zipFile, boolean continueOnError)
 		throws IOException,
@@ -371,6 +380,7 @@ public class CombineArchive
 	 *          the location of the corresponding file
 	 * @return true if we found that entry and removed it successfully
 	 * @throws IOException
+	 *           Signals that an I/O exception has occurred.
 	 */
 	public boolean removeEntry (String location) throws IOException
 	{
@@ -395,6 +405,7 @@ public class CombineArchive
 	 *          the entry to remove
 	 * @return true if we found that entry and removed it successfully
 	 * @throws IOException
+	 *           Signals that an I/O exception has occurred.
 	 */
 	public boolean removeEntry (ArchiveEntry entry) throws IOException
 	{
@@ -434,6 +445,7 @@ public class CombineArchive
 	 *          the old entry whose file should be replaced
 	 * @return the new entry
 	 * @throws IOException
+	 *           Signals that an I/O exception has occurred.
 	 */
 	public ArchiveEntry replaceFile (File toInsert, ArchiveEntry oldEntry)
 		throws IOException
@@ -1032,7 +1044,7 @@ public class CombineArchive
 	 * @throws IOException
 	 *           Signals that an I/O exception has occurred.
 	 * @throws TransformerException
-	 *           the transformer exception
+	 *           Signals problems with converting the DOM to a text document
 	 */
 	private void writeManifest (boolean singleFile)
 		throws IOException,
@@ -1122,7 +1134,9 @@ public class CombineArchive
 	 *          should we create one meta file per archive entry or combine all
 	 *          meta data in a single file?
 	 * @throws TransformerException
+	 *           Signals problems with converting the DOM to a text document
 	 * @throws IOException
+	 *           Signals that an I/O exception has occurred.
 	 */
 	public void pack (boolean multipleMetaFiles)
 		throws IOException,
@@ -1145,7 +1159,9 @@ public class CombineArchive
 	 * </p>
 	 * 
 	 * @throws TransformerException
+	 *           Signals problems with converting the DOM to a text document
 	 * @throws IOException
+	 *           Signals that an I/O exception has occurred.
 	 */
 	public void pack () throws IOException, TransformerException
 	{
