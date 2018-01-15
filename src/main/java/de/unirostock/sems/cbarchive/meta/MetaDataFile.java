@@ -178,7 +178,7 @@ public class MetaDataFile
 				}
 			}
 			
-			if (currentEntry == null)
+			if (currentEntry == null && metaDataFiles != null)
 			{
 				for (Path p : metaDataFiles)
 				{
