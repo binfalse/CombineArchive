@@ -86,6 +86,7 @@ public abstract class MetaDataObject
 	{
 		this.about = about;
 		this.fragmentIdentifier = null;
+		description.setAttribute ("about", getAbout (), Utils.rdfNS);
 	}
 	
 	
@@ -101,6 +102,7 @@ public abstract class MetaDataObject
 	{
 		this.about = about;
 		this.fragmentIdentifier = fragmentIdentifier;
+		description.setAttribute ("about", getAbout (), Utils.rdfNS);
 	}
 	
 	
@@ -111,6 +113,9 @@ public abstract class MetaDataObject
 	 */
 	public String getAbout ()
 	{
+		if (about == null)
+			return "";
+		
 		if (fragmentIdentifier != null)
 			return about.getEntityPath () + "#" + fragmentIdentifier;
 		
@@ -160,10 +165,13 @@ public abstract class MetaDataObject
 		{
 			try
 			{
+				Element elementOne = description.clone ().setAttribute ("about", "", Utils.rdfNS);
+				Element elementTwo = otherMeta.description.clone ().setAttribute ("about", "", Utils.rdfNS);
+				
 				String one = Utils
-					.prettyPrintDocument (new Document (description.clone ()));
+					.prettyPrintDocument (new Document (elementOne));
 				String two = Utils
-					.prettyPrintDocument (new Document (otherMeta.description.clone ()));
+					.prettyPrintDocument (new Document (elementTwo));
 				return one.equals (two);
 			}
 			catch (IOException | TransformerException e)
