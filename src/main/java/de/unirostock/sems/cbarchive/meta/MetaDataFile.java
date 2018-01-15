@@ -214,7 +214,7 @@ public class MetaDataFile
 	
 	
 	/**
-	 * Adds all descriptions of a file to a single entry.
+	 * Adds all descriptions of a file to a single entry, assuming all are about this file (ignoring the actual about!).
 	 * 
 	 * @param file
 	 *          the file containing the meta data
@@ -247,6 +247,10 @@ public class MetaDataFile
 				if (p >= 0 && about.length () > p + 1)
 					fragmentIdentifier = about.substring (p + 1);
 			}
+			if (fragmentIdentifier != null)
+				current.setAttribute ("about", entry.getEntityPath () + "#" + fragmentIdentifier, Utils.rdfNS);
+			else
+				current.setAttribute ("about", entry.getEntityPath (), Utils.rdfNS);
 			
 			if (!addMetaToEntry (entry, current, fragmentIdentifier))
 				LOGGER.warn ("could not parse description for ", about);

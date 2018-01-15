@@ -703,7 +703,7 @@ public class TestArchive
 		assertEquals (
 			"expected so see a different number of descriptions after adding all descriptions from a file (prev: "
 				+ prevDescriptions + " -- toAdd: " + toAdd + ")",
-			prevDescriptions + toAdd - 1/* one descr equals.. */,
+			prevDescriptions + toAdd,
 			CellMLFile.getDescriptions ().size ());
 		
 		ca.close ();
