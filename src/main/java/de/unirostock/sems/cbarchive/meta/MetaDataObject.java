@@ -162,7 +162,7 @@ public abstract class MetaDataObject
 				String one = Utils
 					.prettyPrintDocument (new Document (description.clone ()));
 				String two = Utils
-					.prettyPrintDocument (new Document (description.clone ()));
+					.prettyPrintDocument (new Document (otherMeta.description.clone ()));
 				return one.equals (two);
 			}
 			catch (IOException | TransformerException e)
