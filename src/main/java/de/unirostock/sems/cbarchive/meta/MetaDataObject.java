@@ -134,6 +134,7 @@ public abstract class MetaDataObject
 	 */
 	public Element getXmlDescription ()
 	{
+		description.setAttribute ("about", getAbout (), Utils.rdfNS);
 		return description;
 	}
 	
