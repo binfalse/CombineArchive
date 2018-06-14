@@ -7,7 +7,9 @@ Usage
 ----
 
 Find some snippets of how to use this library at [our website][4].
-An example is also shipped with the code at [src/main/java/de/unirostock/sems/cbarchive/Example.java](src/main/java/de/unirostock/sems/cbarchive/Example.java)
+Some more documentation is available from the [SEMS GitHub pages for this project](https://semsproject.github.io/CombineArchive/).
+An example on how to use this library is also shipped with the code at [src/main/java/de/unirostock/sems/cbarchive/Example.java](src/main/java/de/unirostock/sems/cbarchive/Example.java)
+
 
 Binaries
 ----
