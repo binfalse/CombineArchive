@@ -1022,6 +1022,8 @@ public class CombineArchive
 	 * @param format
 	 *          the format of the entry, see <a href=
 	 *          "https://sems.uni-rostock.de/trac/combine-ext/wiki/CombineFormatizer">CombineFormatizer</a>
+	 * @param mainEntry
+	 *          is this the main entry for this archive?
 	 * @return the XML node
 	 */
 	private Element createManifestEntry (String location, URI format,
