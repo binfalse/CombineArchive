@@ -45,6 +45,7 @@ import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.ProviderNotFoundException;
 import java.nio.file.StandardCopyOption;
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -219,7 +220,7 @@ public class CombineArchive
 			zipfs = FileSystems.newFileSystem (URI.create ("jar:" + zipFile.toURI ()),
 				zip_properties);
 		}
-		catch (IOException e)
+		catch (IOException | ProviderNotFoundException | UnsupportedOperationException e)
 		{
 			LOGGER.error (e, "cannot read archive " + zipFile.toURI ()
 				+ " (file system creation failed)");
@@ -1557,6 +1558,7 @@ public class CombineArchive
 	@Override
 	public void close () throws IOException
 	{
-		zipfs.close ();
+		if (zipfs != null)
+			zipfs.close ();
 	}
 }
