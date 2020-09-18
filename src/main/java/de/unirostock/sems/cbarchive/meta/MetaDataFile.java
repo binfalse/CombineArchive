@@ -203,7 +203,7 @@ public class MetaDataFile
 					+ " (about=" + about + ").");
 				if (!continueOnError)
 					throw new CombineArchiveException ("found no entry for description "
-						+ i + " in " + file + " (about=" + about + ").");
+						+ current + "(" + i + ") in " + file + " (about=" + about + ").");
 				continue;
 			}
 			
@@ -503,7 +503,10 @@ public class MetaDataFile
 		for (MetaDataObject meta : entity.getDescriptions ())
 		{
 			Element Description = new Element ("Description", Utils.rdfNS);
-			Description.setAttribute ("about", meta.getAbout (), Utils.rdfNS);
+			String about = meta.getAbout ();
+			if (!about.startsWith("."))
+				about = "." + about;
+			Description.setAttribute ("about", about, Utils.rdfNS);
 			rdf.addContent (Description);
 			meta.injectDescription (Description);
 		}

@@ -1473,7 +1473,7 @@ public class TestArchive
 		}
 		catch (Exception e1)
 		{
-			LOGGER.error (e);
+			LOGGER.error (e1);
 			fail ("example failed");
 		}
 	}
